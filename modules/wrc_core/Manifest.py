@@ -9,3 +9,9 @@ files = [ "xwr_core.vhd",
 	      "wrc_cpu_csr_wbgen2_pkg.vhd",
 	      "wrc_cpu_csr_wb.vhd",
 ];
+
+modules =  {
+    "local" : [
+        "../../ip_cores/urv-core",
+    ],
+}
