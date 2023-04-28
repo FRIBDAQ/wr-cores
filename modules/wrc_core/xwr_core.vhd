@@ -6,7 +6,7 @@
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-02
--- Last update: 2023-03-13
+-- Last update: 2023-04-26
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -105,7 +105,8 @@ entity xwr_core is
     g_diag_ver                  : integer                        := 0;
     g_diag_ro_size              : integer                        := 0;
     g_diag_rw_size              : integer                        := 0;
-    g_dac_bits                  : integer                        := 16);
+    g_dac_bits                  : integer                        := 16;
+    g_with_clock_freq_monitor   : boolean                        := true);
   port(
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -318,7 +319,8 @@ begin
       g_diag_ro_size              => g_diag_ro_size,
       g_diag_rw_size              => g_diag_rw_size,
       g_dac_bits                  => g_dac_bits,
-      g_use_platform_specific_dpram => g_use_platform_specific_dpram
+      g_use_platform_specific_dpram => g_use_platform_specific_dpram,
+      g_with_clock_freq_monitor   => g_with_clock_freq_monitor
       )
     port map(
       clk_sys_i     => clk_sys_i,

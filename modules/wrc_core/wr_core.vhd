@@ -6,7 +6,7 @@
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-02
--- Last update: 2023-03-21
+-- Last update: 2023-04-26
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -105,7 +105,9 @@ entity wr_core is
     g_diag_ver                  : integer                        := 0;
     g_diag_ro_size              : integer                        := 0;
     g_diag_rw_size              : integer                        := 0;
-    g_dac_bits                  : integer                        := 16);
+    g_dac_bits                  : integer                        := 16;
+    g_with_clock_freq_monitor   : boolean                        := true
+    );
   port(
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -416,7 +418,7 @@ architecture struct of wr_core is
   -----------------------------------------------------------------------------
   --WB Secondary Crossbar
   -----------------------------------------------------------------------------
-  constant c_secbar_layout : t_sdb_record_array(10 downto 0) :=
+  constant c_secbar_layout : t_sdb_record_array(11 downto 0) :=
     (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb, x"00000000"),
      1  => f_sdb_embed_device(c_xwr_endpoint_sdb, x"00000100"),
      2  => f_sdb_embed_device(c_xwr_softpll_ng_sdb, x"00000200"),
@@ -427,15 +429,16 @@ architecture struct of wr_core is
      7  => f_sdb_embed_device(c_wrc_periph4_sdb,  x"00000800"),  -- wdiag (usr)
      8  => f_sdb_embed_device(c_wrc_periph5_sdb,  x"00000900"),  -- wdiag (cpu)
      9  => f_sdb_embed_device(c_wrc_cpu_csr_sdb,  x"00000b00"),  -- cpu csr
-     10 => f_sdb_embed_device(g_aux_sdb,          x"00008000")   -- aux WB bus
-     );
+     10 => f_sdb_embed_device(g_aux_sdb,          x"00008000"),  -- aux WB bus
+     11 => f_sdb_embed_device(c_wrc_periph6_sdb,  x"00000a00")  -- freq monitor
+   );
 
   constant c_secbar_sdb_address : t_wishbone_address := x"00000C00";
   constant c_secbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_secbar_layout, c_secbar_sdb_address);
 
-  signal secbar_master_i : t_wishbone_master_in_array(10 downto 0);
-  signal secbar_master_o : t_wishbone_master_out_array(10 downto 0);
+  signal secbar_master_i : t_wishbone_master_in_array(11 downto 0);
+  signal secbar_master_o : t_wishbone_master_out_array(11 downto 0);
 
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
@@ -491,6 +494,29 @@ architecture struct of wr_core is
   signal phy_mdio_master_out : t_wishbone_master_out;
   signal phy_mdio_master_in : t_wishbone_master_in;
 
+  function f_count_freqmon_clocks return integer is
+    variable cnt : integer;
+  begin
+
+    -- SYS + DMTD + REF + PHY RX Clock;
+    cnt := 1 + 1 + 1 + 1;
+
+    -- All Aux Clocks
+    cnt := cnt + g_aux_clks;
+
+    -- Ext clock input, if need be.
+    if( g_with_external_clock_input ) then
+      cnt := cnt + 1;
+    end if;
+    
+    return cnt;
+    
+  end f_count_freqmon_clocks;
+
+  constant c_NUM_FREQMON_CLOCKS: integer := f_count_freqmon_clocks;
+
+  signal freqmon_in : std_logic_vector(c_NUM_FREQMON_CLOCKS - 1 downto 0);
+  
 begin
 
   -----------------------------------------------------------------------------
@@ -931,7 +957,7 @@ begin
     generic map(
       g_verbose     => g_verbose,
       g_num_masters => 2,
-      g_num_slaves  => 11,
+      g_num_slaves  => 12,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_secbar_layout,
@@ -1049,4 +1075,47 @@ begin
 
   ep_txtsu_ack <= txtsu_ack_i or mnic_txtsu_ack;
 
+  gen_with_clock_monitor : if g_with_clock_freq_monitor generate
+
+    inst_clock_monitor: entity work.xwb_clock_monitor
+      generic map (
+        g_NUM_CLOCKS             => c_NUM_FREQMON_CLOCKS,
+        g_CLK_SYS_FREQ           => c_WR_CORE_SYSTEM_CLOCK_FREQ_HZ,
+        g_WITH_INTERNAL_TIMEBASE => true)
+      port map (
+        rst_n_i   => rst_n_i,
+        clk_sys_i => clk_sys_i,
+        clk_in_i  => freqmon_in,
+        pps_p1_i  => '0',
+        slave_i   => secbar_master_o(11),
+        slave_o   => secbar_master_i(11));
+    
+    freqmon_in(0) <= clk_sys_i;
+    freqmon_in(1) <= clk_dmtd_i;
+    freqmon_in(2) <= clk_ref_i;
+    freqmon_in(3) <= phy_rx_clk;
+
+    gen_with_aux_clocks : if g_aux_clks > 0 generate
+      freqmon_in( g_aux_clks + 4 - 1 downto 4 ) <= clk_aux_i(g_aux_clks-1 downto 0);
+    end generate gen_with_aux_clocks;
+
+    gen_with_ext_clock : if g_with_external_clock_input generate
+      freqmon_in( g_aux_clks + 4 ) <= clk_ext_i;
+    end generate gen_with_ext_clock;
+    
+  end generate gen_with_clock_monitor;
+
+  gen_without_clock_monitor : if not g_with_clock_freq_monitor generate
+
+    secbar_master_i(11) <= ( dat => (others => '0'),
+                             stall => '0',
+                             err => '0',
+                             rty => '0',
+                             ack => '1' );
+    
+  end generate gen_without_clock_monitor;
+  
+
+  
+  
 end struct;
