@@ -98,12 +98,13 @@ port
     DRPRDY_OUT                              : out  std_logic;
     DRPWE_IN                                : in   std_logic;
     ------------------------------- Clocking Ports -----------------------------
-    QPLLCLK_IN                              : in   std_logic;
-    QPLLREFCLK_IN                           : in   std_logic;
+    QPLLCLK_IN                              : in   std_logic := '0';
+    QPLLREFCLK_IN                           : in   std_logic := '0';
     ------------------------------- Loopback Ports -----------------------------
     LOOPBACK_IN                             : in   std_logic_vector(2 downto 0);
     --------------------- RX Initialization and Reset Ports --------------------
     RXUSERRDY_IN                            : in   std_logic;
+    RXRATE_IN : in std_logic_vector(2 downto 0);
     -------------------------- RX Margin Analysis Ports ------------------------
     EYESCANDATAERROR_OUT                    : out  std_logic;
     ------------------------- Receive Ports - CDR Ports ------------------------
@@ -113,7 +114,7 @@ port
     RXUSRCLK_IN                             : in   std_logic;
     RXUSRCLK2_IN                            : in   std_logic;
     ------------------ Receive Ports - FPGA RX interface Ports -----------------
-    rxdata_out                              : out  std_logic_vector(19 downto 0);
+    rxdata_out                              : out  std_logic_vector(39 downto 0);
     --------------------------- Receive Ports - RX AFE -------------------------
     GTXRXP_IN                               : in   std_logic;
     ------------------------ Receive Ports - RX AFE Ports ----------------------
@@ -173,7 +174,7 @@ architecture RTL of whiterabbit_gtxe2_channel_wrapper_kintex7_lp is
     signal rxdisperr_float_i                :   std_logic_vector(5 downto 0);
     signal rxnotintable_float_i             :   std_logic_vector(5 downto 0);
     signal rxrundisp_float_i                :   std_logic_vector(5 downto 0);
-    signal rxdata_out_i                     :   std_logic_vector(19 downto 0);
+    signal rxdata_out_i                     :   std_logic_vector(39 downto 0);
     signal rxcharisk_i                      :   std_logic_vector(7 downto 0);
     signal rxdisperr_i                      :   std_logic_vector(7 downto 0);
 
@@ -199,14 +200,19 @@ begin
     -------------------  GT Datapath byte mapping  -----------------
 
     --The GT deserializes the rightmost parallel bit (LSb) first
-    RXDATA_OUT    <=   rxdata_out_i(19 downto 0);
+    RXDATA_OUT    <=   rxdata_out_i(39 downto 0);
 
     --The GT serializes the rightmost parallel bit (LSb) first
     txdata_in_i <=   TXDATA_IN;
 
     -------------  GT RXDATA Assignments for 20 bit datapath  -------  
 
-    rxdata_out_i    <= (rxdisperr_i(1) & rxcharisk_i(1) & rxdata_i(15 downto 8) & rxdisperr_i(0) & rxcharisk_i(0) & rxdata_i(7 downto 0));
+    rxdata_out_i    <= (
+
+      rxdisperr_i(3) & rxcharisk_i(3) & rxdata_i(31 downto 24) &
+      rxdisperr_i(2) & rxcharisk_i(2) & rxdata_i(23 downto 16) &
+      rxdisperr_i(1) & rxcharisk_i(1) & rxdata_i(15 downto 8) &
+                        rxdisperr_i(0) & rxcharisk_i(0) & rxdata_i(7 downto 0));
 
     -------------  GT txdata_i Assignments for 20 bit datapath  -------  
 
@@ -369,7 +375,9 @@ begin
        --For SATA Gen2 GTP- set RXCDR_CFG=83'h0_0000_47FE_2060_2448_1010
 
        --For SATA Gen1 GTP- set RXCDR_CFG=83'h0_0000_47FE_1060_2448_1010
-        RXCDR_CFG                               =>     (x"03000023ff40080020"),
+       --  RXCDR_CFG                               =>     (x"03000023ff40080020"),
+       
+        RXCDR_CFG                               =>     (x"03000023FF10100020"),-- works on tb - tom
         RXCDR_FR_RESET_ON_EIDLE                 =>     ('0'),
         RXCDR_HOLD_DURING_EIDLE                 =>     ('0'),
         RXCDR_PH_RESET_ON_EIDLE                 =>     ('0'),
@@ -464,8 +472,8 @@ begin
         CPLL_INIT_CFG                           =>     (x"00001E"),
         CPLL_LOCK_CFG                           =>     (x"01E8"),
         CPLL_REFCLK_DIV                         =>     (1),
-        RXOUT_DIV                               =>     (8),
-        TXOUT_DIV                               =>     (8),
+        RXOUT_DIV                               =>     (1),
+        TXOUT_DIV                               =>     (4),
         SATA_CPLL_CFG                           =>     ("VCO_3000MHZ"),
 
        --------------RX Initialization and Reset Attributes-------------
@@ -510,14 +518,14 @@ begin
     port map
     (
         --------------------------------- CPLL Ports -------------------------------
-        CPLLFBCLKLOST                   =>      open,
-        CPLLLOCK                        =>      open,
-        CPLLLOCKDETCLK                  =>      tied_to_ground_i,
+        CPLLFBCLKLOST                   =>      CPLLFBCLKLOST_OUT,
+        CPLLLOCK                        =>      CPLLLOCK_OUT,
+        CPLLLOCKDETCLK                  =>      CPLLLOCKDETCLK_IN,
         CPLLLOCKEN                      =>      tied_to_vcc_i,
-        CPLLPD                          =>      tied_to_vcc_i,
-        CPLLREFCLKLOST                  =>      open,
+        CPLLPD                          =>      tied_to_ground_i,
+        CPLLREFCLKLOST                  =>      CPLLREFCLKLOST_OUT,
         CPLLREFCLKSEL                   =>      "001",
-        CPLLRESET                       =>      tied_to_ground_i,
+        CPLLRESET                       =>      CPLLRESET_IN,
         GTRSVD                          =>      "0000000000000000",
         PCSRSVDIN                       =>      "0000000000000000",
         PCSRSVDIN2                      =>      "00000",
@@ -531,7 +539,7 @@ begin
         GTGREFCLK                       =>      tied_to_ground_i,
         GTNORTHREFCLK0                  =>      tied_to_ground_i,
         GTNORTHREFCLK1                  =>      tied_to_ground_i,
-        GTREFCLK0                       =>      tied_to_ground_i,
+        GTREFCLK0                       =>      gtrefclk0_in,
         GTREFCLK1                       =>      tied_to_ground_i,
         GTSOUTHREFCLK0                  =>      tied_to_ground_i,
         GTSOUTHREFCLK1                  =>      tied_to_ground_i,
@@ -545,10 +553,10 @@ begin
         DRPWE                           =>      DRPWE_IN,
         ------------------------------- Clocking Ports -----------------------------
         GTREFCLKMONITOR                 =>      open,
-        QPLLCLK                         =>      qpllclk_in,
-        QPLLREFCLK                      =>      qpllrefclk_in,
-        RXSYSCLKSEL                     =>      "11",
-        TXSYSCLKSEL                     =>      "11",
+        QPLLCLK                         =>      '0',
+        QPLLREFCLK                      =>      '0',
+        RXSYSCLKSEL                     =>      "00",
+        TXSYSCLKSEL                     =>      "00",
         --------------------------- Digital Monitor Ports --------------------------
         DMONITOROUT                     =>      open,
         ----------------- FPGA TX Interface Datapath Configuration  ----------------
@@ -557,7 +565,7 @@ begin
         LOOPBACK                        =>      LOOPBACK_IN,
         ----------------------------- PCI Express Ports ----------------------------
         PHYSTATUS                       =>      open,
-        RXRATE                          =>      tied_to_ground_vec_i(2 downto 0),
+        RXRATE                          =>      RXRATE_IN,
         RXVALID                         =>      open,
         ------------------------------ Power-Down Ports ----------------------------
         RXPD                            =>      "00",
