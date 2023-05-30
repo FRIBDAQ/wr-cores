@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2009-06-16
--- Last update: 2023-03-13
+-- Last update: 2023-05-30
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -194,6 +194,7 @@ architecture behavioral of ep_rx_pcs_16bit is
   signal rx_sync_enable : std_logic;
 
   signal lcr_ready         : std_logic;
+  signal lcr_ready_d       : std_logic;
   signal lcr_prev_val      : std_logic_vector(15 downto 0);
   signal lcr_cur_val       : std_logic_vector(15 downto 0);
   signal lcr_final_val     : std_logic_vector(15 downto 0);
@@ -326,6 +327,14 @@ begin
   synced_o    <= rx_sync_status;        -- drive the PCS outputs
   sync_lost_o <= rx_sync_lost_p;
 
+  p_delay_lcr_ready  : process (phy_rx_clk_i)
+  begin
+    if rising_edge(phy_rx_clk_i) then
+      lcr_ready_d <= lcr_ready;
+    end if;
+  end process;
+  
+  
 -------------------------------------------------------------------------------
 -- Calibration pattern logic
 -------------------------------------------------------------------------------
@@ -468,13 +477,14 @@ begin
     end if;
   end process;
 
+
+  
 -- process: RBCLK-driven RX state machine. Implements the receive logic od 802.3z compliant
 -- 1000BaseX PCS.
 -- reads: almost everything
 -- writes: almost everything
-
-  
-  rx_fsm : process (phy_rx_clk_i)
+ 
+  p_rx_fsm : process (phy_rx_clk_i)
   begin
     if rising_edge(phy_rx_clk_i) then
       -- reset or PCS disabled
@@ -764,15 +774,22 @@ begin
     end if;     
   end process;
 
-  an_rx_val_o <= lcr_final_val;
-
+  U_Sync_an_rx_value: entity work.gc_sync_register
+    generic map (
+      g_width => 16)
+    port map (
+      clk_i     => clk_sys_i,
+      rst_n_a_i => rst_n_i,
+      d_i       => lcr_final_val,
+      q_o       => an_rx_val_o);
+  
   U_sync_an_rx_ready : gc_sync_ffs
     generic map (
       g_sync_edge => "positive")
     port map (
       clk_i    => clk_sys_i,
       rst_n_i  => rst_n_i,
-      data_i   => lcr_ready,
+      data_i   => lcr_ready_d,
       synced_o => an_rx_valid_o,
       npulse_o => open,
       ppulse_o => open);
@@ -807,7 +824,7 @@ begin
       extended_o => rmon_rx_overrun);
 
 -- drive the "RX PCS Sync Lost" event counter
-  rmon_rx_sync_lost <= rx_sync_lost_p and (not mdio_mcr_pdown_i);
+  rmon_rx_sync_lost <= rx_sync_lost_p and (not mdio_mcr_pdown_rx_clk);
 
   pcs_fab_out.rx_timestamp_valid <= timestamp_valid_i;
 

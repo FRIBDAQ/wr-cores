@@ -7,7 +7,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2009-06-22
--- Last update: 2017-02-03
+-- Last update: 2023-05-25
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'87
 -------------------------------------------------------------------------------
@@ -187,7 +187,9 @@ architecture syn of ep_timestamping_unit is
   signal rx_trigger_mask, rx_trigger_a, rx_cal_pulse_a : std_logic;
 
   signal regs_o_tscr_cs_done       : std_logic;
+  signal regs_o_tscr_rx_cal_result_rx_clk : std_logic;
   signal regs_o_tscr_rx_cal_result : std_logic;
+  signal regs_i_tscr_en_rxts_rx_clk : std_logic;
   
 begin  -- syn
 
@@ -238,9 +240,9 @@ begin  -- syn
 
         if(rx_ts_done = '1') then
           if(cntr_rx_f /= cntr_rx_r(g_timestamp_bits_f-1 downto 0)) then
-            regs_o_tscr_rx_cal_result <= '1';
+            regs_o_tscr_rx_cal_result_rx_clk <= '1';
           else
-            regs_o_tscr_rx_cal_result <= '0';
+            regs_o_tscr_rx_cal_result_rx_clk <= '0';
           end if;
         end if;
 
@@ -308,6 +310,7 @@ begin  -- syn
       npulse_o => open,
       ppulse_o => take_rx_synced_p_fedge);
 
+  
   
 
   take_r : process(clk_ref_i)
@@ -396,6 +399,20 @@ begin  -- syn
       npulse_o => rx_ts_done,
       ppulse_o => open);
 
+  inst_sync_en_rxts : gc_sync
+    port map (
+      clk_i     => clk_rx_i,
+      rst_n_a_i => rst_n_rx_i,
+      d_i       => regs_i.tscr_en_rxts_o,
+      q_o       => regs_i_tscr_en_rxts_rx_clk );
+
+  inst_sync_rx_cal_result : gc_sync
+    port map (
+      clk_i     => clk_sys_i,
+      rst_n_a_i => rst_n_sys_i,
+      d_i       => regs_o_tscr_rx_cal_result_rx_clk,
+      q_o       => regs_o_tscr_rx_cal_result );
+  
   txts_o <= txts; 		-- 2013-Nov-28 peterj added for debugging/calibration
   rxts_o <= rx_ts_done; 		-- 2013-Nov-28 peterj added for debugging/calibration
 
@@ -407,9 +424,9 @@ begin  -- syn
         rxts_timestamp_o       <= (others => '0');
         rxts_timestamp_valid_o <= '0';
       else
-        if(regs_i. tscr_en_rxts_o = '0') then
+        if(regs_i_tscr_en_rxts_rx_clk = '0') then
           rxts_timestamp_stb_o <= '0';
-        elsif(rx_ts_done = '1' and regs_i.tscr_en_rxts_o = '1') then
+        elsif(rx_ts_done = '1' and regs_i_tscr_en_rxts_rx_clk = '1') then
           rxts_timestamp_stb_o   <= '1';
           rxts_timestamp_valid_o <= valid_rx;
           rxts_timestamp_o       <= cntr_rx_f & cntr_rx_r;
