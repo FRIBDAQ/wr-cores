@@ -6,7 +6,7 @@
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-02
--- Last update: 2023-05-05
+-- Last update: 2023-05-25
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -629,7 +629,8 @@ begin
       tm_cycles_o     => tm_cycles_o,
       tm_time_valid_o => tm_time_valid_o
       );
-  ppsg_link_ok <= not phy_rst;
+
+  ppsg_link_ok <= ep_led_link;
   pps_csync_o  <= s_pps_csync;
   pps_valid_o  <= pps_valid;
 
