@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2010-09-02
--- Last update: 2018-03-08
+-- Last update: 2023-05-25
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ architecture behavioral of wr_pps_gen is
   signal pps_out_int   : std_logic;
   signal pps_in_refclk : std_logic;
 
-
+  signal link_ok_clk_ref : std_logic;
 
 begin  -- behavioral
 
@@ -248,6 +248,13 @@ begin  -- behavioral
       ppulse_o => pps_in_refclk);
 
 
+  U_Sync_Link_OK: gc_sync
+    port map (
+      clk_i     => clk_ref_i,
+      rst_n_a_i => rst_ref_n_i,
+      d_i       => link_ok_i,
+      q_o       => link_ok_clk_ref);
+  
   ppsg_cntr_nsec  <= std_logic_vector(cntr_nsec);
   ppsg_cntr_utclo <= std_logic_vector(cntr_utc(31 downto 0));
   ppsg_cntr_utchi <= std_logic_vector(cntr_utc(39 downto 32));
@@ -433,7 +440,7 @@ begin  -- behavioral
 
         if(ns_overflow_adv = '1') then
           pps_out_int <= ppsg_escr_pps_valid and
-                         (link_ok_i or ppsg_escr_pps_unmask);
+                         (link_ok_clk_ref or ppsg_escr_pps_unmask);
           width_cntr  <= unsigned(ppsg_cr_pwidth);
         elsif(ns_overflow = '1') then
           pps_led_o <= ppsg_escr_pps_valid;
