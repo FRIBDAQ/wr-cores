@@ -499,7 +499,9 @@ begin
               tx_odd_length <= '0';
             end if;
 
-            tx_cntr <= "1000";
+				--  2 May 2023 
+				-- Phil C:      Attempted Fix for 100% of line-rate TX on spec...    was "1000"
+            tx_cntr <= "0011";
 
 -------------------------------------------------------------------------------
 -- State GEN_ERROR: entered when an error occured. Just terminates the frame.
