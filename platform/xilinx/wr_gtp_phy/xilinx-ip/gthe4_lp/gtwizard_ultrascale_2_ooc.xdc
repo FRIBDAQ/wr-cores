@@ -57,7 +57,7 @@
 create_clock -period 16.0 [get_ports gtwiz_reset_clk_freerun_in]
 
 # CPLL reference clock constraint (will be overridden by required constraint on IBUFDS_GTE4 input in context)
-create_clock -period 8.0 [get_ports gtrefclk0_in[0]]
+create_clock -period 10.0 [get_ports gtrefclk0_in[0]]
 
 # DRP clock constraint for CHANNEL primitive
 create_clock -period 16.0 [get_ports drpclk_in[0]]
