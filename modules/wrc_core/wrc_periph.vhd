@@ -70,13 +70,13 @@ entity wrc_periph is
     rst_net_n_o : out std_logic;
     rst_wrc_n_o : out std_logic;
 
-    scl_o       : out std_logic;
+    scl_o       : out std_logic := '1';
     scl_i       : in  std_logic;
-    sda_o       : out std_logic;
+    sda_o       : out std_logic := '1';
     sda_i       : in  std_logic;
-    sfp_scl_o   : out std_logic;
+    sfp_scl_o   : out std_logic := '1';
     sfp_scl_i   : in  std_logic;
-    sfp_sda_o   : out std_logic;
+    sfp_sda_o   : out std_logic := '1';
     sfp_sda_i   : in  std_logic;
     sfp_det_i   : in  std_logic;
     memsize_i   : in  std_logic_vector(3 downto 0);
