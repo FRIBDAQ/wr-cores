@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-Co-HT
 -- Created    : 2010-02-25
--- Last update: 2023-06-02
+-- Last update: 2023-06-03
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
@@ -56,18 +56,21 @@ entity dmtd_with_deglitcher is
     -- the following formula:
     -- g_counter_bits = log2(f_in / abs(f_in - f_dmtd)) + 1
     g_counter_bits : natural := 17;
-    g_chipscope    : boolean := false;
 
     -- Divides the inputs by 2 (effectively passing the clock through a flip flop)
     -- before it gets to the DMTD, effectively removing Place&Route warnings
     -- (at the cost of detector bandwidth)
     g_divide_input_by_2 : boolean := false;
 
+    -- enables oversampling mode. In this case, the oversampling divider must
+    -- be provided through r_oversample_div_i port.
+    g_with_oversampling : boolean := false;
 
-    g_oversample : boolean := false;
-    g_oversample_factor : integer := 1;
-
-    -- reversed mode: samples clk_dmtd with clk_in.
+    -- enables jitter measurement statistic registers (r_low_o, r_high_o,
+    -- r_samples_o, r_minmax_sel_i, r_reset_i ). They take some resources, so use with care.
+    g_with_jitter_stats_regs : boolean := false;
+    
+    -- reversed mode: samples clk_dmtd_i with clk_in_i.
     g_reverse : boolean := false;
 
     -- uses an external DDMTD sampler and just deglitches and generates tags
@@ -99,22 +102,39 @@ entity dmtd_with_deglitcher is
     -- [clk_dmtd_i] counter resync output, pulses when free_cntr == 0
     resync_p_o : out std_logic;
 
-    -- DMTD clock enable, active high. Can be used to reduce the DMTD sampling
-    -- frequency - for example, two 10 MHz signals cannot be sampled directly
-    -- with a 125 MHz clock, but it's possible with a 5 MHz reference, obtained
-    -- by asserting clk_dmtd_en_i every 25 clk_dmtd_i cycles.
-
-    clk_dmtd_en_i : in std_logic := '1';
-
+    -- [clk_dmtd_over_i] counter resync input (oversampled mode)
+    resync_p_over_i : out std_logic;
+    
+    -- CONTROL REGISTERS (wired from SoftPLL)
+    
     -- [clk_dmtd_i] deglitcher threshold
-    deglitch_threshold_i : in std_logic_vector(15 downto 0);
+    r_deglitch_threshold_i : in std_logic_vector(15 downto 0);
+    -- min/max stable 0 duration (selectable with r_minmax_sel_i)
+    r_low_o : out std_logic_vector(15 downto 0);
+    -- min/max stable 1 duration (selectable with r_minmax_sel_i)
+    r_high_o : out std_logic_vector(15 downto 0);
+    -- min/max sample count
+    r_samples_o : out std_logic_vector(15 downto 0);
+    -- 1: calculate max low/high period, 0: calculate min low/high period.
+    r_minmax_sel_i : in std_logic := '0';
+    -- 1: resets r_low_o/r_high_o/r_samples_o
+    r_minmax_reset_i : in std_logic := '0';
 
+    -- fractional mode input clock divider
+    r_oversample_in_div_i : in std_logic_vector(5 downto 0) := (others => '0');
+    -- fractional mode PPS alignment clock divider
+    r_oversample_pps_div_i : in std_logic_vector(5 downto 0) := (others => '0');
+        
     -- [clk_dmtd_i] raw DDMTD output (for debugging purposes)
     dbg_dmtdout_o : out std_logic;
 
+    -- [clk_in_i] 1 PPS input for fractional clock-to-PPS alignment.
+    pps_p1_i : in std_logic := '0';
+    
     -- [clk_sys_i] deglitched edge tag value
     tag_o : out std_logic_vector(g_counter_bits-1 downto 0);
-
+    tag_pps_mark_o : out std_logic;
+    
     -- [clk_sys_i] pulse indicates new phase tag on tag_o
     tag_stb_p1_o : out std_logic;
     dbg_clk_d3_o : out std_logic
@@ -159,14 +179,14 @@ begin  -- rtl
       generic map (
         g_divide_input_by_2 => g_divide_input_by_2,
         g_reverse           => g_reverse,
-        g_oversample_factor => g_oversample_factor,
-        g_oversample => g_oversample)
+        g_with_oversampling => g_with_oversampling)
       port map (
         clk_in_i        => clk_in_i,
-        sync_p1_i       => '0',
+        sync_p1_i       => resync_p_over_i,
         clk_dmtd_over_i => clk_dmtd_over_i,
         clk_dmtd_i      => clk_dmtd_i,
-        clk_sampled_o   => clk_sampled);
+        clk_sampled_o   => clk_sampled,
+        r_oversample_div_i => r_oversample_in_div_i );
     
   end generate gen_builtin;
 
