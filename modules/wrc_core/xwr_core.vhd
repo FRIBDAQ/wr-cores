@@ -6,7 +6,7 @@
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-02
--- Last update: 2023-05-05
+-- Last update: 2023-07-06
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -98,6 +98,7 @@ entity xwr_core is
     g_aux_sdb                   : t_sdb_device                   := c_wrc_periph3_sdb;
     g_softpll_enable_debugger   : boolean                        := false;
     g_softpll_use_sampled_ref_clocks : boolean := false;
+    g_softpll_reverse_dmtds : boolean := false;
     g_vuart_fifo_size           : integer                        := 1024;
     g_pcs_16bit                 : boolean                        := false;
     g_records_for_phy           : boolean                        := false;
@@ -314,6 +315,7 @@ begin
       g_aux_sdb                   => g_aux_sdb,
       g_softpll_enable_debugger   => g_softpll_enable_debugger,
       g_softpll_use_sampled_ref_clocks => g_softpll_use_sampled_ref_clocks,
+      g_softpll_reverse_dmtds => g_softpll_reverse_dmtds,
       g_vuart_fifo_size           => g_vuart_fifo_size,
       g_pcs_16bit                 => g_pcs_16bit,
       g_records_for_phy           => g_records_for_phy,

@@ -6,7 +6,7 @@
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-02-02
--- Last update: 2023-05-25
+-- Last update: 2023-07-06
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -100,6 +100,7 @@ entity wr_core is
     g_aux_sdb                   : t_sdb_device                   := c_wrc_periph3_sdb;
     g_softpll_enable_debugger   : boolean                        := false;
     g_softpll_use_sampled_ref_clocks : boolean := false;
+    g_softpll_reverse_dmtds : boolean := false;
     g_vuart_fifo_size           : integer                        := 1024;
     g_pcs_16bit                 : boolean                        := false;
     g_records_for_phy           : boolean                        := false;
@@ -639,8 +640,8 @@ begin
   -----------------------------------------------------------------------------
   U_SOFTPLL : entity work.xwr_softpll_ng
     generic map(
-      g_reverse_dmtds        => false,
-      g_divide_input_by_2    => not g_pcs_16bit,
+      g_reverse_dmtds        => g_softpll_reverse_dmtds,
+      g_divide_input_by_2    => not g_pcs_16bit and not g_softpll_reverse_dmtds,
       g_with_debug_fifo      => g_softpll_enable_debugger,
       g_tag_bits             => 22,
       g_dac_bits             => g_dac_bits,
