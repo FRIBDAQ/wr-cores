@@ -79,6 +79,8 @@ entity wr_softpll_ng is
 -- use with care.
     g_divide_input_by_2 : boolean := false;
 
+    g_with_jitter_stats_regs : boolean := true;
+    
     g_ref_clock_rate : integer := 125_000_000;
     g_ext_clock_rate : integer :=  10_000_000;
     g_sys_clock_rate: integer :=   62_500_000;
@@ -258,6 +260,7 @@ architecture rtl of wr_softpll_ng is
     return tmp;
   end resize;
 
+
   type t_tag_array is array (0 to f_num_total_channels-1) of std_logic_vector(g_tag_bits-1 downto 0);
 
   type t_phase_error_array is array(0 to g_num_outputs-1) of std_logic_vector(c_BB_ERROR_BITS-1 downto 0);
@@ -312,6 +315,16 @@ architecture rtl of wr_softpll_ng is
   attribute keep of aligner_sample_cref : signal is "true";
   attribute keep of aligner_sample_cin  : signal is "true";
 
+  type t_stat_array is array(integer range <>) of std_logic_vector(15 downto 0);
+  
+  signal r_stat_high_ref : t_stat_array(0 to g_num_ref_inputs-1);
+  signal r_stat_low_ref : t_stat_array(0 to g_num_ref_inputs-1);
+  signal r_stat_valid_ref : std_logic_vector(g_num_ref_inputs-1 downto 0);
+  signal r_stat_high_fb : t_stat_array(0 to g_num_outputs-1);
+  signal r_stat_low_fb : t_stat_array(0 to g_num_outputs-1);
+  signal r_stat_valid_fb : std_logic_vector(g_num_outputs-1 downto 0);
+  
+    
 begin  -- rtl
 
   U_Adapter : wb_slave_adapter
@@ -337,8 +350,6 @@ begin  -- rtl
       sl_ack_o   => wb_ack_o,
       sl_stall_o => wb_stall_o);
 
-  regs_out.f_dmtd_valid_i <= '0';
-  regs_out.f_ref_valid_i <= '0';
   regs_out.f_ext_valid_i <= '0';
 
   gen_ref_dmtds : for i in 0 to g_num_ref_inputs-1 generate
@@ -348,13 +359,13 @@ begin  -- rtl
         g_counter_bits      => g_tag_bits,
         g_divide_input_by_2 => g_divide_input_by_2,
         g_reverse	=> g_reverse_dmtds,
+        g_with_jitter_stats_regs => g_with_jitter_stats_regs,
         g_use_sampled_clock => g_use_sampled_ref_clocks)
       port map (
         rst_n_dmtdclk_i => rst_dmtd_n_i,
         rst_n_sysclk_i  => rst_n_i,
 
         clk_dmtd_i    => clk_dmtd_i,
-        clk_dmtd_en_i => '1',
 
         clk_sys_i => clk_sys_i,
         clk_in_i  => clk_ref_i(i),
@@ -364,9 +375,14 @@ begin  -- rtl
 
         tag_o                => tags(i),
         tag_stb_p1_o         => tags_p(i),
-        deglitch_threshold_i => deglitch_thr_slv);
-
-
+        r_deglitch_threshold_i => deglitch_thr_slv,
+        r_low_o => r_stat_low_ref(i),
+        r_high_o => r_stat_high_ref(i),
+        r_samples_i => regs_in.dmtd_stat_cr_samples_o,
+        r_minmax_sel_i => regs_in.dmtd_stat_cr_minmax_sel_o,
+        r_stat_reset_i => regs_in.dmtd_stat_cr_rst_o,
+        r_stat_ready_o => r_stat_valid_ref(i)
+        );
   end generate gen_ref_dmtds;
 
   gen_feedback_dmtds : for i in 0 to g_num_outputs-1 generate
@@ -377,28 +393,36 @@ begin  -- rtl
         g_divide_input_by_2 => g_divide_input_by_2,
         g_reverse => g_reverse_dmtds,
         g_use_sampled_clock => false,
-        g_oversample => g_aux_config(i).oversample,
-        g_oversample_factor => g_aux_config(i).divider)
+        g_with_jitter_stats_regs => g_with_jitter_stats_regs,
+        g_with_oversampling => g_aux_config(i).oversample )
       port map (
         rst_n_dmtdclk_i => rst_dmtd_n_i,
         rst_n_sysclk_i  => rst_n_i,
 
         clk_dmtd_i    => clk_dmtd_i,
-        clk_dmtd_en_i => '1',
         clk_dmtd_over_i => clk_dmtd_over_i,
 
         clk_sys_i => clk_sys_i,
         clk_in_i  => clk_fb_i(i),
 
-        resync_p_a_i     => fb_resync_out(0),
+        resync_p_a_i     => f_pick( i = 0, '0', fb_resync_out(0) ),
         resync_p_o       => fb_resync_out(i),
 
         tag_o        => tags(i+g_num_ref_inputs),
         tag_stb_p1_o => tags_p(i+g_num_ref_inputs),
 
-        deglitch_threshold_i => deglitch_thr_slv,
+        r_deglitch_threshold_i => deglitch_thr_slv,
         dbg_dmtdout_o        => open,
-        dbg_clk_d3_o         => debug_o(i)); --debug_o(4));
+        dbg_clk_d3_o         => debug_o(i),
+        r_low_o => r_stat_low_fb(i),
+        r_high_o => r_stat_high_fb(i),
+        r_samples_i => regs_in.dmtd_stat_cr_samples_o,
+        r_minmax_sel_i => regs_in.dmtd_stat_cr_minmax_sel_o,
+        r_stat_reset_i => regs_in.dmtd_stat_cr_rst_o,
+        r_stat_ready_o => r_stat_valid_fb(i)
+
+
+        ); --debug_o(4));
 
 
   end generate gen_feedback_dmtds;
@@ -412,13 +436,13 @@ begin  -- rtl
       generic map (
         g_counter_bits      => g_tag_bits,
         g_divide_input_by_2 => g_divide_input_by_2,
-        g_reverse	    => g_reverse_dmtds,
+        g_reverse	=> g_reverse_dmtds,
+        g_with_jitter_stats_regs => g_with_jitter_stats_regs,
         g_use_sampled_clock => false)
       port map (
         rst_n_dmtdclk_i => rst_dmtd_n_i,
         rst_n_sysclk_i  => rst_n_i,
         clk_dmtd_i      => clk_dmtd_i,
-        clk_dmtd_en_i   => '1',
 
         clk_sys_i => clk_sys_i,
         clk_in_i  => clk_ext_mul_i(I),
@@ -428,8 +452,7 @@ begin  -- rtl
         tag_o        => tags(g_num_ref_inputs + g_num_outputs + I),
         tag_stb_p1_o => tags_p(g_num_ref_inputs + g_num_outputs + I),
 
-        deglitch_threshold_i => deglitch_thr_slv);
-
+        r_deglitch_threshold_i => deglitch_thr_slv);
   end generate gen_ext_dmtds;
 
   gen_with_ext_clock_input: if g_num_exts > 0 generate
@@ -486,6 +509,33 @@ begin  -- rtl
 --    debug_o(3) <= '0';
 --    debug_o(5) <= '0';
   end generate gen_without_ext_clock_input;
+
+
+  p_jitter_stat_regs : process(r_stat_valid_fb, r_stat_valid_ref,
+                               r_stat_high_fb, r_stat_high_ref,
+                               r_stat_low_fb, r_stat_low_ref,
+                               regs_in )
+  begin
+    case regs_in.dmtd_stat_cr_chan_sel_o is
+      when "0000" =>
+        regs_out.dmtd_stat_val_high_i <= r_stat_high_ref(0);
+        regs_out.dmtd_stat_val_low_i <= r_stat_low_ref(0);
+        regs_out.dmtd_stat_cr_valid_i <= r_stat_valid_ref(0);
+      when "0001" =>
+        regs_out.dmtd_stat_val_high_i <= r_stat_high_fb(0);
+        regs_out.dmtd_stat_val_low_i <= r_stat_low_fb(0);
+        regs_out.dmtd_stat_cr_valid_i <= r_stat_valid_fb(0);
+      when "0010" => -- fixme: hack
+        regs_out.dmtd_stat_val_high_i <= r_stat_high_fb(1);
+        regs_out.dmtd_stat_val_low_i <= r_stat_low_fb(1);
+        regs_out.dmtd_stat_cr_valid_i <= r_stat_valid_fb(1);
+      when others =>
+        regs_out.dmtd_stat_cr_valid_i <= '0';
+        regs_out.dmtd_stat_val_low_i <= (others => '0');
+        regs_out.dmtd_stat_val_high_i <= (others => '0');
+    end case;
+  end process;
+  
 
   p_ack_aligner_samples: process(regs_in, aligner_sample_valid)
   begin
