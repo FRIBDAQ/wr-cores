@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-Co-HT
 -- Created    : 2010-02-25
--- Last update: 2023-06-03
+-- Last update: 2023-07-06
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
@@ -173,7 +173,9 @@ begin  -- rtl
     p_the_dmtd_itself : process(clk_in)
     begin
       if rising_edge(clk_in) then
-        clk_i_d0 <= clk_dmtd_i;
+        if en_i = '1' then
+          clk_i_d0 <= clk_dmtd_i;
+        end if;
         clk_i_d1 <= clk_i_d0;
       end if;
     end process;
