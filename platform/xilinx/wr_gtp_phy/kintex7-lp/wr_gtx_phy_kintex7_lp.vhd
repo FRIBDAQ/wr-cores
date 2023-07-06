@@ -349,17 +349,17 @@ begin  -- rtl
   U_Sampler_RX : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => false)
+      g_reverse           => true)
     port map (
       clk_in_i      => clk_rx_250m,
-      en_i => ddmtd_mask_cnt_sreg_fedge(3),
+      en_i          => ddmtd_mask_sync_250m_p,
       clk_dmtd_i    => clk_dmtd_i,
       clk_sampled_o => rx_rec_clk_sampled);
 
   U_Sampler_TX : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => false)
+      g_reverse           => true)
     port map (
       clk_in_i      => tx_out_clk_div2,
       clk_dmtd_i    => clk_dmtd_i,
@@ -368,7 +368,7 @@ begin  -- rtl
   U_Sampler_REFCLK : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => false)
+      g_reverse           => true)
     port map (
       clk_in_i      => clk_ref_i,
       clk_dmtd_i    => clk_dmtd_i,
@@ -392,7 +392,7 @@ begin  -- rtl
     elsif rising_edge(clk_rx_250m) then
       ddmtd_mask_sync_250m <= ddmtd_mask_sync_62m5; -- need stringent setup constraint for this one
       ddmtd_mask_sync_250m_d <= ddmtd_mask_sync_250m;
-      ddmtd_mask_sync_250m_p <= ddmtd_mask_sync_250m and not ddmtd_mask_sync_250m_d;
+      ddmtd_mask_sync_250m_p <= ddmtd_mask_sync_250m xor ddmtd_mask_sync_250m_d;
     end if;
   end process;
 
