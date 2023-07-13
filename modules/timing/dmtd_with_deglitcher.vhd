@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-Co-HT
 -- Created    : 2010-02-25
--- Last update: 2023-07-06
+-- Last update: 2023-07-07
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ begin  -- rtl
           if r_minmax_sel_i = '0' and stat_length_high < stat_length_high_minmax then
               stat_length_high_minmax <= stat_length_high;
             elsif r_minmax_sel_i = '1' and stat_length_high > stat_length_low_minmax then
-              stat_length_high_minmax <= stat_length_low;
+              stat_length_high_minmax <= stat_length_high;
             end if;
           end if;
 
