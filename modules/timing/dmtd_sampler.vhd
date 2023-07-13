@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN BE-Co-HT
 -- Created    : 2010-02-25
--- Last update: 2023-07-06
+-- Last update: 2023-07-12
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
@@ -92,6 +92,8 @@ architecture rtl of dmtd_sampler is
   signal over_div_cnt : unsigned(5 downto 0);
   signal sync_p1_d : std_logic;
   signal over_div_p : std_logic;
+
+  signal en_i_d0 : std_logic;
   
 begin  -- rtl
 
@@ -155,8 +157,9 @@ begin  -- rtl
     p_the_dmtd_itself : process(clk_dmtd_i)
     begin
       if rising_edge(clk_dmtd_i) then
-        clk_i_d0 <= clk_in and en_i;
-        clk_i_d1 <= clk_i_d0;
+        clk_i_d0 <= clk_in;
+        en_i_d0 <= en_i;
+        clk_i_d1 <= not( clk_i_d0 and en_i_d0 );
         clk_i_d2 <= clk_i_d1;
         clk_i_d3 <= clk_i_d2;
       end if;
