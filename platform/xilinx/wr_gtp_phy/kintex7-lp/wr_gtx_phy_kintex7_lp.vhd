@@ -6,7 +6,7 @@
 -- Author     : Peter Jansweijer, Tomasz Wlostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2013-04-08
--- Last update: 2023-07-06
+-- Last update: 2023-07-12
 -- Platform   : Kintex-7
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -52,7 +52,9 @@ entity wr_gtx_phy_kintex7_lp is
   generic (
     -- set to non-zero value to speed up the simulation by reducing some delays
     g_simulation         : integer := 0;
-    g_id : integer := 0
+    g_id : integer := 0;
+    g_reverse_ddmtds : boolean := false
+    
     );
 
   port (
@@ -279,7 +281,7 @@ architecture rtl of wr_gtx_phy_kintex7_lp is
 
   signal ddmtd_mask_cnt_sreg_fedge : std_logic_vector(3 downto 0);
   signal ddmtd_mask_sync_62m5 : std_logic;
-  signal ddmtd_mask_sync_250m, ddmtd_mask_sync_250m_d, ddmtd_mask_sync_250m_p : std_logic;
+  signal ddmtd_mask_sync_250m, ddmtd_mask_sync_250m_d, ddmtd_mask_sync_250m_p, ddmtd_mask_sync_250m_p_fedge : std_logic;
 
   
 signal cpll_reset, cpll_locked : std_logic;
@@ -351,17 +353,17 @@ begin  -- rtl
   U_Sampler_RX : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => true)
+      g_reverse           => g_reverse_ddmtds)
     port map (
       clk_in_i      => clk_rx_250m,
-      en_i          => ddmtd_mask_sync_250m_p,
+      en_i          => f_pick(g_reverse_ddmtds, ddmtd_mask_sync_250m_p, ddmtd_mask_sync_250m_p_fedge),
       clk_dmtd_i    => clk_dmtd_i,
       clk_sampled_o => rx_rec_clk_sampled);
 
   U_Sampler_TX : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => true)
+      g_reverse           => g_reverse_ddmtds)
     port map (
       clk_in_i      => tx_out_clk_div2,
       clk_dmtd_i    => clk_dmtd_i,
@@ -370,7 +372,7 @@ begin  -- rtl
   U_Sampler_REFCLK : entity work.dmtd_sampler
     generic map (
       g_divide_input_by_2 => false,
-      g_reverse           => true)
+      g_reverse           => g_reverse_ddmtds)
     port map (
       clk_in_i      => clk_ref_i,
       clk_dmtd_i    => clk_dmtd_i,
@@ -401,11 +403,7 @@ begin  -- rtl
   process(clk_rx_250m)
   begin
     if falling_edge(clk_rx_250m) then
-      if ddmtd_mask_sync_250m_p = '1' then
-        ddmtd_mask_cnt_sreg_fedge <= "1000";
-      else
-        ddmtd_mask_cnt_sreg_fedge <= ddmtd_mask_cnt_sreg_fedge(0) & ddmtd_mask_cnt_sreg_fedge(3 downto 1);
-      end if;
+      ddmtd_mask_sync_250m_p_fedge <= ddmtd_mask_sync_250m_p;
     end if;
   end process;
 
