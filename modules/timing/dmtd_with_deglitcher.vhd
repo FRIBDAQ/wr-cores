@@ -339,7 +339,7 @@ begin  -- rtl
           if r_minmax_sel_i = '0' and stat_length_high < stat_length_high_minmax then
               stat_length_high_minmax <= stat_length_high;
             elsif r_minmax_sel_i = '1' and stat_length_high > stat_length_low_minmax then
-              stat_length_high_minmax <= stat_length_low;
+              stat_length_high_minmax <= stat_length_high;
             end if;
           end if;
 
