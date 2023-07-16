@@ -6,7 +6,7 @@
 -- Author     : Tomasz Włostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2011-01-29
--- Last update: 2023-07-06
+-- Last update: 2023-07-16
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -791,9 +791,9 @@ begin  -- rtl
   regs_out.csr_n_out_i <= std_logic_vector(to_unsigned(g_num_outputs, regs_out.csr_n_out_i'length));
 
   dac_dmtd_load_o <= regs_in.dac_hpll_wr_o;
-  dac_dmtd_data_o <= regs_in.dac_hpll_o;
+  dac_dmtd_data_o <= regs_in.dac_hpll_o(g_dac_bits-1 downto 0);
 
-  dac_out_data_o <= regs_in.dac_main_value_o;
+  dac_out_data_o <= regs_in.dac_main_value_o(g_dac_bits-1 downto 0);
   dac_out_sel_o  <= regs_in.dac_main_dac_sel_o;
   dac_out_load_o <= regs_in.dac_main_value_wr_o;
 
