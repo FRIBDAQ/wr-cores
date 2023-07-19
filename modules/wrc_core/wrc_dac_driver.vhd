@@ -1,20 +1,67 @@
+-------------------------------------------------------------------------------
+-- Title      : WhiteRabbit PTP Core
+-- Project    : WhiteRabbit
+-------------------------------------------------------------------------------
+-- File       : wrc_dac_driver.vhd
+-- Author     : Tomasz Wlostowski
+-- Company    : CERN (BE-CO-HT)
+-- Created    : 2023
+-- Platform   : FPGA-generics
+-- Standard   : VHDL
+-------------------------------------------------------------------------------
+-- Description:
+-- A simple DAC driver module with dithering to improve the nonlinear behaviour
+-- of the softpll for small noise amplitudes (i.e. on low jitter HW such as the 
+-- WR2RF or eRTM). Takes a 24 bit DAC value from the SoftPLL, adds 8 bits of
+-- white noise dither (xorshift2 method), rounds and drives the DAC at a fixed
+-- update rate. Put between the wr_core and gc_serial_dac (or another DAC 
+-- interface of your choice)
+-------------------------------------------------------------------------------
+--
+-- Copyright (c) 2012 - 2023 CERN
+--
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
+--
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
+--
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
+-- from http://www.gnu.org/licenses/lgpl-2.1.html
+--
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity wrc_dac_driver is
   generic (
+-- log2 of the amplitude of the dither: y = x + (2**g_dither_amplitude) * rand_range(-1,1)
+-- example: for g_dither_amplitude_log2 == 7, dithering signal takes values from -128 to +127
     g_dither_amplitude_log2 : integer                       := 7;
+-- DAC update rate config. The DAC is updated every
+-- (2**g_dither_clock_div_log2) clk_sys_i cycles. Remember to use a much faster (e.g. 10 times)
+-- update rate than the SPLL sampling frequency for the dithering to actually work.
     g_dither_clock_div_log2 : integer                       := 7;
+-- Initial value for the random number generator.
     g_dither_init_value     : std_logic_vector(31 downto 0) := x"deadbeef"
     );
   port (
     clk_sys_i   : in std_logic;
     rst_sys_n_i : in std_logic;
 
+-- undithered input from the SPLL
     x_valid_i : in std_logic;
     x_i       : in std_logic_vector(23 downto 0);
 
+-- dithered 16-bit output to the DAC
     y_o       : out std_logic_vector(15 downto 0);
     y_valid_o : out std_logic
     );
