@@ -1,0 +1,11 @@
+This is a proof-of-concept setup of White Rabbit which utilizes the Fractional PLLs on an AMD Ultrascale+ FPGA
+according to XAPP1276. Only a commonly available ZCU102 board is needed, without any external PLLs. SFP2 is being used
+for 1G ethernet IO and upstream connectivity.
+
+A custom FSBL build is needed to de-tune the MGT-Si570 clock chip on the board to precisely 124975605 Hz.
+
+To build a Vivado project and synthesize the bitstream follow these steps:
+
+$ hdlmake
+$ make files.tcl
+$ vivado -mode tcl -source zcu102.tcl

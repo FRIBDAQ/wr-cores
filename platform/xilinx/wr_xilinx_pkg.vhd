@@ -86,6 +86,10 @@ package wr_xilinx_pkg is
       dac_hpll_load_p1_i    : in  std_logic := '0';
       dac_dpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
       dac_dpll_load_p1_i    : in  std_logic := '0';
+      dummy_gthtxp_o        : out std_logic_vector(3 downto 0);
+      dummy_gthtxn_o        : out std_logic_vector(3 downto 0);
+      dummy_gthrxp_i        : in  std_logic_vector(3 downto 0) := (others => '0');
+      dummy_gthrxn_i        : in  std_logic_vector(3 downto 0) := (others => '0');
       sfp_txn_o             : out std_logic;
       sfp_txp_o             : out std_logic;
       sfp_rxn_i             : in  std_logic;
@@ -308,12 +312,15 @@ package wr_xilinx_pkg is
   component wr_gthe4_phy_family7_xilinx_ip is
     generic (
       g_simulation         : integer := 0;
+      g_use_qpll_sdm       : boolean := FALSE;
       g_use_gclk_as_refclk : boolean);
     port (
       clk_gth_i     : in std_logic;
       clk_freerun_i : in std_logic;
       tx_out_clk_o : out std_logic;
       tx_locked_o  : out std_logic;
+      tx_sdm_data_i : in std_logic_vector(24 downto 0) := (others => '0');
+      tx_sdm_toggle_i : in std_logic := '0';
       tx_data_i : in std_logic_vector(15 downto 0);
       tx_k_i : in std_logic_vector(1 downto 0);
       tx_disparity_o : out std_logic;

@@ -4,8 +4,10 @@
 -- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
 -------------------------------------------------------------------------------
 -- File       : wrc_platform_vivado.vhd
--- Author     : Greg Daniluk
+-- Author(s)  : Greg Daniluk
+--              David Epping <david.epping@missinglinkelectronics.com>
 -- Company    : CERN
+--              Missing Link Electronics
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -117,6 +119,13 @@ entity xwrc_platform_xilinx is
     clk_ext_locked_i      : in  std_logic             := '1';
     clk_ext_stopped_i     : in  std_logic             := '0';
     clk_ext_rst_o         : out std_logic;
+    ---------------------------------------------------------------------------
+    -- Dummy GTH channel required for QPLL SDM
+    ---------------------------------------------------------------------------
+    dummy_gthtxp_o        : out std_logic_vector(3 downto 0);
+    dummy_gthtxn_o        : out std_logic_vector(3 downto 0);
+    dummy_gthrxp_i        : in  std_logic_vector(3 downto 0) := (others => '0');
+    dummy_gthrxn_i        : in  std_logic_vector(3 downto 0) := (others => '0');
     dac_hpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
     dac_hpll_load_p1_i    : in  std_logic                     := '0';
     dac_dpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
@@ -181,6 +190,132 @@ end entity xwrc_platform_xilinx;
 
 architecture rtl of xwrc_platform_xilinx is
 
+  component gtwizard_v1_7_gthe4_sdm_main
+    port (
+      gtwiz_userclk_tx_reset_in : in std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_srcclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_usrclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_usrclk2_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_active_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_reset_in : in std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_srcclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_usrclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_usrclk2_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_active_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_clk_freerun_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_all_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_pll_and_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_pll_and_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_cdr_stable_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_done_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_done_out : out std_logic_vector(0 downto 0);
+      gtwiz_userdata_tx_in : in std_logic_vector(31 downto 0);
+      gtwiz_userdata_rx_out : out std_logic_vector(31 downto 0);
+      gtrefclk00_in : in std_logic_vector(0 downto 0);
+      sdm0data_in : in std_logic_vector(24 downto 0);
+      sdm0toggle_in : in std_logic_vector(0 downto 0);
+      sdm1data_in : in std_logic_vector(24 downto 0);
+      sdm1toggle_in : in std_logic_vector(0 downto 0);
+      qpll0outclk_out : out std_logic_vector(0 downto 0);
+      qpll0outrefclk_out : out std_logic_vector(0 downto 0);
+      drpclk_in : in std_logic_vector(1 downto 0);
+      gthrxn_in : in std_logic_vector(1 downto 0);
+      gthrxp_in : in std_logic_vector(1 downto 0);
+      gtrefclk0_in : in std_logic_vector(1 downto 0);
+      rx8b10ben_in : in std_logic_vector(1 downto 0);
+      rxbufreset_in : in std_logic_vector(1 downto 0);
+      rxcommadeten_in : in std_logic_vector(1 downto 0);
+      rxmcommaalignen_in : in std_logic_vector(1 downto 0);
+      rxpcommaalignen_in : in std_logic_vector(1 downto 0);
+      tx8b10ben_in : in std_logic_vector(1 downto 0);
+      txctrl0_in : in std_logic_vector(31 downto 0);
+      txctrl1_in : in std_logic_vector(31 downto 0);
+      txctrl2_in : in std_logic_vector(15 downto 0);
+      txpllclksel_in : in std_logic_vector(3 downto 0);
+      gthtxn_out : out std_logic_vector(1 downto 0);
+      gthtxp_out : out std_logic_vector(1 downto 0);
+      gtpowergood_out : out std_logic_vector(1 downto 0);
+      rxbufstatus_out : out std_logic_vector(5 downto 0);
+      rxbyteisaligned_out : out std_logic_vector(1 downto 0);
+      rxbyterealign_out : out std_logic_vector(1 downto 0);
+      rxclkcorcnt_out : out std_logic_vector(3 downto 0);
+      rxcommadet_out : out std_logic_vector(1 downto 0);
+      rxctrl0_out : out std_logic_vector(31 downto 0);
+      rxctrl1_out : out std_logic_vector(31 downto 0);
+      rxctrl2_out : out std_logic_vector(15 downto 0);
+      rxctrl3_out : out std_logic_vector(15 downto 0);
+      rxpmaresetdone_out : out std_logic_vector(1 downto 0);
+      txoutclk_out : out std_logic_vector(1 downto 0);
+      txpmaresetdone_out : out std_logic_vector(1 downto 0);
+      txprgdivresetdone_out : out std_logic_vector(1 downto 0)
+    );
+  end component;
+
+  component gtwizard_v1_7_gthe4_sdm_dmtd
+    port (
+      gtwiz_userclk_tx_reset_in : in std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_srcclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_usrclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_usrclk2_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_tx_active_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_reset_in : in std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_srcclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_usrclk_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_usrclk2_out : out std_logic_vector(0 downto 0);
+      gtwiz_userclk_rx_active_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_clk_freerun_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_all_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_pll_and_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_pll_and_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_datapath_in : in std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_cdr_stable_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_tx_done_out : out std_logic_vector(0 downto 0);
+      gtwiz_reset_rx_done_out : out std_logic_vector(0 downto 0);
+      gtwiz_userdata_tx_in : in std_logic_vector(31 downto 0);
+      gtwiz_userdata_rx_out : out std_logic_vector(31 downto 0);
+      gtrefclk00_in : in std_logic_vector(0 downto 0);
+      sdm0data_in : in std_logic_vector(24 downto 0);
+      sdm0toggle_in : in std_logic_vector(0 downto 0);
+      sdm1data_in : in std_logic_vector(24 downto 0);
+      sdm1toggle_in : in std_logic_vector(0 downto 0);
+      qpll0outclk_out : out std_logic_vector(0 downto 0);
+      qpll0outrefclk_out : out std_logic_vector(0 downto 0);
+      drpclk_in : in std_logic_vector(1 downto 0);
+      gthrxn_in : in std_logic_vector(1 downto 0);
+      gthrxp_in : in std_logic_vector(1 downto 0);
+      gtrefclk0_in : in std_logic_vector(1 downto 0);
+      rx8b10ben_in : in std_logic_vector(1 downto 0);
+      rxbufreset_in : in std_logic_vector(1 downto 0);
+      rxcommadeten_in : in std_logic_vector(1 downto 0);
+      rxmcommaalignen_in : in std_logic_vector(1 downto 0);
+      rxpcommaalignen_in : in std_logic_vector(1 downto 0);
+      tx8b10ben_in : in std_logic_vector(1 downto 0);
+      txctrl0_in : in std_logic_vector(31 downto 0);
+      txctrl1_in : in std_logic_vector(31 downto 0);
+      txctrl2_in : in std_logic_vector(15 downto 0);
+      txpllclksel_in : in std_logic_vector(3 downto 0);
+      gthtxn_out : out std_logic_vector(1 downto 0);
+      gthtxp_out : out std_logic_vector(1 downto 0);
+      gtpowergood_out : out std_logic_vector(1 downto 0);
+      rxbufstatus_out : out std_logic_vector(5 downto 0);
+      rxbyteisaligned_out : out std_logic_vector(1 downto 0);
+      rxbyterealign_out : out std_logic_vector(1 downto 0);
+      rxclkcorcnt_out : out std_logic_vector(3 downto 0);
+      rxcommadet_out : out std_logic_vector(1 downto 0);
+      rxctrl0_out : out std_logic_vector(31 downto 0);
+      rxctrl1_out : out std_logic_vector(31 downto 0);
+      rxctrl2_out : out std_logic_vector(15 downto 0);
+      rxctrl3_out : out std_logic_vector(15 downto 0);
+      rxpmaresetdone_out : out std_logic_vector(1 downto 0);
+      txoutclk_out : out std_logic_vector(1 downto 0);
+      txpmaresetdone_out : out std_logic_vector(1 downto 0);
+      txprgdivresetdone_out : out std_logic_vector(1 downto 0)
+    );
+  end component;
+
   -----------------------------------------------------------------------------
   -- Signals declaration
   -----------------------------------------------------------------------------
@@ -188,6 +323,16 @@ architecture rtl of xwrc_platform_xilinx is
   signal pll_arst            : std_logic := '0';
   signal clk_125m_pllref_buf : std_logic;
   signal clk_sys             : std_logic;
+  signal clk_freerun         : std_logic;
+
+  -- Initialize the SDM interface to the center of our 19 bit tuning range.
+  -- This allows to use almost the entire allowed +/- 200 ppm range around
+  -- 125 MHz with 124.975605 MHz refclock and integral part of 80 for N.
+  signal sdm_data_h : std_logic_vector(24 downto 0) :=
+      std_logic_vector(to_unsigned(262143, 25));
+  signal sdm_data_d : std_logic_vector(24 downto 0) :=
+      std_logic_vector(to_unsigned(262143, 25));
+  signal sdm_toggle_d : std_logic := '0';
 
 begin  -- architecture rtl
 
@@ -618,6 +763,226 @@ begin  -- architecture rtl
     end generate gen_zynqus_si5341_plls;
 
     ---------------------------------------------------------------------------
+    --   Zynq US+ QPLLs with SDM tuning
+    ---------------------------------------------------------------------------
+    gen_zynqus_sdm_qplls: if (g_fpga_family = "zynqus_qpll_sdm") generate
+
+      constant CLK_FREERUN_FREQ_HZ : std_logic_vector(31 downto 0) :=
+          std_logic_vector(to_unsigned(62500000, 32));
+
+      signal txoutclk : std_logic_vector(1 downto 0);
+
+      signal sdm_toggle_shift_h : std_logic_vector(31 downto 0) := (others => '0');
+      signal sdm_toggle_shift_d : std_logic_vector(31 downto 0) := (others => '0');
+      signal sdm_toggle_h : std_logic := '0';
+
+    begin
+      cmp_clk_freerun_buf_o : BUFGCE_DIV
+      generic map (
+        BUFGCE_DIVIDE => 2)
+      port map (
+        I => clk_125m_pllref_i,
+        CLR => '0',
+        CE => '1',
+        O => clk_freerun);
+
+      cmp_clk_dmtd_bufg_gt_o : BUFG_GT
+        port map (
+          CE => '1',
+          CEMASK => '0',
+          CLR => '0',
+          CLRMASK => '0',
+          DIV => "000",
+          O => clk_62m5_dmtd_o,
+          I => txoutclk(0));
+
+      cmp_clk_sys_bufg_gt_o : BUFG_GT
+        port map (
+          CE => '1',
+          CEMASK => '0',
+          CLR => '0',
+          CLRMASK => '0',
+          DIV => "000",
+          O => clk_sys,
+          I => txoutclk(1));
+
+      gtwizard_main_inst : gtwizard_v1_7_gthe4_sdm_main
+        port map (
+          gtwiz_userclk_tx_reset_in => "0",
+          gtwiz_userclk_tx_srcclk_out => open,
+          gtwiz_userclk_tx_usrclk_out => open,
+          gtwiz_userclk_tx_usrclk2_out => open,
+          gtwiz_userclk_tx_active_out => open,
+          gtwiz_userclk_rx_reset_in => "0",
+          gtwiz_userclk_rx_srcclk_out => open,
+          gtwiz_userclk_rx_usrclk_out => open,
+          gtwiz_userclk_rx_usrclk2_out => open,
+          gtwiz_userclk_rx_active_out => open,
+          gtwiz_reset_clk_freerun_in => (0 => clk_freerun),
+          gtwiz_reset_all_in => "0",
+          gtwiz_reset_tx_pll_and_datapath_in => "0",
+          gtwiz_reset_tx_datapath_in => "0",
+          gtwiz_reset_rx_pll_and_datapath_in => "0",
+          gtwiz_reset_rx_datapath_in => "0",
+          gtwiz_reset_rx_cdr_stable_out => open,
+          gtwiz_reset_tx_done_out => open,
+          gtwiz_reset_rx_done_out => open,
+          gtwiz_userdata_tx_in => (31 downto 0 => '0'),
+          gtwiz_userdata_rx_out => open,
+          gtrefclk00_in => (0 => clk_125m_dmtd_i),
+          sdm0data_in => sdm_data_d,
+          sdm0toggle_in => (0 => sdm_toggle_d),
+          sdm1data_in => sdm_data_h,
+          sdm1toggle_in => (0 => sdm_toggle_h),
+          qpll0outclk_out => open,
+          qpll0outrefclk_out => open,
+          drpclk_in => (0 => clk_freerun, 1 => clk_freerun),
+          gthrxn_in => dummy_gthrxn_i(3 downto 2),
+          gthrxp_in => dummy_gthrxp_i(3 downto 2),
+          gtrefclk0_in => (0 => clk_125m_dmtd_i, 1 => clk_125m_dmtd_i),
+          rx8b10ben_in => "11",
+          rxbufreset_in => "00",
+          rxcommadeten_in => "00",
+          rxmcommaalignen_in => "00",
+          rxpcommaalignen_in => "00",
+          tx8b10ben_in => "11",
+          txctrl0_in => (31 downto 0 => '0'),
+          txctrl1_in => (31 downto 0 => '0'),
+          txctrl2_in => (15 downto 0 => '0'),
+          -- txoutclk0 is sourced by QPLL0, and txoutclk1 is sourced by QPLL1
+          txpllclksel_in => "1011",
+          gthtxn_out => dummy_gthtxn_o(3 downto 2),
+          gthtxp_out => dummy_gthtxp_o(3 downto 2),
+          gtpowergood_out => open,
+          rxbufstatus_out => open,
+          rxbyteisaligned_out => open,
+          rxbyterealign_out => open,
+          rxclkcorcnt_out => open,
+          rxcommadet_out => open,
+          rxctrl0_out => open,
+          rxctrl1_out => open,
+          rxctrl2_out => open,
+          rxctrl3_out => open,
+          rxpmaresetdone_out => open,
+          txoutclk_out(0) => txoutclk(1),
+          txoutclk_out(1) => open,
+          txpmaresetdone_out => open,
+          txprgdivresetdone_out => open);
+
+      gtwizard_dmtd_inst : gtwizard_v1_7_gthe4_sdm_dmtd
+        port map (
+          gtwiz_userclk_tx_reset_in => "0",
+          gtwiz_userclk_tx_srcclk_out => open,
+          gtwiz_userclk_tx_usrclk_out => open,
+          gtwiz_userclk_tx_usrclk2_out => open,
+          gtwiz_userclk_tx_active_out => open,
+          gtwiz_userclk_rx_reset_in => "0",
+          gtwiz_userclk_rx_srcclk_out => open,
+          gtwiz_userclk_rx_usrclk_out => open,
+          gtwiz_userclk_rx_usrclk2_out => open,
+          gtwiz_userclk_rx_active_out => open,
+          gtwiz_reset_clk_freerun_in => (0 => clk_freerun),
+          gtwiz_reset_all_in => "0",
+          gtwiz_reset_tx_pll_and_datapath_in => "0",
+          gtwiz_reset_tx_datapath_in => "0",
+          gtwiz_reset_rx_pll_and_datapath_in => "0",
+          gtwiz_reset_rx_datapath_in => "0",
+          gtwiz_reset_rx_cdr_stable_out => open,
+          gtwiz_reset_tx_done_out => open,
+          gtwiz_reset_rx_done_out => open,
+          gtwiz_userdata_tx_in => (31 downto 0 => '0'),
+          gtwiz_userdata_rx_out => open,
+          gtrefclk00_in => (0 => clk_125m_dmtd_i),
+          sdm0data_in => sdm_data_h,
+          sdm0toggle_in => (0 => sdm_toggle_h),
+          sdm1data_in => sdm_data_d,
+          sdm1toggle_in => (0 => sdm_toggle_d),
+          qpll0outclk_out => open,
+          qpll0outrefclk_out => open,
+          drpclk_in => (0 => clk_freerun, 1 => clk_freerun),
+          gthrxn_in => dummy_gthrxn_i(1 downto 0),
+          gthrxp_in => dummy_gthrxp_i(1 downto 0),
+          gtrefclk0_in => (0 => clk_125m_dmtd_i, 1 => clk_125m_dmtd_i),
+          rx8b10ben_in => "11",
+          rxbufreset_in => "00",
+          rxcommadeten_in => "00",
+          rxmcommaalignen_in => "00",
+          rxpcommaalignen_in => "00",
+          tx8b10ben_in => "11",
+          txctrl0_in => (31 downto 0 => '0'),
+          txctrl1_in => (31 downto 0 => '0'),
+          txctrl2_in => (15 downto 0 => '0'),
+          -- txoutclk0 is sourced by QPLL0, and txoutclk1 is sourced by QPLL1
+          txpllclksel_in => "1011",
+          gthtxn_out => dummy_gthtxn_o(1 downto 0),
+          gthtxp_out => dummy_gthtxp_o(1 downto 0),
+          gtpowergood_out => open,
+          rxbufstatus_out => open,
+          rxbyteisaligned_out => open,
+          rxbyterealign_out => open,
+          rxclkcorcnt_out => open,
+          rxcommadet_out => open,
+          rxctrl0_out => open,
+          rxctrl1_out => open,
+          rxctrl2_out => open,
+          rxctrl3_out => open,
+          rxpmaresetdone_out => open,
+          txoutclk_out(0) => txoutclk(0),
+          txoutclk_out(1) => open,
+          txpmaresetdone_out => open,
+          txprgdivresetdone_out => open);
+
+          pll_locked_o <= '1'; -- txprgdivresetdone(0) and txprgdivresetdone(1);
+
+          tm_dac_h_to_sdm : process(clk_sys)
+          begin
+            if (rising_edge(clk_sys)) then
+              sdm_toggle_shift_h <=
+                  sdm_toggle_shift_h(sdm_toggle_shift_h'left - 1 downto 0) &
+                  dac_hpll_load_p1_i;
+
+              if (sdm_toggle_shift_h(0) = '1') then
+                -- FIXME we should check that the softpll really only uses 16 bits
+                sdm_data_h <= (sdm_data_h'left downto (16 + 3) => '0') &
+                    dac_hpll_data_i(15 downto 0) &
+                    "011";
+              end if;
+
+              if (sdm_toggle_shift_h(23 downto 8) /= x"0000") then
+                sdm_toggle_h <= '1';
+              else
+                sdm_toggle_h <= '0';
+              end if;
+            end if;
+          end process;
+
+          tm_dac_d_to_sdm : process(clk_sys)
+          begin
+            if (rising_edge(clk_sys)) then
+              sdm_toggle_shift_d <=
+                  sdm_toggle_shift_d(sdm_toggle_shift_d'left - 1 downto 0) &
+                  dac_dpll_load_p1_i;
+
+              if (sdm_toggle_shift_d(0) = '1') then
+                -- FIXME we should check that the softpll really only uses 16 bits
+                sdm_data_d <= (sdm_data_d'left downto (16 + 3) => '0') &
+                    dac_dpll_data_i(15 downto 0) &
+                    "011";
+              end if;
+
+              if (sdm_toggle_shift_d(23 downto 8) /= x"0000") then
+                sdm_toggle_d <= '1';
+              else
+                sdm_toggle_d <= '0';
+              end if;
+            end if;
+          end process;
+
+    end generate gen_zynqus_sdm_qplls;
+
+    ---------------------------------------------------------------------------
+    --   Zynq US+ Buffers when external PLLs are used
+    ---------------------------------------------------------------------------
     
     gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
       clk_10m_ext_o         <= '0';
@@ -807,7 +1172,7 @@ begin  -- architecture rtl
   end generate gen_phy_artix7;
 
   ---------------------------------------------------------------------------
-  --   ZynqUS+ PHY
+  --   ZynqUS+ PHY with external or fabric PLLs
   ---------------------------------------------------------------------------
   gen_phy_zynqus : if (g_fpga_family = "zynqus" or g_fpga_family = "zynqus_epll") generate
 
@@ -865,6 +1230,70 @@ begin  -- architecture rtl
     phy8_o <= c_dummy_phy8_to_wrc;
 
   end generate gen_phy_zynqus;
+
+  ---------------------------------------------------------------------------
+  --   ZynqUS+ PHY with SDM controlled QPLL
+  ---------------------------------------------------------------------------
+  gen_phy_zynqus_qplls : if (g_fpga_family = "zynqus_qpll_sdm") generate
+
+    signal clk_125m_gth_buf  : std_logic;
+    signal clk_ref : std_logic;
+
+  begin
+    U_Ref_Clock_Buffer : IBUFDS_GTE4
+      generic map (
+        REFCLK_EN_TX_PATH  => '0',
+        REFCLK_HROW_CK_SEL => "00",
+        REFCLK_ICNTL_RX    => "00")
+      port map (
+        O     => clk_125m_gth_buf,
+        ODIV2 => open,
+        CEB   => '0',
+        I     => clk_125m_gtp_p_i,
+        IB    => clk_125m_gtp_n_i);
+
+    cmp_gth: wr_gthe4_phy_family7_xilinx_ip
+      generic map (
+        g_simulation         => g_simulation,
+        g_use_qpll_sdm       => true,
+        g_use_gclk_as_refclk => false)
+      port map (
+        clk_gth_i      => clk_125m_gth_buf,
+        clk_freerun_i  => clk_freerun,
+        tx_out_clk_o   => clk_ref,
+        tx_locked_o    => open,
+        tx_sdm_data_i  => sdm_data_d,
+        tx_sdm_toggle_i => sdm_toggle_d,
+        tx_data_i      => phy16_i.tx_data,
+        tx_k_i         => phy16_i.tx_k,
+        tx_disparity_o => phy16_o.tx_disparity,
+        tx_enc_err_o   => phy16_o.tx_enc_err,
+        rx_rbclk_o     => phy16_o.rx_clk,
+        rx_data_o      => phy16_o.rx_data,
+        rx_k_o         => phy16_o.rx_k,
+        rx_enc_err_o   => phy16_o.rx_enc_err,
+        rx_bitslide_o  => phy16_o.rx_bitslide,
+        rst_i          => phy16_i.rst,
+        loopen_i       => "000",
+        debug_i        => x"0000",
+        debug_o        => open,
+        pad_txn_o      => sfp_txn_o,
+        pad_txp_o      => sfp_txp_o,
+        pad_rxn_i      => sfp_rxn_i,
+        pad_rxp_i      => sfp_rxp_i,
+        rdy_o          => phy16_o.rdy);
+
+    clk_62m5_sys_o       <= clk_sys;
+    clk_125m_ref_o       <= clk_ref;
+    clk_ref_locked_o     <= '1';
+    phy16_o.ref_clk      <= clk_ref;
+    phy16_o.sfp_tx_fault <= sfp_tx_fault_i;
+    phy16_o.sfp_los      <= sfp_los_i;
+    sfp_tx_disable_o     <= phy16_i.sfp_tx_disable;
+
+    phy8_o <= c_dummy_phy8_to_wrc;
+
+  end generate gen_phy_zynqus_qplls;
 
   ---------------------------------------------------------------------------
 
