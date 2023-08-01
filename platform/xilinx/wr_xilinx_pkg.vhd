@@ -57,6 +57,7 @@ package wr_xilinx_pkg is
       g_with_external_clock_input : boolean := FALSE;
       g_use_default_plls          : boolean := TRUE;
       g_aux_pll_cfg               : t_auxpll_cfg_array := c_AUXPLL_CFG_ARRAY_DEFAULT;
+      g_dac_bits                  : integer := 16;
       g_gtp_enable_ch0            : integer := 0;
       g_gtp_enable_ch1            : integer := 1;
       g_gtp_mux_enable            : boolean := FALSE;
@@ -81,6 +82,10 @@ package wr_xilinx_pkg is
       clk_ext_locked_i      : in  std_logic             := '1';
       clk_ext_stopped_i     : in  std_logic             := '0';
       clk_ext_rst_o         : out std_logic;
+      dac_hpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
+      dac_hpll_load_p1_i    : in  std_logic := '0';
+      dac_dpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
+      dac_dpll_load_p1_i    : in  std_logic := '0';
       sfp_txn_o             : out std_logic;
       sfp_txp_o             : out std_logic;
       sfp_rxn_i             : in  std_logic;

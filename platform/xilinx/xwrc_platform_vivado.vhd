@@ -66,6 +66,7 @@ entity xwrc_platform_xilinx is
       g_use_default_plls          : boolean := TRUE;
       -- Config for the auxiliary PLL output (for now only used in Spartan-6
       g_aux_pll_cfg               : t_auxpll_cfg_array := c_AUXPLL_CFG_ARRAY_DEFAULT;
+      g_dac_bits                  : integer := 16;
       -- Select GTP channel to use
       g_gtp_enable_ch0            : integer := 0;
       g_gtp_enable_ch1            : integer := 1;
@@ -116,6 +117,10 @@ entity xwrc_platform_xilinx is
     clk_ext_locked_i      : in  std_logic             := '1';
     clk_ext_stopped_i     : in  std_logic             := '0';
     clk_ext_rst_o         : out std_logic;
+    dac_hpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
+    dac_hpll_load_p1_i    : in  std_logic                     := '0';
+    dac_dpll_data_i       : in  std_logic_vector(g_dac_bits-1 downto 0) := (others => '0');
+    dac_dpll_load_p1_i    : in  std_logic                     := '0';
     ---------------------------------------------------------------------------
     -- SFP - channel 0
     ---------------------------------------------------------------------------
