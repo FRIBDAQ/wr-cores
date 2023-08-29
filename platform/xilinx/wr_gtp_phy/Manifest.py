@@ -50,13 +50,23 @@ xilinx_ip_common = [
     "xilinx-ip/common/gtwizard_ultrascale_v1_7_gthe3_cal_freqcnt.v"
 ];
 
-xilinx_ip_gthe4_lp = [
-    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2.v",
+xilinx_ip_gthe4_lp_125 = [
+    "xilinx-ip/gthe4_lp/ref_clk_125/gtwizard_ultrascale_2.v",
     "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_gtwizard_top.v",
     "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2.xdc",
-    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_gthe4_channel_wrapper.v",
+    "xilinx-ip/gthe4_lp/ref_clk_125/gtwizard_ultrascale_2_gthe4_channel_wrapper.v",
     "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_gtwizard_gthe4.v",
-    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_ooc.xdc",
+    "xilinx-ip/gthe4_lp/ref_clk_125/gtwizard_ultrascale_2_ooc.xdc",
+    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_v1_7_gthe4_channel.v"
+];
+
+xilinx_ip_gthe4_lp_100 = [
+    "xilinx-ip/gthe4_lp/ref_clk_100/gtwizard_ultrascale_2.v",
+    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_gtwizard_top.v",
+    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2.xdc",
+    "xilinx-ip/gthe4_lp/ref_clk_100/gtwizard_ultrascale_2_gthe4_channel_wrapper.v",
+    "xilinx-ip/gthe4_lp/gtwizard_ultrascale_2_gtwizard_gthe4.v",
+    "xilinx-ip/gthe4_lp/ref_clk_100/gtwizard_ultrascale_2_ooc.xdc",
     "xilinx-ip/gthe4_lp/gtwizard_ultrascale_v1_7_gthe4_channel.v"
 ];
 
@@ -164,5 +174,12 @@ elif (syn_device[0:6].upper()=="XCAU10" or # Artix Ultrascale+ AU10P AU15P GTH
         "family7-gtx-lp/gtx_comma_detect_lp.vhd",
         "common/lpdc_mdio_regs.vhd",
         ]);
-    files.extend( xilinx_ip_gthe4_lp );        # Note that gthe4 depend on Vivado version
-    files.extend( xilinx_ip_gthe4_common_lp ); # and instantiate its specific common files 
+    # PHY reference clock is default 125 MHz; check if 100 MHz is defined
+    try:
+        if (ref_clk=="100"):
+            files.extend( xilinx_ip_gthe4_lp_100 ); # Note that gthe4 depend on Vivado version
+        else:
+            files.extend( xilinx_ip_gthe4_lp_125 ); # Note that gthe4 depend on Vivado version
+    except:
+        files.extend( xilinx_ip_gthe4_lp_125 );     # Note that gthe4 depend on Vivado version
+    files.extend( xilinx_ip_gthe4_common_lp );      # and instantiate its specific common files 
