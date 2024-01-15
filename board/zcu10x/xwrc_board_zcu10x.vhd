@@ -41,6 +41,8 @@ entity xwrc_board_zcu10x is
   generic(
     -- set to 1 to speed up some initialization processes during simulation
     g_simulation                : integer              := 0;
+    -- Select whether to include external ref clock input
+    g_with_external_clock_input : boolean              := TRUE;
     -- Number of aux clocks syntonized by WRPC to WR timebase
     g_aux_clks                  : integer              := 0;
     -- memory initialisation file for embedded CPU
@@ -74,7 +76,10 @@ entity xwrc_board_zcu10x is
     wr_clk_sfp_125m_n_i    : in  std_logic;
     -- Aux clocks, which can be disciplined by the WR Core
     clk_aux_i              : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
-
+    -- 10MHz ext ref clock input (g_with_external_clock_input = TRUE)
+    clk_10m_ext_i       : in  std_logic                               := '0';
+    -- External PPS input (g_with_external_clock_input = TRUE)
+    pps_ext_i           : in  std_logic                               := '0';
     -- 62.5MHz sys clock output
     clk_sys_62m5_o      : out std_logic;
     -- 125MHz ref clock output
@@ -140,8 +145,10 @@ entity xwrc_board_zcu10x is
     ---------------------------------------------------------------------------
     -- UART
     ---------------------------------------------------------------------------
-    uart_rxd_i : in  std_logic;
-    uart_txd_o : out std_logic;
+    uart0_rxd_i : in  std_logic;
+    uart0_txd_o : out std_logic;
+    uart1_rxd_i : in  std_logic := '0';
+    uart1_txd_o : out std_logic;
 
     ---------------------------------------------------------------------------
     -- External WB interface
@@ -217,6 +224,8 @@ architecture struct of xwrc_board_zcu10x is
   signal clk_pll_125m        : std_logic;
   signal clk_pll_dmtd        : std_logic;
   signal pll_locked          : std_logic;
+  signal clk_10m_ext         : std_logic;
+
 
   -- Reset logic
   signal areset_edge_ppulse : std_logic;
@@ -237,6 +246,12 @@ architecture struct of xwrc_board_zcu10x is
 
   signal sfp_tx_disable_n : std_logic;
 
+  -- External reference
+  signal ext_ref_mul         : std_logic;
+  signal ext_ref_mul_locked  : std_logic;
+  signal ext_ref_mul_stopped : std_logic;
+  signal ext_ref_rst         : std_logic;
+
   -- Si570
   signal si570_wb_in  : t_wishbone_slave_in;
   signal si570_wb_out : t_wishbone_slave_out;
@@ -244,6 +259,10 @@ architecture struct of xwrc_board_zcu10x is
   -- GPIO for FMC enable
   signal enfmc_wb_in  : t_wishbone_slave_in;
   signal enfmc_wb_out : t_wishbone_slave_out;
+
+  -- GPS Uart
+  signal gps_uart_wb_in  : t_wishbone_slave_in;
+  signal gps_uart_wb_out : t_wishbone_slave_out;
 
   constant c_xwb_si5xx_sdb : t_sdb_device := (
     abi_class     => x"0000",              -- undocumented device
@@ -265,16 +284,17 @@ architecture struct of xwrc_board_zcu10x is
   signal aux_master_out : t_wishbone_master_out;
   signal aux_master_in : t_wishbone_master_in := cc_dummy_master_in;
 
-  signal tertbar_master_i : t_wishbone_master_in_array(1 downto 0);
-  signal tertbar_master_o : t_wishbone_master_out_array(1 downto 0);
+  signal tertbar_master_i : t_wishbone_master_in_array(2 downto 0);
+  signal tertbar_master_o : t_wishbone_master_out_array(2 downto 0);
 
-  constant c_tertbar_layout : t_sdb_record_array(1 downto 0) :=
+  constant c_tertbar_layout : t_sdb_record_array(2 downto 0) :=
     (0  => f_sdb_embed_device(c_xwb_gpio_port_sdb, x"00000000"),
-     1  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000100")
-     --                     tertbar sdb            x"00000200"
+     1  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000100"),
+     2  => f_sdb_embed_device(c_wrc_periph1_sdb,   x"00000200")
+     --                     tertbar sdb            x"00000300"
    );
 
-  constant c_tertbar_sdb_address : t_wishbone_address := x"00000200";
+  constant c_tertbar_sdb_address : t_wishbone_address := x"00000300";
   constant c_tertbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_tertbar_layout, c_tertbar_sdb_address);
 begin  -- architecture struct
@@ -312,12 +332,13 @@ begin  -- architecture struct
   cmp_xwrc_platform : xwrc_platform_xilinx
     generic map (
       g_fpga_family               => "zynqus_qpll_sdm",
-      g_with_external_clock_input => FALSE,
+      g_with_external_clock_input => g_with_external_clock_input,
       g_use_default_plls          => TRUE,
       g_simulation                => g_simulation,
       g_dac_bits                  => g_dac_bits)
     port map (
       areset_n_i            => areset_n_i,
+      clk_10m_ext_i         => clk_10m_ext_i,
       clk_125m_pllref_i     => clk_125m_pllref_buf,
       clk_125m_gtp_p_i      => wr_clk_sfp_125m_p_i,
       clk_125m_gtp_n_i      => wr_clk_sfp_125m_n_i,
@@ -341,8 +362,13 @@ begin  -- architecture struct
       clk_125m_ref_o        => clk_pll_125m,
       clk_62m5_dmtd_o       => clk_pll_dmtd,
       pll_locked_o          => pll_locked,
+      clk_10m_ext_o         => clk_10m_ext,
       phy16_o               => phy16_to_wrc,
-      phy16_i               => phy16_from_wrc);
+      phy16_i               => phy16_from_wrc,
+      ext_ref_mul_o         => ext_ref_mul,
+      ext_ref_mul_locked_o  => ext_ref_mul_locked,
+      ext_ref_mul_stopped_o => ext_ref_mul_stopped,
+      ext_ref_rst_i         => ext_ref_rst);
 
   --  the board invert the tx_disable signal.
   sfp_tx_disable_o <= not sfp_tx_disable_n;
@@ -396,7 +422,7 @@ begin  -- architecture struct
     generic map (
       g_simulation                => g_simulation,
       g_verbose                   => TRUE,
-      g_with_external_clock_input => FALSE,
+      g_with_external_clock_input => g_with_external_clock_input,
       g_board_name                => g_board_name,
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
@@ -421,6 +447,12 @@ begin  -- architecture struct
       clk_sys_i            => clk_pll_62m5,
       clk_dmtd_i           => clk_pll_dmtd,
       clk_ref_i            => clk_pll_125m,
+      clk_10m_ext_i        => clk_10m_ext,
+      clk_ext_mul_i        => ext_ref_mul,
+      clk_ext_mul_locked_i => ext_ref_mul_locked,
+      clk_ext_stopped_i    => ext_ref_mul_stopped,
+      clk_ext_rst_o        => ext_ref_rst,
+      pps_ext_i            => pps_ext_i,
       rst_n_i              => rst_62m5_n,
       dac_hpll_load_p1_o   => dac_hpll_load_p1,
       dac_hpll_data_o      => dac_hpll_data,
@@ -437,8 +469,8 @@ begin  -- architecture struct
       sfp_sda_o            => sfp_sda_o,
       sfp_sda_i            => sfp_sda_i,
       sfp_det_i            => sfp_det_i,
-      uart_rxd_i           => uart_rxd_i,
-      uart_txd_o           => uart_txd_o,
+      uart_rxd_i           => uart0_rxd_i,
+      uart_txd_o           => uart0_txd_o,
       wb_slave_i           => wb_slave_i,
       wb_slave_o           => wb_slave_o,
       aux_master_o         => aux_master_out,
@@ -476,7 +508,7 @@ begin  -- architecture struct
     generic map(
       g_verbose     => TRUE,
       g_num_masters => 1,
-      g_num_slaves  => 2,
+      g_num_slaves  => 3,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_tertbar_layout,
@@ -498,6 +530,9 @@ begin  -- architecture struct
 
   tertbar_master_i(1) <= si570_wb_out;
   si570_wb_in         <= tertbar_master_o(1);
+
+  tertbar_master_i(2) <= gps_uart_wb_out;
+  gps_uart_wb_in      <= tertbar_master_o(2);
 
   -----------------------------------------------------------------------------
   -- Enable FMC pins
@@ -537,6 +572,33 @@ begin  -- architecture struct
 
       slave_i           => si570_wb_in,
       slave_o           => si570_wb_out
+    );
+
+  -----------------------------------------------------------------------------
+  -- GPS Uart device
+  -----------------------------------------------------------------------------
+  cmp_gps_uart : xwb_simple_uart
+    generic map(
+      g_with_virtual_uart   => FALSE,
+      g_with_physical_uart  => TRUE,
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_vuart_fifo_size     => 1024,
+      g_WITH_PHYSICAL_UART_FIFO => TRUE,
+      g_TX_FIFO_SIZE => 1024,
+      g_RX_FIFO_SIZE => 1024
+    )
+    port map(
+      clk_sys_i => clk_pll_62m5,
+      rst_n_i   => rst_62m5_n,
+
+      -- Wishbone
+      slave_i => gps_uart_wb_in,
+      slave_o => gps_uart_wb_out,
+      desc_o  => open,
+
+      uart_rxd_i => uart1_rxd_i,
+      uart_txd_o => uart1_txd_o
     );
 
   sfp_rate_select_o <= '1';

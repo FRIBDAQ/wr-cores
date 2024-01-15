@@ -206,6 +206,7 @@ architecture rtl of xwrc_platform_xilinx is
   signal clk_ref             : std_logic;
   signal clk_sys             : std_logic;
   signal clk_sys_out         : std_logic;
+  signal pll_sys_locked      : std_logic;
   signal clk_freerun         : std_logic;
   constant c_WITH_SERDES     : boolean := f_aux_timing_enabled(g_aux_timing_config);
 
@@ -276,7 +277,6 @@ begin  -- architecture rtl
     gen_kintex7_artix7_default_plls : if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
 
       signal clk_sys_fb       : std_logic;
-      signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic := '0'; -- initialize for simulation
       signal pll_dmtd_locked  : std_logic;
 
@@ -522,7 +522,6 @@ begin  -- architecture rtl
 
       signal clk_sys_prebuf : std_logic;
       signal clk_sys_fb  : std_logic;
-      signal pll_sys_locked  : std_logic;
       signal clk_dmtd     : std_logic;
       signal clk_dmtd_div : std_logic;
       signal clk_pll_aux  : std_logic_vector(3 downto 0);
@@ -641,6 +640,7 @@ begin  -- architecture rtl
 
       clk_62m5_sys_o <= clk_sys;
       pll_locked_o   <= '1'; --pll_sys_locked;
+      pll_sys_locked <= '1';
 
       cmp_clk_dmtd_buf_o: BUFG
         port map (
@@ -660,6 +660,8 @@ begin  -- architecture rtl
       signal sdm_toggle_h : std_logic := '0';
 
     begin
+      pll_sys_locked <= '1';
+
       cmp_clk_freerun_buf_o : BUFGCE_DIV
       generic map (
         BUFGCE_DIVIDE => 2)
@@ -792,9 +794,88 @@ begin  -- architecture rtl
     end generate gen_zynqus_sdm_qplls;
 
     ---------------------------------------------------------------------------
+    --   Zynq US+ External 10MHz reference PLL
+    ---------------------------------------------------------------------------
+    gen_zynqus_ext_ref_pll: if (g_with_external_clock_input = TRUE and (g_fpga_family = "zynqus" or g_fpga_family = "zynqus_epll" or g_fpga_family = "zynqus_qpll_sdm")) generate
+        signal clk_ext_fbi : std_logic;
+        signal clk_ext_fbo : std_logic;
+        signal clk_ext_buf : std_logic;
+        signal clk_ext_mul : std_logic;
+        signal pll_ext_rst : std_logic;
+    begin
+      ext_ref_pll : MMCME4_ADV
+        generic map (
+          BANDWIDTH            => "OPTIMIZED",
+          CLKOUT4_CASCADE      => "FALSE",
+          COMPENSATION         => "AUTO",
+          STARTUP_WAIT         => "FALSE",
+          DIVCLK_DIVIDE        => 1,
+          CLKFBOUT_MULT_F      => 118.750,
+          CLKFBOUT_PHASE       => 0.000,
+          CLKFBOUT_USE_FINE_PS => "FALSE",
+          CLKIN1_PERIOD        => 100.000,
+
+          CLKOUT0_DIVIDE_F     => 19.000,
+          CLKOUT0_PHASE        => 0.000,
+          CLKOUT0_DUTY_CYCLE   => 0.500,
+          CLKOUT0_USE_FINE_PS  => "FALSE"
+          )
+        port map (
+          CLKFBOUT     => clk_ext_fbo,
+          CLKOUT0      => clk_ext_mul,
+          CLKFBIN      => clk_ext_fbi,
+          CLKIN1       => clk_ext_buf,
+          CLKIN2       => '0',
+          CLKINSEL     => '1',
+          DADDR        => (others => '0'),
+          DCLK         => '0',
+          DEN          => '0',
+          DI           => (others => '0'),
+          DWE          => '0',
+          CDDCREQ      => '0',
+          PSCLK        => '0',
+          PSEN         => '0',
+          PSINCDEC     => '0',
+          LOCKED       => ext_ref_mul_locked_o,
+          CLKINSTOPPED => ext_ref_mul_stopped_o,
+          PWRDWN       => '0',
+          RST          => pll_ext_rst);
+
+      -- External reference input buffer
+      cmp_clk_ext_buf_i : BUFG
+        port map (
+          O => clk_ext_buf,
+          I => clk_10m_ext_i);
+
+      clk_10m_ext_o <= clk_ext_buf;
+
+      -- External reference feedback buffer
+      cmp_clk_ext_buf_fb : BUFG
+        port map (
+          O => clk_ext_fbi,
+          I => clk_ext_fbo);
+
+      -- External reference output buffer
+      cmp_clk_ext_buf_o : BUFG
+        port map (
+          O => ext_ref_mul_o,
+          I => clk_ext_mul);
+
+      cmp_extend_ext_reset : gc_extend_pulse
+        generic map (
+          g_width => 1000)
+        port map (
+          clk_i      => clk_sys,
+          rst_n_i    => pll_sys_locked,
+          pulse_i    => ext_ref_rst_i,
+          extended_o => pll_ext_rst);
+    
+    end generate gen_zynqus_ext_ref_pll;
+
+    ---------------------------------------------------------------------------
     --   Zynq US+ Buffers when external PLLs are used
     ---------------------------------------------------------------------------
-    
+
     gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
       clk_10m_ext_o         <= '0';
       ext_ref_mul_o         <= '0';

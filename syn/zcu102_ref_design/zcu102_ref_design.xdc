@@ -10,8 +10,9 @@ create_clock -period 16.000 -name gth_eth_rxclk [get_pins cmp_xwrc_board_zcu10x/
 
 create_clock -period 16.000 -name gth_dmtd_txclk [get_pins cmp_xwrc_board_zcu10x/cmp_xwrc_platform/gen_default_plls.gen_zynqus_sdm_qplls.gtwizard_dmtd_inst/inst/gen_gtwizard_gthe4_top.gtwizard_v1_7_gthe4_sdm_dmtd_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK]
 
-set_clock_groups -asynchronous -group {wr_clk_main_125m wr_clk_sfp_125m} -group {wr_clk_helper_125m} -group {gth_eth_txclk} -group {gth_eth_rxclk} -group {gth_dmtd_txclk}
+create_clock -period 100.000 -name clk_10m_ext -waveform {0.000 50.000} [get_ports clk_10m_ext_i]
 
+set_clock_groups -asynchronous -group {wr_clk_main_125m clk_sys_62m5} -group {wr_clk_sfp_125m wr_clk_helper_125m} -group {gth_eth_txclk} -group {gth_eth_rxclk} -group {gth_dmtd_txclk} -group {clk_10m_ext}
 
 ##################
 # I/O constraints
@@ -32,10 +33,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports eeprom_s??_b]
 set_property OFFCHIP_TERM NONE [get_ports eeprom_s??_b]
 
 # PL UART to Quad USB UART
-set_property PACKAGE_PIN F13 [get_ports uart_txd_o]
-set_property PACKAGE_PIN E13 [get_ports uart_rxd_i]
-set_property IOSTANDARD LVCMOS33 [get_ports uart_?xd_?]
-set_property OFFCHIP_TERM NONE [get_ports uart_txd_o]
+set_property PACKAGE_PIN F13 [get_ports uart0_txd_o]
+set_property PACKAGE_PIN E13 [get_ports uart0_rxd_i]
+set_property IOSTANDARD LVCMOS33 [get_ports uart0_?xd_?]
+set_property OFFCHIP_TERM NONE [get_ports uart0_txd_o]
 
 # SFP2 (I2C via shared I2C1 hierarchy)
 set_property PACKAGE_PIN B13 [get_ports sfp_tx_disable_o]
@@ -62,18 +63,31 @@ set_property PACKAGE_PIN G21 [get_ports wr_clk_main_125m_p_i]
 set_property IOSTANDARD LVDS_25 [get_ports wr_clk_main_125m_p_i]
 
 # PMOD (J87)
-# PMOD1_2
-set_property PACKAGE_PIN D22 [get_ports clk_sys_62m5_o]
 # PMOD1_3
 set_property PACKAGE_PIN E22 [get_ports clk_ref_125m_o]
 # PMOD1_6
 set_property PACKAGE_PIN J20 [get_ports {pps_p_o}]
-set_property IOSTANDARD LVCMOS33 [get_ports clk_sys_62m5_o]
 set_property IOSTANDARD LVCMOS33 [get_ports clk_ref_125m_o]
 set_property IOSTANDARD LVCMOS33 [get_ports pps_p_o]
-set_property OFFCHIP_TERM NONE [get_ports clk_sys_62m5_o]
 set_property OFFCHIP_TERM NONE [get_ports clk_ref_125m_o]
 set_property OFFCHIP_TERM NONE [get_ports pps_p_o]
+
+# GNSS UART on PMOD1 (J87)
+# PMOD1_0
+set_property PACKAGE_PIN D20 [get_ports uart1_txd_o]
+# PMOD1_1
+set_property PACKAGE_PIN E20 [get_ports uart1_rxd_i]
+set_property IOSTANDARD LVCMOS33 [get_ports uart1_?xd_?]
+set_property OFFCHIP_TERM NONE [get_ports uart1_txd_o]
+
+# PPS and 10MHz reference
+# PMOD1_4 PPS
+set_property PACKAGE_PIN F20 [get_ports pps_ext_i]
+set_property IOSTANDARD LVCMOS33 [get_ports pps_ext_i]
+
+# PMOD1_5 10MHz
+set_property PACKAGE_PIN G20 [get_ports clk_10m_ext_i]
+set_property IOSTANDARD LVCMOS33 [get_ports clk_10m_ext_i]
 
 # DIP switch for XM105 SMA output clock selection
 set_property PACKAGE_PIN AN14 [get_ports gpio_dip_sw_i[0]]

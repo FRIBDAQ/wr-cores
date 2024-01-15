@@ -66,10 +66,13 @@ entity zcu10x_ref_top is
     wr_clk_sfp_125m_p_i    : in  std_logic;
     wr_clk_sfp_125m_n_i    : in  std_logic;
 
-    clk_sys_62m5_o       : out std_logic;
     clk_ref_125m_o       : out std_logic;
     clk_hpc0_xm105_sma_o : out std_logic;
     clk_hpc1_xm105_sma_o : out std_logic;
+
+    -- GPSDO clock and pps
+    clk_10m_ext_i : in std_logic;
+    pps_ext_i : in std_logic;
 
     ---------------------------------------------------------------------------
     -- Dummy GTH channel required for QPLL SDM
@@ -98,8 +101,10 @@ entity zcu10x_ref_top is
     ---------------------------------------------------------------------------
     -- UART
     ---------------------------------------------------------------------------
-    uart_rxd_i    : in  std_logic;
-    uart_txd_o    : out std_logic;
+    uart0_rxd_i    : in  std_logic;
+    uart0_txd_o    : out std_logic;
+    uart1_rxd_i    : in  std_logic;
+    uart1_txd_o    : out std_logic;
 
     ---------------------------------------------------------------------------
     -- DIP Switch
@@ -147,7 +152,8 @@ begin
       g_simulation     => g_SIMULATION,
       g_board_name     => g_BOARD_NAME,
       g_num_fmc_enable => 2,
-      g_dpram_initf    => "../../bin/wrpc/wrc_amd_devboard.bram")
+      g_dpram_initf    => "../../bin/wrpc/wrc_amd_devboard.bram",
+      g_with_external_clock_input => TRUE)
     port map (
       areset_n_i             => rst_n,
       wr_clk_helper_125m_p_i => wr_clk_helper_125m_p_i,
@@ -158,7 +164,9 @@ begin
       wr_clk_sfp_125m_n_i    => wr_clk_sfp_125m_n_i, 
       clk_sys_62m5_o         => clk_sys_62m5,
       clk_ref_125m_o         => clk_ref_125m,
-  
+      clk_10m_ext_i          => clk_10m_ext_i,
+      pps_ext_i              => pps_ext_i,
+
       dummy_gthtxp_o        => dummy_gthtxp_o,
       dummy_gthtxn_o        => dummy_gthtxn_o,
       dummy_gthrxp_i        => dummy_gthrxp_i,
@@ -180,8 +188,10 @@ begin
       eeprom_sda_o => eeprom_sda_out, 
       eeprom_scl_i => eeprom_scl_in, 
       eeprom_scl_o => eeprom_scl_out, 
-      uart_rxd_i   => uart_rxd_i, 
-      uart_txd_o   => uart_txd_o, 
+      uart0_rxd_i   => uart0_rxd_i,
+      uart0_txd_o   => uart0_txd_o,
+      uart1_rxd_i   => uart1_rxd_i,
+      uart1_txd_o   => uart1_txd_o,
       si570_scl_oen_o => si570_scl_oen,
       si570_scl_i  => si570_scl_in,
       si570_sda_oen_o => si570_sda_oen,
@@ -279,7 +289,6 @@ begin
   clk_hpc1_xm105_sma_o <= clk_xm105_sma_oddr(1) when fmc_enable(1) = '1' else 'Z';
   pps_hpc1_xm105_sma_o <= pps_p when fmc_enable(1) = '1' else 'Z';
 
-  clk_sys_62m5_o <= clk_sys_62m5;
   clk_ref_125m_o <= clk_ref_125m;
   pps_p_o <= pps_p;
 
