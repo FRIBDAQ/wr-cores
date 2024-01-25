@@ -308,8 +308,9 @@ begin  -- architecture rtl
       g_family          => "Arria 10 GX Idrogen",
       g_use_simple_wa   => false,
       g_use_atx_pll     =>  true,    -- Use ATX PLL?
-      g_use_cmu_pll     => false ,    -- Use CMU PLL?
-      g_use_f_pll       => false
+      g_use_cmu_pll     => false,    -- Use CMU PLL?
+      g_use_f_pll       => false,
+      g_use_ext_rst     => false     -- required to prevent PHY to be stuck when connected to same other hardware
       )
     port map (
       clk_ref_i      => clk_pll_ref,
