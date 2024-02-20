@@ -215,8 +215,6 @@ package wr_altera_pkg is
       g_use_simple_wa   : boolean := false;
       g_use_det_phy     : boolean := true;
       g_use_sfp_los_rst : boolean := true;
-      g_use_tx_lcr_dbg  : boolean := false;
-      g_use_rx_lcr_dbg  : boolean := false;
       g_use_ext_loop    : boolean := true;
       g_use_ext_rst     : boolean := true);
     port (

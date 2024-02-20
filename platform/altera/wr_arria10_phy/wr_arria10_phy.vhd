@@ -52,8 +52,6 @@ entity wr_arria10_transceiver is
     g_use_simple_wa   : boolean := false; -- Use simple word aligner (following altera/intel documentation)?
     g_use_det_phy     : boolean := true;  -- Use deterministic or standard PHY?
     g_use_sfp_los_rst : boolean := true;  -- Reset on SFP los (pulled out SFP, ...)?
-    g_use_tx_lcr_dbg  : boolean := false; -- Fake rx lcr values, debugging purposes only
-    g_use_rx_lcr_dbg  : boolean := false; -- Fake tx lcr values, debugging purposes only
     g_use_ext_loop    : boolean := true;  -- Enable internal loop (controlled by loopen_i)?
     g_use_ext_rst     : boolean := true); -- Enable external reset signal (triggerd by drop_link_i)?
   port (
@@ -101,6 +99,7 @@ architecture rtl of wr_arria10_transceiver is
   signal s_tx_pll_serial_clk       : std_logic;
   signal s_tx_pll_locked           : std_logic_vector(0 downto 0);
   signal s_tx_pll_cal_busy         : std_logic;
+  signal s_tx_bonding_clocks       : std_logic_vector(5 downto 0);
 
   signal s_rst_ctl_powerdown       : std_logic_vector(0 downto 0);
   signal s_rst_ctl_rst             : std_logic;
@@ -206,8 +205,8 @@ begin
     port map (
       clk_i    => clk_phy_i,
       rst_n_i  => '1',
-      data_i   => s_rst_ctl_rst_sync,
-      synced_o => s_rst_ctl_rst
+      data_i   => s_rst_ctl_rst,
+      synced_o => s_rst_ctl_rst_sync
     );
 
   det_phy : if g_use_det_phy generate
@@ -220,8 +219,9 @@ begin
           rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
           tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
           rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
-          tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
-          rx_cdr_refclk0                        => clk_phy_i,
+          --tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
+          tx_bonding_clocks                     => s_tx_bonding_clocks,
+			 rx_cdr_refclk0                        => clk_phy_i,
           tx_serial_data(0)                     => pad_txp_o,
           rx_serial_data(0)                     => pad_rxp_i,
           rx_is_lockedtoref                     => s_phy_rx_is_lockedtoref,
@@ -239,17 +239,20 @@ begin
           rx_runningdisp                        => s_rx_runningdisp,
           rx_syncstatus                         => s_syncstatus,
           tx_datak                              => s_tx_data_k,
-          rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
+			 unused_rx_parallel_data               => open,
+          --rx_bitslip                            => '0',
+          --rx_std_wa_patternalign(0)             => '1',
           reconfig_clk(0)                       => clk_phy_i,
-          reconfig_reset(0)                     => s_rst_ctl_rst,
+          reconfig_reset(0)                     => s_rst_ctl_rst_sync,
           reconfig_write                        => s_reconfig_write,
           reconfig_read                         => s_reconfig_read,
           reconfig_address                      => s_reconfig_address,
           reconfig_writedata                    => s_reconfig_writedata,
           reconfig_readdata                     => s_reconfig_readdata,
           reconfig_waitrequest                  => s_reconfig_waitrequest,
+			 tx_std_bitslipboundarysel             => "00000",
           rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-       	  rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+          rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
           rx_seriallpbken(0)                    => s_loop_en
         );
     end generate scu4_phy;
@@ -284,7 +287,7 @@ begin
           tx_datak                              => s_tx_data_k,
           rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
           reconfig_clk(0)                       => clk_phy_i,
-          reconfig_reset(0)                     => s_rst_ctl_rst,
+          reconfig_reset(0)                     => s_rst_ctl_rst_sync,
           reconfig_write                        => s_reconfig_write,
           reconfig_read                         => s_reconfig_read,
           reconfig_address                      => s_reconfig_address,
@@ -327,7 +330,7 @@ begin
             tx_datak                              => s_tx_data_k,
             rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
             reconfig_clk(0)                       => clk_phy_i,
-            reconfig_reset(0)                     => s_rst_ctl_rst,
+            reconfig_reset(0)                     => s_rst_ctl_rst_sync,
             reconfig_write                        => s_reconfig_write,
             reconfig_read                         => s_reconfig_read,
             reconfig_address                      => s_reconfig_address,
@@ -370,7 +373,7 @@ begin
               tx_datak                              => s_tx_data_k,
               rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
               reconfig_clk(0)                       => clk_phy_i,
-              reconfig_reset(0)                     => s_rst_ctl_rst,
+              reconfig_reset(0)                     => s_rst_ctl_rst_sync,
               reconfig_write                        => s_reconfig_write,
               reconfig_read                         => s_reconfig_read,
               reconfig_address                      => s_reconfig_address,
@@ -413,7 +416,7 @@ begin
           tx_datak                              => s_tx_data_k,
           rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
           reconfig_clk(0)                       => clk_phy_i,
-          reconfig_reset(0)                     => s_rst_ctl_rst,
+          reconfig_reset(0)                     => s_rst_ctl_rst_sync,
           reconfig_write                        => s_reconfig_write,
           reconfig_read                         => s_reconfig_read,
           reconfig_address                      => s_reconfig_address,
@@ -436,7 +439,7 @@ begin
     complex_wa : if not(g_use_simple_wa) generate
 
       -- Pattern align watchdog
-      pattern_align_wdg : process(s_rx_clk, s_rst_ctl_rst) is
+      pattern_align_wdg : process(s_rx_clk, s_rst_ctl_rst_sync) is
       begin
         if s_rst_ctl_rst = '1' then
           s_reset_aligner <= '0';
@@ -454,9 +457,9 @@ begin
       end process;
 
       -- Follow recommended wa_patternalign control
-      pattern_align : process(s_rx_clk, s_rst_ctl_rst) is
+      pattern_align : process(s_rx_clk, s_rst_ctl_rst_sync) is
       begin
-        if s_rst_ctl_rst = '1' then
+        if s_rst_ctl_rst_sync = '1' then
           s_rx_std_wa_patternalign <= '0';
           s_scan_cnt               <= (others => '0');
         elsif rising_edge(s_rx_clk) then
@@ -484,9 +487,9 @@ begin
         end if; --Rising CLK
       end process;
 
-      patterndetect_extend : process(s_rx_clk, s_rst_ctl_rst) is -- generic!
+      patterndetect_extend : process(s_rx_clk, s_rst_ctl_rst_sync) is -- generic!
       begin
-        if s_rst_ctl_rst = '1' then
+        if s_rst_ctl_rst_sync = '1' then
           s_patterndetect_ready <= '0';
         elsif rising_edge(s_rx_clk) then
           if s_rst_ctl_rx_digitalreset(0) = '0' then
@@ -501,9 +504,9 @@ begin
 	end generate complex_wa;
 
   simple_wa : if g_use_simple_wa generate
-    simple_wa_mode : process(s_rx_clk, s_rst_ctl_rst) is
+    simple_wa_mode : process(s_rx_clk, s_rst_ctl_rst_sync) is
       begin
-        if s_rst_ctl_rst = '1' then
+        if s_rst_ctl_rst_sync = '1' then
           s_patterndetect_ready    <= '0';
           s_rx_std_wa_patternalign <= '0';
         elsif rising_edge(s_rx_clk) then
@@ -548,11 +551,13 @@ begin
       atx_pll : if g_use_atx_pll generate
         inst_atx_pll : wr_arria10_scu4_atx_pll
           port map (
-            pll_refclk0   => clk_phy_i,
-            pll_powerdown => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
-            pll_locked    => s_tx_pll_locked(0),
-            tx_serial_clk => s_tx_pll_serial_clk,
-            pll_cal_busy  => s_tx_pll_cal_busy
+           pll_refclk0       => clk_ref_i,
+           pll_powerdown     => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
+           pll_locked        => s_tx_pll_locked(0),
+           tx_serial_clk     => s_tx_pll_serial_clk,
+           pll_cal_busy      => s_tx_pll_cal_busy,
+           mcgb_rst          => s_rst_ctl_powerdown(0),
+           tx_bonding_clocks => s_tx_bonding_clocks
           );
         end generate atx_pll;
 
@@ -763,14 +768,14 @@ begin
     s_loop_en <= '0';
   end generate phy_ext_loop_no;
 
-  s_rst_ctl_rst_sync <= s_sfp_los_reset or s_ext_reset;
+  s_rst_ctl_rst <= s_sfp_los_reset or s_ext_reset;
 
   s_pll_select <= (others => '0');
 
   -- Additional outputs
   tx_ready_o     <= s_rst_ctl_tx_ready(0);
   rx_ready_o     <= s_rst_ctl_rx_ready(0);
-  s_phy_ready    <= s_rst_ctl_tx_ready(0) and s_rst_ctl_rx_ready(0) and s_patterndetect_ready;
+  s_phy_ready    <= s_rst_ctl_tx_ready(0) and s_rst_ctl_rx_ready(0); -- and s_patterndetect_ready;
   tx_disparity_o <= '0';
   tx_enc_err_o   <= '0';
   rx_enc_err_o   <= s_phy_rx_disperr(0) or s_phy_rx_errdetect(0);

@@ -7,7 +7,7 @@
    description=""
    tags="INTERNAL_COMPONENT=true"
    categories="System" />
- <parameter name="bonusData"><![CDATA[bonusData 
+ <parameter name="bonusData"><![CDATA[bonusData
 {
    element xcvr_reset_control_0
    {
@@ -45,6 +45,7 @@
    dir="end">
   <port name="clock" internal="clock" />
  </interface>
+ <interface name="pll_cal_busy" internal="xcvr_reset_control_0.pll_cal_busy" />
  <interface
    name="pll_locked"
    internal="xcvr_reset_control_0.pll_locked"
@@ -147,7 +148,7 @@
   <parameter name="REDUCED_SIM_TIME" value="1" />
   <parameter name="RX_ENABLE" value="1" />
   <parameter name="RX_PER_CHANNEL" value="0" />
-  <parameter name="SYNCHRONIZE_PLL_RESET" value="0" />
+  <parameter name="SYNCHRONIZE_PLL_RESET" value="1" />
   <parameter name="SYNCHRONIZE_RESET" value="1" />
   <parameter name="SYS_CLK_IN_MHZ" value="125" />
   <parameter name="TX_ENABLE" value="1" />
