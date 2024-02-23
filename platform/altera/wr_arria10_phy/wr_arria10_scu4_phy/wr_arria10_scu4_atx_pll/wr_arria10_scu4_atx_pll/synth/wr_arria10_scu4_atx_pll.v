@@ -4,14 +4,16 @@
 
 `timescale 1 ps / 1 ps
 module wr_arria10_scu4_atx_pll (
-		output wire  pll_cal_busy,  //  pll_cal_busy.pll_cal_busy
-		output wire  pll_locked,    //    pll_locked.pll_locked
-		input  wire  pll_powerdown, // pll_powerdown.pll_powerdown
-		input  wire  pll_refclk0,   //   pll_refclk0.clk
-		output wire  tx_serial_clk  // tx_serial_clk.clk
+		input  wire       mcgb_rst,          //          mcgb_rst.mcgb_rst
+		output wire       pll_cal_busy,      //      pll_cal_busy.pll_cal_busy
+		output wire       pll_locked,        //        pll_locked.pll_locked
+		input  wire       pll_powerdown,     //     pll_powerdown.pll_powerdown
+		input  wire       pll_refclk0,       //       pll_refclk0.clk
+		output wire [5:0] tx_bonding_clocks, // tx_bonding_clocks.clk
+		output wire       tx_serial_clk      //     tx_serial_clk.clk
 	);
 
-	wr_arria10_scu4_atx_pll_altera_xcvr_atx_pll_a10_181_n7tbbgq #(
+	wr_arria10_scu4_atx_pll_altera_xcvr_atx_pll_a10_181_amrwezy #(
 		.enable_pll_reconfig                                              (0),
 		.rcfg_jtag_enable                                                 (0),
 		.rcfg_separate_avmm_busy                                          (0),
@@ -34,7 +36,7 @@ module wr_arria10_scu4_atx_pll (
 		.atx_pll_silicon_rev                                              ("20nm2"),
 		.atx_pll_is_cascaded_pll                                          ("false"),
 		.atx_pll_cgb_div                                                  (1),
-		.atx_pll_pma_width                                                (64),
+		.atx_pll_pma_width                                                (10),
 		.atx_pll_cp_compensation_enable                                   ("true"),
 		.atx_pll_cp_current_setting                                       ("cp_current_setting26"),
 		.atx_pll_cp_testmode                                              ("cp_normal"),
@@ -50,7 +52,7 @@ module wr_arria10_scu4_atx_pll (
 		.atx_pll_output_regulator_supply                                  ("vreg1v_setting0"),
 		.atx_pll_overrange_voltage                                        ("over_setting0"),
 		.atx_pll_underrange_voltage                                       ("under_setting4"),
-		.atx_pll_fb_select                                                ("direct_fb"),
+		.atx_pll_fb_select                                                ("iqtxrxclk_fb"),
 		.atx_pll_d2a_voltage                                              ("d2a_setting_4"),
 		.atx_pll_dsm_mode                                                 ("dsm_mode_integer"),
 		.atx_pll_dsm_out_sel                                              ("pll_dsm_disable"),
@@ -91,14 +93,14 @@ module wr_arria10_scu4_atx_pll (
 		.hip_cal_en                                                       ("disable"),
 		.calibration_en                                                   ("enable"),
 		.enable_analog_resets                                             (0),
-		.atx_pll_bonding_mode                                             ("cpri_bonding"),
-		.enable_mcgb                                                      (0),
+		.atx_pll_bonding_mode                                             ("pll_bonding"),
+		.enable_mcgb                                                      (1),
 		.enable_mcgb_debug_ports_parameters                               (0),
 		.hssi_pma_cgb_master_prot_mode                                    ("basic_tx"),
 		.hssi_pma_cgb_master_silicon_rev                                  ("20nm2"),
 		.hssi_pma_cgb_master_x1_div_m_sel                                 ("divbypass"),
-		.hssi_pma_cgb_master_cgb_enable_iqtxrxclk                         ("disable_iqtxrxclk"),
-		.hssi_pma_cgb_master_ser_mode                                     ("sixty_four_bit"),
+		.hssi_pma_cgb_master_cgb_enable_iqtxrxclk                         ("enable_iqtxrxclk"),
+		.hssi_pma_cgb_master_ser_mode                                     ("ten_bit"),
 		.hssi_pma_cgb_master_datarate                                     ("1250000000 bps"),
 		.hssi_pma_cgb_master_cgb_power_down                               ("normal_cgb"),
 		.hssi_pma_cgb_master_observe_cgb_clocks                           ("observe_nothing"),
@@ -108,51 +110,51 @@ module wr_arria10_scu4_atx_pll (
 		.hssi_pma_cgb_master_input_select                                 ("lcpll_top"),
 		.hssi_pma_cgb_master_input_select_gen3                            ("unused")
 	) xcvr_atx_pll_a10_0 (
-		.pll_powerdown           (pll_powerdown),                        // pll_powerdown.pll_powerdown
-		.pll_refclk0             (pll_refclk0),                          //   pll_refclk0.clk
-		.tx_serial_clk           (tx_serial_clk),                        // tx_serial_clk.clk
-		.pll_locked              (pll_locked),                           //    pll_locked.pll_locked
-		.pll_cal_busy            (pll_cal_busy),                         //  pll_cal_busy.pll_cal_busy
-		.pll_refclk1             (1'b0),                                 //   (terminated)
-		.pll_refclk2             (1'b0),                                 //   (terminated)
-		.pll_refclk3             (1'b0),                                 //   (terminated)
-		.pll_refclk4             (1'b0),                                 //   (terminated)
-		.tx_serial_clk_gt        (),                                     //   (terminated)
-		.pll_pcie_clk            (),                                     //   (terminated)
-		.pll_cascade_clk         (),                                     //   (terminated)
-		.atx_to_fpll_cascade_clk (),                                     //   (terminated)
-		.reconfig_clk0           (1'b0),                                 //   (terminated)
-		.reconfig_reset0         (1'b0),                                 //   (terminated)
-		.reconfig_write0         (1'b0),                                 //   (terminated)
-		.reconfig_read0          (1'b0),                                 //   (terminated)
-		.reconfig_address0       (10'b0000000000),                       //   (terminated)
-		.reconfig_writedata0     (32'b00000000000000000000000000000000), //   (terminated)
-		.reconfig_readdata0      (),                                     //   (terminated)
-		.reconfig_waitrequest0   (),                                     //   (terminated)
-		.avmm_busy0              (),                                     //   (terminated)
-		.hip_cal_done            (),                                     //   (terminated)
-		.clklow                  (),                                     //   (terminated)
-		.fref                    (),                                     //   (terminated)
-		.overrange               (),                                     //   (terminated)
-		.underrange              (),                                     //   (terminated)
-		.mcgb_rst                (1'b0),                                 //   (terminated)
-		.mcgb_aux_clk0           (1'b0),                                 //   (terminated)
-		.mcgb_aux_clk1           (1'b0),                                 //   (terminated)
-		.mcgb_aux_clk2           (1'b0),                                 //   (terminated)
-		.tx_bonding_clocks       (),                                     //   (terminated)
-		.mcgb_serial_clk         (),                                     //   (terminated)
-		.pcie_sw                 (2'b00),                                //   (terminated)
-		.pcie_sw_done            (),                                     //   (terminated)
-		.reconfig_clk1           (1'b0),                                 //   (terminated)
-		.reconfig_reset1         (1'b0),                                 //   (terminated)
-		.reconfig_write1         (1'b0),                                 //   (terminated)
-		.reconfig_read1          (1'b0),                                 //   (terminated)
-		.reconfig_address1       (10'b0000000000),                       //   (terminated)
-		.reconfig_writedata1     (32'b00000000000000000000000000000000), //   (terminated)
-		.reconfig_readdata1      (),                                     //   (terminated)
-		.reconfig_waitrequest1   (),                                     //   (terminated)
-		.mcgb_cal_busy           (),                                     //   (terminated)
-		.mcgb_hip_cal_done       ()                                      //   (terminated)
+		.pll_powerdown           (pll_powerdown),                        //     pll_powerdown.pll_powerdown
+		.pll_refclk0             (pll_refclk0),                          //       pll_refclk0.clk
+		.tx_serial_clk           (tx_serial_clk),                        //     tx_serial_clk.clk
+		.pll_locked              (pll_locked),                           //        pll_locked.pll_locked
+		.pll_cal_busy            (pll_cal_busy),                         //      pll_cal_busy.pll_cal_busy
+		.mcgb_rst                (mcgb_rst),                             //          mcgb_rst.mcgb_rst
+		.tx_bonding_clocks       (tx_bonding_clocks),                    // tx_bonding_clocks.clk
+		.pll_refclk1             (1'b0),                                 //       (terminated)
+		.pll_refclk2             (1'b0),                                 //       (terminated)
+		.pll_refclk3             (1'b0),                                 //       (terminated)
+		.pll_refclk4             (1'b0),                                 //       (terminated)
+		.tx_serial_clk_gt        (),                                     //       (terminated)
+		.pll_pcie_clk            (),                                     //       (terminated)
+		.pll_cascade_clk         (),                                     //       (terminated)
+		.atx_to_fpll_cascade_clk (),                                     //       (terminated)
+		.reconfig_clk0           (1'b0),                                 //       (terminated)
+		.reconfig_reset0         (1'b0),                                 //       (terminated)
+		.reconfig_write0         (1'b0),                                 //       (terminated)
+		.reconfig_read0          (1'b0),                                 //       (terminated)
+		.reconfig_address0       (10'b0000000000),                       //       (terminated)
+		.reconfig_writedata0     (32'b00000000000000000000000000000000), //       (terminated)
+		.reconfig_readdata0      (),                                     //       (terminated)
+		.reconfig_waitrequest0   (),                                     //       (terminated)
+		.avmm_busy0              (),                                     //       (terminated)
+		.hip_cal_done            (),                                     //       (terminated)
+		.clklow                  (),                                     //       (terminated)
+		.fref                    (),                                     //       (terminated)
+		.overrange               (),                                     //       (terminated)
+		.underrange              (),                                     //       (terminated)
+		.mcgb_aux_clk0           (1'b0),                                 //       (terminated)
+		.mcgb_aux_clk1           (1'b0),                                 //       (terminated)
+		.mcgb_aux_clk2           (1'b0),                                 //       (terminated)
+		.mcgb_serial_clk         (),                                     //       (terminated)
+		.pcie_sw                 (2'b00),                                //       (terminated)
+		.pcie_sw_done            (),                                     //       (terminated)
+		.reconfig_clk1           (1'b0),                                 //       (terminated)
+		.reconfig_reset1         (1'b0),                                 //       (terminated)
+		.reconfig_write1         (1'b0),                                 //       (terminated)
+		.reconfig_read1          (1'b0),                                 //       (terminated)
+		.reconfig_address1       (10'b0000000000),                       //       (terminated)
+		.reconfig_writedata1     (32'b00000000000000000000000000000000), //       (terminated)
+		.reconfig_readdata1      (),                                     //       (terminated)
+		.reconfig_waitrequest1   (),                                     //       (terminated)
+		.mcgb_cal_busy           (),                                     //       (terminated)
+		.mcgb_hip_cal_done       ()                                      //       (terminated)
 	);
 
 endmodule

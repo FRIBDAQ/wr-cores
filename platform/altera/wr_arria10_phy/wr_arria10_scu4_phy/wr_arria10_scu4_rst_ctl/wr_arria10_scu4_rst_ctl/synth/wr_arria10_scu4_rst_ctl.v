@@ -28,7 +28,7 @@ module wr_arria10_scu4_rst_ctl (
 		.REDUCED_SIM_TIME      (1),
 		.TX_PLL_ENABLE         (1),
 		.T_PLL_POWERDOWN       (1000),
-		.SYNCHRONIZE_PLL_RESET (0),
+		.SYNCHRONIZE_PLL_RESET (1),
 		.TX_ENABLE             (1),
 		.TX_PER_CHANNEL        (0),
 		.T_TX_ANALOGRESET      (70000),

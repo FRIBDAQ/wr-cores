@@ -219,54 +219,7 @@ begin
           rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
           tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
           rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
-          --tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
           tx_bonding_clocks                     => s_tx_bonding_clocks,
-			 rx_cdr_refclk0                        => clk_phy_i,
-          tx_serial_data(0)                     => pad_txp_o,
-          rx_serial_data(0)                     => pad_rxp_i,
-          rx_is_lockedtoref                     => s_phy_rx_is_lockedtoref,
-          rx_is_lockedtodata                    => s_phy_rx_is_lockedtodata,
-          tx_coreclkin(0)                       => clk_ref_i,
-          rx_coreclkin(0)                       => clk_ref_i,
-          tx_clkout(0)                          => s_tx_clk,
-          rx_clkout(0)                          => s_rx_clk,
-          tx_parallel_data                      => s_tx_data,
-          rx_parallel_data                      => s_rx_data,
-          rx_datak                              => s_rx_data_k,
-          rx_disperr                            => s_phy_rx_disperr(0),
-          rx_errdetect                          => s_phy_rx_errdetect(0),
-          rx_patterndetect                      => s_patterndetect,
-          rx_runningdisp                        => s_rx_runningdisp,
-          rx_syncstatus                         => s_syncstatus,
-          tx_datak                              => s_tx_data_k,
-			 unused_rx_parallel_data               => open,
-          --rx_bitslip                            => '0',
-          --rx_std_wa_patternalign(0)             => '1',
-          reconfig_clk(0)                       => clk_phy_i,
-          reconfig_reset(0)                     => s_rst_ctl_rst_sync,
-          reconfig_write                        => s_reconfig_write,
-          reconfig_read                         => s_reconfig_read,
-          reconfig_address                      => s_reconfig_address,
-          reconfig_writedata                    => s_reconfig_writedata,
-          reconfig_readdata                     => s_reconfig_readdata,
-          reconfig_waitrequest                  => s_reconfig_waitrequest,
-			 tx_std_bitslipboundarysel             => "00000",
-          rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-          rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
-          rx_seriallpbken(0)                    => s_loop_en
-        );
-    end generate scu4_phy;
-
-    ftm4_phy: if (g_family = "Arria 10 GX FTM4") generate
-      inst_phy : wr_arria10_ftm4_det_phy
-        port map (
-          tx_analogreset(0)                     => s_rst_ctl_tx_analogreset(0),
-          tx_digitalreset(0)                    => s_rst_ctl_tx_digitalreset(0),
-          rx_analogreset(0)                     => s_rst_ctl_rx_analogreset(0),
-          rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
-          tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
-          rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
-          tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
           rx_cdr_refclk0                        => clk_phy_i,
           tx_serial_data(0)                     => pad_txp_o,
           rx_serial_data(0)                     => pad_rxp_i,
@@ -285,7 +238,7 @@ begin
           rx_runningdisp                        => s_rx_runningdisp,
           rx_syncstatus                         => s_syncstatus,
           tx_datak                              => s_tx_data_k,
-          rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
+          unused_rx_parallel_data               => open,
           reconfig_clk(0)                       => clk_phy_i,
           reconfig_reset(0)                     => s_rst_ctl_rst_sync,
           reconfig_write                        => s_reconfig_write,
@@ -294,8 +247,53 @@ begin
           reconfig_writedata                    => s_reconfig_writedata,
           reconfig_readdata                     => s_reconfig_readdata,
           reconfig_waitrequest                  => s_reconfig_waitrequest,
+          tx_std_bitslipboundarysel             => "00000",
           rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-       	  rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+          rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+          rx_seriallpbken(0)                    => s_loop_en
+        );
+    end generate scu4_phy;
+
+    ftm4_phy: if (g_family = "Arria 10 GX FTM4") generate
+      inst_phy : wr_arria10_ftm4_det_phy
+        port map (
+          tx_analogreset(0)                     => s_rst_ctl_tx_analogreset(0),
+          tx_digitalreset(0)                    => s_rst_ctl_tx_digitalreset(0),
+          rx_analogreset(0)                     => s_rst_ctl_rx_analogreset(0),
+          rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
+          tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
+          rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
+          tx_bonding_clocks                     => s_tx_bonding_clocks,
+          rx_cdr_refclk0                        => clk_phy_i,
+          tx_serial_data(0)                     => pad_txp_o,
+          rx_serial_data(0)                     => pad_rxp_i,
+          rx_is_lockedtoref                     => s_phy_rx_is_lockedtoref,
+          rx_is_lockedtodata                    => s_phy_rx_is_lockedtodata,
+          tx_coreclkin(0)                       => clk_ref_i,
+          rx_coreclkin(0)                       => clk_ref_i,
+          tx_clkout(0)                          => s_tx_clk,
+          rx_clkout(0)                          => s_rx_clk,
+          tx_parallel_data                      => s_tx_data,
+          rx_parallel_data                      => s_rx_data,
+          rx_datak                              => s_rx_data_k,
+          rx_disperr                            => s_phy_rx_disperr(0),
+          rx_errdetect                          => s_phy_rx_errdetect(0),
+          rx_patterndetect                      => s_patterndetect,
+          rx_runningdisp                        => s_rx_runningdisp,
+          rx_syncstatus                         => s_syncstatus,
+          tx_datak                              => s_tx_data_k,
+          unused_rx_parallel_data               => open,
+          reconfig_clk(0)                       => clk_phy_i,
+          reconfig_reset(0)                     => s_rst_ctl_rst_sync,
+          reconfig_write                        => s_reconfig_write,
+          reconfig_read                         => s_reconfig_read,
+          reconfig_address                      => s_reconfig_address,
+          reconfig_writedata                    => s_reconfig_writedata,
+          reconfig_readdata                     => s_reconfig_readdata,
+          reconfig_waitrequest                  => s_reconfig_waitrequest,
+          tx_std_bitslipboundarysel             => "00000",
+          rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
+          rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
           rx_seriallpbken(0)                    => s_loop_en
         );
     end generate ftm4_phy;
@@ -309,7 +307,7 @@ begin
             rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
             tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
             rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
-            tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
+            tx_bonding_clocks                     => s_tx_bonding_clocks,
             rx_cdr_refclk0                        => clk_phy_i,
             tx_serial_data(0)                     => pad_txp_o,
             rx_serial_data(0)                     => pad_rxp_i,
@@ -328,7 +326,7 @@ begin
             rx_runningdisp                        => s_rx_runningdisp,
             rx_syncstatus                         => s_syncstatus,
             tx_datak                              => s_tx_data_k,
-            rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
+            unused_rx_parallel_data               => open,
             reconfig_clk(0)                       => clk_phy_i,
             reconfig_reset(0)                     => s_rst_ctl_rst_sync,
             reconfig_write                        => s_reconfig_write,
@@ -337,8 +335,9 @@ begin
             reconfig_writedata                    => s_reconfig_writedata,
             reconfig_readdata                     => s_reconfig_readdata,
             reconfig_waitrequest                  => s_reconfig_waitrequest,
+            tx_std_bitslipboundarysel             => "00000",
             rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-         	  rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+            rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
             rx_seriallpbken(0)                    => s_loop_en
           );
       end generate pex10_phy;
@@ -352,7 +351,7 @@ begin
               rx_digitalreset(0)                    => s_rst_ctl_rx_digitalreset(0),
               tx_cal_busy(0)                        => s_phy_tx_cal_busy(0),
               rx_cal_busy(0)                        => s_phy_rx_cal_busy(0),
-              tx_serial_clk0(0)                     => s_tx_pll_serial_clk,
+              tx_bonding_clocks                     => s_tx_bonding_clocks,
               rx_cdr_refclk0                        => clk_phy_i,
               tx_serial_data(0)                     => pad_txp_o,
               rx_serial_data(0)                     => pad_rxp_i,
@@ -371,7 +370,7 @@ begin
               rx_runningdisp                        => s_rx_runningdisp,
               rx_syncstatus                         => s_syncstatus,
               tx_datak                              => s_tx_data_k,
-              rx_std_wa_patternalign(0)             => s_rx_std_wa_patternalign,
+              unused_rx_parallel_data               => open,
               reconfig_clk(0)                       => clk_phy_i,
               reconfig_reset(0)                     => s_rst_ctl_rst_sync,
               reconfig_write                        => s_reconfig_write,
@@ -380,8 +379,9 @@ begin
               reconfig_writedata                    => s_reconfig_writedata,
               reconfig_readdata                     => s_reconfig_readdata,
               reconfig_waitrequest                  => s_reconfig_waitrequest,
+              tx_std_bitslipboundarysel             => "00000",
               rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-           	  rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+              rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
               rx_seriallpbken(0)                    => s_loop_en
             );
         end generate ftm10_phy;
@@ -424,7 +424,7 @@ begin
           reconfig_readdata                     => s_reconfig_readdata,
           reconfig_waitrequest                  => s_reconfig_waitrequest,
           rx_std_bitslipboundarysel(3 downto 0) => rx_bitslide_o(3 downto 0),
-       	  rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
+          rx_std_bitslipboundarysel(4)          => s_rx_bs_dump,
           rx_seriallpbken(0)                    => s_loop_en
         );
     end generate e3p1_phy;
@@ -595,11 +595,13 @@ begin
       atx_pll : if g_use_atx_pll generate
         inst_atx_pll : wr_arria10_ftm4_atx_pll
           port map (
-            pll_refclk0   => clk_phy_i,
-            pll_powerdown => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
-            pll_locked    => s_tx_pll_locked(0),
-            tx_serial_clk => s_tx_pll_serial_clk,
-            pll_cal_busy  => s_tx_pll_cal_busy
+            pll_refclk0       => clk_ref_i,
+            pll_powerdown     => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
+            pll_locked        => s_tx_pll_locked(0),
+            tx_serial_clk     => s_tx_pll_serial_clk,
+            pll_cal_busy      => s_tx_pll_cal_busy,
+            mcgb_rst          => s_rst_ctl_powerdown(0),
+            tx_bonding_clocks => s_tx_bonding_clocks
           );
         end generate atx_pll;
 
@@ -637,11 +639,13 @@ begin
       atx_pll : if g_use_atx_pll generate
         inst_atx_pll : wr_arria10_pex10_atx_pll
           port map (
-            pll_refclk0   => clk_phy_i,
-            pll_powerdown => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
-            pll_locked    => s_tx_pll_locked(0),
-            tx_serial_clk => s_tx_pll_serial_clk,
-            pll_cal_busy  => s_tx_pll_cal_busy
+            pll_refclk0       => clk_ref_i,
+            pll_powerdown     => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
+            pll_locked        => s_tx_pll_locked(0),
+            tx_serial_clk     => s_tx_pll_serial_clk,
+            pll_cal_busy      => s_tx_pll_cal_busy,
+            mcgb_rst          => s_rst_ctl_powerdown(0),
+            tx_bonding_clocks => s_tx_bonding_clocks
           );
         end generate atx_pll;
 
@@ -679,11 +683,13 @@ begin
       atx_pll : if g_use_atx_pll generate
         inst_atx_pll : wr_arria10_ftm10_atx_pll
           port map (
-            pll_refclk0   => clk_phy_i,
-            pll_powerdown => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
-            pll_locked    => s_tx_pll_locked(0),
-            tx_serial_clk => s_tx_pll_serial_clk,
-            pll_cal_busy  => s_tx_pll_cal_busy
+            pll_refclk0       => clk_ref_i,
+            pll_powerdown     => s_rst_ctl_powerdown(0), -- Missing at Intel documentation -> Connection Guidelines for a CPRI PHY Design
+            pll_locked        => s_tx_pll_locked(0),
+            tx_serial_clk     => s_tx_pll_serial_clk,
+            pll_cal_busy      => s_tx_pll_cal_busy,
+            mcgb_rst          => s_rst_ctl_powerdown(0),
+            tx_bonding_clocks => s_tx_bonding_clocks
           );
         end generate atx_pll;
 

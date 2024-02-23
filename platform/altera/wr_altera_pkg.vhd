@@ -374,7 +374,6 @@ package wr_altera_pkg is
       rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
       rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
       rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-      rx_std_wa_patternalign    : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_std_wa_patternalign
       rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
       tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
       tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
@@ -383,11 +382,12 @@ package wr_altera_pkg is
       tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
       tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
       tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-      tx_serial_clk0            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
       tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
+      tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
       unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
       unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-      rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X')  -- rx_seriallpbken
+      rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
+      tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X')
     );
   end component wr_arria10_scu4_det_phy;
 
@@ -458,7 +458,6 @@ package wr_altera_pkg is
         rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
         rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
         rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-        rx_std_wa_patternalign    : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_std_wa_patternalign
         rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
         tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
         tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
@@ -467,11 +466,12 @@ package wr_altera_pkg is
         tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
         tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
         tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-        tx_serial_clk0            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
         tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
+        tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
         unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
         unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-        rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X')  -- rx_seriallpbken
+        rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
+        tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X')
       );
     end component wr_arria10_ftm4_det_phy;
 
@@ -542,7 +542,6 @@ package wr_altera_pkg is
         rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
         rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
         rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-        rx_std_wa_patternalign    : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_std_wa_patternalign
         rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
         tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
         tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
@@ -551,12 +550,13 @@ package wr_altera_pkg is
         tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
         tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
         tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-        tx_serial_clk0            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
         tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
+        tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
         unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
         unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-        rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X')  -- rx_seriallpbken
-      );
+        rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
+        tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X')
+        );
     end component wr_arria10_pex10_det_phy;
 
     component wr_arria10_pex10_transceiver is
@@ -626,7 +626,6 @@ package wr_altera_pkg is
           rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
           rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
           rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-          rx_std_wa_patternalign    : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_std_wa_patternalign
           rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
           tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
           tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
@@ -635,11 +634,12 @@ package wr_altera_pkg is
           tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
           tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
           tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-          tx_serial_clk0            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
           tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
+          tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
           unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
           unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-          rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X')  -- rx_seriallpbken
+          rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
+          tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X')
         );
       end component wr_arria10_ftm10_det_phy;
 
@@ -716,11 +716,13 @@ package wr_altera_pkg is
 
   component wr_arria10_scu4_atx_pll is
     port (
-      pll_refclk0   : in  std_logic := 'X';
-      pll_powerdown : in  std_logic := 'X';
-      pll_locked    : out std_logic;
-      tx_serial_clk : out std_logic;
-      pll_cal_busy  : out std_logic
+      pll_cal_busy      : out std_logic;                           -- pll_cal_busy
+      pll_locked        : out std_logic;                           -- pll_locked
+      pll_powerdown     : in  std_logic                    := 'X'; -- pll_powerdown
+      pll_refclk0       : in  std_logic                    := 'X'; -- clk
+      tx_serial_clk     : out std_logic;                           -- clk
+      mcgb_rst          : in  std_logic                    := 'X'; -- mcgb_rst
+      tx_bonding_clocks : out std_logic_vector(5 downto 0)         -- clk
     );
   end component wr_arria10_scu4_atx_pll;
 
@@ -736,11 +738,13 @@ package wr_altera_pkg is
 
   component wr_arria10_ftm4_atx_pll is
     port (
-      pll_refclk0   : in  std_logic := 'X';
-      pll_powerdown : in  std_logic := 'X';
-      pll_locked    : out std_logic;
-      tx_serial_clk : out std_logic;
-      pll_cal_busy  : out std_logic
+      pll_cal_busy      : out std_logic;                           -- pll_cal_busy
+      pll_locked        : out std_logic;                           -- pll_locked
+      pll_powerdown     : in  std_logic                    := 'X'; -- pll_powerdown
+      pll_refclk0       : in  std_logic                    := 'X'; -- clk
+      tx_serial_clk     : out std_logic;                           -- clk
+      mcgb_rst          : in  std_logic                    := 'X'; -- mcgb_rst
+      tx_bonding_clocks : out std_logic_vector(5 downto 0)         -- clk
     );
   end component wr_arria10_ftm4_atx_pll;
 
@@ -756,11 +760,13 @@ package wr_altera_pkg is
 
   component wr_arria10_pex10_atx_pll is
     port (
-      pll_refclk0   : in  std_logic := 'X';
-      pll_powerdown : in  std_logic := 'X';
-      pll_locked    : out std_logic;
-      tx_serial_clk : out std_logic;
-      pll_cal_busy  : out std_logic
+      pll_cal_busy      : out std_logic;                           -- pll_cal_busy
+      pll_locked        : out std_logic;                           -- pll_locked
+      pll_powerdown     : in  std_logic                    := 'X'; -- pll_powerdown
+      pll_refclk0       : in  std_logic                    := 'X'; -- clk
+      tx_serial_clk     : out std_logic;                           -- clk
+      mcgb_rst          : in  std_logic                    := 'X'; -- mcgb_rst
+      tx_bonding_clocks : out std_logic_vector(5 downto 0)         -- clk
     );
   end component wr_arria10_pex10_atx_pll;
 
@@ -776,11 +782,13 @@ package wr_altera_pkg is
 
   component wr_arria10_ftm10_atx_pll is
     port (
-      pll_refclk0   : in  std_logic := 'X';
-      pll_powerdown : in  std_logic := 'X';
-      pll_locked    : out std_logic;
-      tx_serial_clk : out std_logic;
-      pll_cal_busy  : out std_logic
+      pll_cal_busy      : out std_logic;                           -- pll_cal_busy
+      pll_locked        : out std_logic;                           -- pll_locked
+      pll_powerdown     : in  std_logic                    := 'X'; -- pll_powerdown
+      pll_refclk0       : in  std_logic                    := 'X'; -- clk
+      tx_serial_clk     : out std_logic;                           -- clk
+      mcgb_rst          : in  std_logic                    := 'X'; -- mcgb_rst
+      tx_bonding_clocks : out std_logic_vector(5 downto 0)         -- clk
     );
   end component wr_arria10_ftm10_atx_pll;
 
