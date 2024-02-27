@@ -1,5 +1,0 @@
-config wr_arria10_e3p1_atx_pll_cfg;
-		design wr_arria10_e3p1_atx_pll;
-		instance wr_arria10_e3p1_atx_pll.xcvr_atx_pll_a10_0 use wr_arria10_e3p1_atx_pll_altera_xcvr_atx_pll_a10_181.wr_arria10_e3p1_atx_pll_altera_xcvr_atx_pll_a10_181_z7ksuua;
-endconfig
-
