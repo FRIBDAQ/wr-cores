@@ -302,6 +302,12 @@ begin
       clk_sys_i            => clk_pll_62m5,
       clk_dmtd_i           => clk_pll_dmtd,
       clk_ref_i            => clk_pll_125m,
+      clk_10m_ext_i        => clk_10m_ext,           -- ML: connect directly external 10MHz input
+      clk_ext_mul_i        => ext_ref_mul,           -- ML: 62.MHz multipled from 10MHz using FPGA's PLL
+      clk_ext_mul_locked_i => ext_ref_mul_locked,    -- ML: connect inputs from FPGA's PLL that multiplies 10MHz to 62.5MHz
+      clk_ext_stopped_i    => ext_ref_mul_stopped,   -- ML: connect inputs from FPGA's PLL that multiplies 10MHz to 62.5MHz
+      clk_ext_rst_o        => ext_ref_rst,           -- ML: connect to FPGA's PPL
+      pps_ext_i            => pps_ext_i,             -- ML: connect direclty to external PPS input
       rst_n_i              => rst_62m5_n,
       dac_hpll_load_p1_o   => dac_hpll_load_p1,
       dac_hpll_data_o      => dac_hpll_data,
