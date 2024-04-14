@@ -58,14 +58,14 @@ entity xwrc_board_cute_a7 is
     g_verbose                   : boolean                        := TRUE;
     g_with_external_clock_input : boolean                        := TRUE;
     g_board_name                : string                         := "cute";
-    g_flash_secsz_kb            : integer                        := 256;        -- default for N25Q128
+    g_flash_secsz_kb            : integer                        := 64;        -- default for N25Q128
     g_flash_sdbfs_baddr         : integer                        := 16#760000#; -- default for N25Q128
     g_phys_uart                 : boolean                        := TRUE;
     g_virtual_uart              : boolean                        := TRUE;
     g_aux_clks                  : integer                        := 0;
     g_ep_rxbuf_size             : integer                        := 1024;
     g_tx_runt_padding           : boolean                        := TRUE;
-    g_dpram_initf               : string                         := "wrc_phy16.bram";
+    g_dpram_initf               : string                         := "";
     g_dpram_size                : integer                        := 131072/4;
     g_interface_mode            : t_wishbone_interface_mode      := PIPELINED;
     g_address_granularity       : t_wishbone_address_granularity := BYTE;
@@ -107,15 +107,20 @@ entity xwrc_board_cute_a7 is
     clk_aux_i : in std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
 
     -- External 10 MHz reference (cesium, GPSDO, etc.), used in Grandmaster mode
-    clk_ext_i            : in std_logic := '0';
+    clk_ext_i : in std_logic := '0';
+
     clk_ext_mul_i        : in  std_logic := '0';
     clk_ext_mul_locked_i : in  std_logic := '1';
     clk_ext_stopped_i    : in  std_logic := '0';
     clk_ext_rst_o        : out std_logic;
 
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
-    pps_i   : in std_logic := '0';
+    pps_ext_i : in std_logic := '0';
     ppsin_term_o : out std_logic;
+    todin_term_o          : out   std_logic;
+    ext_tai_valid_p_i     : in    std_logic;
+    ext_tai_i             : in    std_logic_vector(39 downto 0);
+    ext_tai_ready_i       : in    std_logic;
     rst_n_i : in std_logic;
 
     ---------------------------------------------------------------------------
@@ -129,10 +134,10 @@ entity xwrc_board_cute_a7 is
     ---------------------------------------------------------------------------
     -- PHY I/f
     ---------------------------------------------------------------------------
-    phy8_o  : out t_phy_8bits_from_wrc_array(g_num_phys-1 downto 0);
-    phy8_i  : in  t_phy_8bits_to_wrc_array(g_num_phys-1 downto 0):=(others=>c_dummy_phy8_to_wrc);
-    phy16_o : out t_phy_16bits_from_wrc_array(g_num_phys-1 downto 0);
-    phy16_i : in  t_phy_16bits_to_wrc_array(g_num_phys-1 downto 0):=(others=>c_dummy_phy16_to_wrc);
+    phy8_o    : out t_phy_8bits_from_wrc_array(g_num_phys-1 downto 0);
+    phy8_i    : in  t_phy_8bits_to_wrc_array(g_num_phys-1 downto 0):=(others=>c_dummy_phy8_to_wrc);
+    phy16_o   : out t_phy_16bits_from_wrc_array(g_num_phys-1 downto 0);
+    phy16_i   : in  t_phy_16bits_to_wrc_array(g_num_phys-1 downto 0):=(others=>c_dummy_phy16_to_wrc);
 
     ---------------------------------------------------------------------------
     -- I2C EEPROM
@@ -145,12 +150,12 @@ entity xwrc_board_cute_a7 is
     ---------------------------------------------------------------------------
     -- SFP management info
     ---------------------------------------------------------------------------
-    sfp_scl_o : out std_logic_vector(g_num_phys-1 downto 0);
-    sfp_scl_i : in  std_logic_vector(g_num_phys-1 downto 0):=(others=> '1');
-    sfp_sda_o : out std_logic_vector(g_num_phys-1 downto 0);
-    sfp_sda_i : in  std_logic_vector(g_num_phys-1 downto 0):=(others=> '1');
-    sfp_det_i : in  std_logic_vector(g_num_phys-1 downto 0):=(others=> '1');
-    -- Flash
+    sfp_scl_o  : out std_logic_vector(g_num_phys-1 downto 0);
+    sfp_scl_i  : in  std_logic_vector(g_num_phys-1 downto 0):= (others=>'1');
+    sfp_sda_o  : out std_logic_vector(g_num_phys-1 downto 0);
+    sfp_sda_i  : in  std_logic_vector(g_num_phys-1 downto 0):= (others=>'1');
+    sfp_det_i  : in  std_logic_vector(g_num_phys-1 downto 0):= (others=>'1');
+
     flash_spi_sclk_o : out std_logic;
     flash_spi_ncs_o  : out std_logic;
     flash_spi_mosi_o : out std_logic;
@@ -205,6 +210,11 @@ entity xwrc_board_cute_a7 is
     wrf_src_i : in  t_wrf_source_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_src_in);
     wrf_snk_o : out t_wrf_sink_out_array(g_num_phys-1 downto 0);
     wrf_snk_i : in  t_wrf_sink_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_snk_in);
+
+    eb_wrf_src_o : out t_wrf_source_out_array(g_num_phys-1 downto 0);
+    eb_wrf_src_i : in  t_wrf_source_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_src_in);
+    eb_wrf_snk_o : out t_wrf_sink_out_array(g_num_phys-1 downto 0);
+    eb_wrf_snk_i : in  t_wrf_sink_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_snk_in);
 
     ---------------------------------------------------------------------------
     -- Etherbone WB master interface (when g_fabric_iface = ETHERBONE)
@@ -262,10 +272,12 @@ entity xwrc_board_cute_a7 is
     btn2_i          : in  std_logic := '1';
     -- 1PPS output
     pps_csync_o     : out std_logic;
-    pps_o           : out std_logic;
+    pps_valid_o     : out std_logic;
+    pps_unmask_o    : out std_logic;
+    pps_p_o         : out std_logic;
     pps_led_o       : out std_logic;
-    sync_data_p_o   : out std_logic;
-    sync_data_n_o   : out std_logic;    
+    sync_clk_10m_o_p: out std_logic;
+    sync_clk_10m_o_n: out std_logic;    
     -- Link ok indication
     link_ok_o       : out std_logic_vector(g_num_phys-1 downto 0)
     );
@@ -282,7 +294,7 @@ architecture struct of xwrc_board_cute_a7 is
       g_mtu            : natural := 1500);
     port(
       clk_i       : in  std_logic;
-      nRst_i      : in  std_logic;
+      nrst_i      : in  std_logic;
       snk_i       : in  t_wrf_sink_in;
       snk_o       : out t_wrf_sink_out;
       src_o       : out t_wrf_source_out;
@@ -311,9 +323,9 @@ architecture struct of xwrc_board_cute_a7 is
 
   -- WR fabric interface
   signal wrf_src_out : t_wrf_source_out_array(g_num_phys-1 downto 0);
-  signal wrf_src_in  : t_wrf_source_in_array(g_num_phys-1 downto 0);
+  signal wrf_src_in  : t_wrf_source_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_src_in);
   signal wrf_snk_out : t_wrf_sink_out_array(g_num_phys-1 downto 0);
-  signal wrf_snk_in  : t_wrf_sink_in_array(g_num_phys-1 downto 0);
+  signal wrf_snk_in  : t_wrf_sink_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_snk_in);
 
   -- Aux WB interface
   signal aux_master_out : t_wishbone_master_out;
@@ -349,6 +361,10 @@ architecture struct of xwrc_board_cute_a7 is
 
   -- link state
   signal link_ok      : std_logic_vector(g_num_phys-1 downto 0);
+
+  signal pps_valid     : std_logic;
+  signal pps_csync     : std_logic;
+  signal pps_unmask    : std_logic;
 
   signal flash_spi_sclk : std_logic;
 
@@ -412,8 +428,12 @@ begin  -- architecture struct
       clk_ext_mul_locked_i => clk_ext_mul_locked_i,
       clk_ext_stopped_i    => clk_ext_stopped_i,
       clk_ext_rst_o        => clk_ext_rst_o,
-      pps_ext_i            => pps_i,
+      pps_ext_i            => pps_ext_i,
       ppsin_term_o         => ppsin_term_o,
+      todin_term_o         => todin_term_o,
+      ext_tai_valid_p_i    => ext_tai_valid_p_i,
+      ext_tai_i            => ext_tai_i,
+      ext_tai_ready_i      => ext_tai_ready_i,
       rst_n_i              => rst_n_i,
       dac_hpll_load_p1_o   => dac_hpll_load_p1_o,
       dac_hpll_data_o      => dac_hpll_data_o,
@@ -488,16 +508,21 @@ begin  -- architecture struct
       tm_time_valid_o      => tm_time_valid,
       tm_tai_o             => tm_tai,
       tm_cycles_o          => tm_cycles,
-      pps_csync_o          => pps_csync_o,
-      pps_p_o              => pps_o,
+      pps_csync_o          => pps_csync,
+      pps_valid_o          => pps_valid,
+      pps_unmask_o         => pps_unmask,
+      pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
-      sync_data_p_o        => sync_data_p_o,
-      sync_data_n_o        => sync_data_n_o,
+      sync_clk_10m_o_p     => sync_clk_10m_o_p,
+      sync_clk_10m_o_n     => sync_clk_10m_o_n,
       rst_aux_n_o          => aux_rst_n,
       aux_diag_i           => aux_diag_in,
       aux_diag_o           => aux_diag_out,
       link_ok_o            => link_ok);
 
+  pps_csync_o     <= pps_csync;
+  pps_valid_o     <= pps_valid;
+  pps_unmask_o    <= pps_unmask;
   rst_aux_n_o     <= aux_rst_n;
   link_ok_o       <= link_ok;
   tm_time_valid_o <= tm_time_valid;
@@ -525,10 +550,10 @@ begin  -- architecture struct
 
     cmp_eb_ethernet_slave : eb_ethernet_slave
       generic map (
-        g_sdb_address => x"0000000000020e00")
+        g_sdb_address => x"0000000000030000")
       port map (
         clk_i       => clk_sys_i,
-        nRst_i      => aux_rst_n,
+        nrst_i      => aux_rst_n,
         src_o       => eb_wrf_snk_in(0),
         src_i       => eb_wrf_snk_out(0),
         snk_o       => eb_wrf_src_in(0),
@@ -561,6 +586,12 @@ begin  -- architecture struct
 
     wrf_src_in <= wrf_src_i;
     wrf_snk_in <= wrf_snk_i;
+
+    eb_wrf_src_o <= eb_wrf_src_out;
+    eb_wrf_snk_o <= eb_wrf_snk_out;
+
+    eb_wrf_src_in <= eb_wrf_src_i;
+    eb_wrf_snk_in <= eb_wrf_snk_i;
 
     aux_master_in <= aux_master_i;
     aux_master_o  <= aux_master_out;

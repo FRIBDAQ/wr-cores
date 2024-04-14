@@ -71,10 +71,17 @@ entity xwr_pps_gen is
 
     -- Single-pulse PPS output for synchronizing endpoints to
     pps_csync_o : out std_logic;
+    pps_valid_int_o : out std_logic;
     pps_out_o   : out std_logic;
     pps_led_o   : out std_logic;
 
-    pps_valid_o : out std_logic;
+    pps_valid_o  : out std_logic;
+    pps_unmask_o : out std_logic;
+
+    todin_term_o         : out std_logic;
+    ext_tai_valid_p_i    : in std_logic := '0';
+    ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+    ext_tai_ready_i      : in std_logic := '0';
 
     tm_utc_o        : out std_logic_vector(39 downto 0);
     tm_cycles_o     : out std_logic_vector(27 downto 0);
@@ -98,7 +105,7 @@ architecture behavioral of xwr_pps_gen is
       clk_sys_i       : in  std_logic;
       rst_ref_n_i     : in  std_logic;
       rst_sys_n_i     : in  std_logic;
-      wb_adr_i        : in  std_logic_vector(4 downto 0);
+      wb_adr_i        : in  std_logic_vector(5 downto 0);
       wb_dat_i        : in  std_logic_vector(31 downto 0);
       wb_dat_o        : out std_logic_vector(31 downto 0);
       wb_cyc_i        : in  std_logic;
@@ -114,6 +121,12 @@ architecture behavioral of xwr_pps_gen is
       pps_out_o       : out std_logic;
       pps_led_o       : out std_logic;
       pps_valid_o     : out std_logic;
+      pps_valid_int_o : out std_logic;
+      pps_unmask_o    : out std_logic;
+      todin_term_o       : out std_logic;
+      ext_tai_valid_p_i  : in std_logic := '0';
+      ext_tai_i          : in std_logic_vector(39 downto 0) := (others => '0');
+      ext_tai_ready_i    : in std_logic := '0';
       tm_utc_o        : out std_logic_vector(39 downto 0);
       tm_cycles_o     : out std_logic_vector(27 downto 0);
       tm_time_valid_o : out std_logic
@@ -136,7 +149,7 @@ begin  -- behavioral
       clk_sys_i       => clk_sys_i,
       rst_ref_n_i     => rst_ref_n_i,
       rst_sys_n_i     => rst_sys_n_i,
-      wb_adr_i        => slave_i.adr(4 downto 0),
+      wb_adr_i        => slave_i.adr(5 downto 0),
       wb_dat_i        => slave_i.dat,
       wb_dat_o        => slave_o.dat,
       wb_cyc_i        => slave_i.cyc,
@@ -149,9 +162,15 @@ begin  -- behavioral
       pps_in_i        => pps_in_i,
       ppsin_term_o    => ppsin_term_o,
       pps_csync_o     => pps_csync_o,
+      pps_valid_int_o => pps_valid_int_o,
       pps_out_o       => pps_out_o,
       pps_led_o       => pps_led_o,
       pps_valid_o     => pps_valid_o,
+      pps_unmask_o    => pps_unmask_o,
+      todin_term_o      => todin_term_o,
+      ext_tai_valid_p_i => ext_tai_valid_p_i,
+      ext_tai_i         => ext_tai_i,
+      ext_tai_ready_i   => ext_tai_ready_i,
       tm_utc_o        => tm_utc_o,
       tm_cycles_o     => tm_cycles_o,
       tm_time_valid_o => tm_time_valid_o

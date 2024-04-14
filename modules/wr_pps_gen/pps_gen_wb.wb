@@ -232,5 +232,69 @@ peripheral {
         access_bus = READ_WRITE;
         access_dev = READ_ONLY;
       };
+
+      field {
+        name = "Enable TOD IN 5OOhm termination";
+        description = "write 1: enable 50ohm termination for TOD input \
+                       write 0: disable 50ohm termination for TOD input \
+                       read  1: 50ohm termination for TOD input enabled \
+                       read  0: 50ohm termination for TOD input disabled";
+        prefix = "TOD_IN_TERM";
+        type = BIT;
+        access_bus = READ_WRITE;
+        access_dev = READ_ONLY;
+      };
+
+      field {
+         name = "Set UTC counter to External UTC Input";
+         description = "write 1: enable UTC counter to sync to External UTC Input.\
+                        write 0: disable UTC counter to sync to External UTC Input";
+         prefix = "EXT_TAI_SYNC";
+         type = BIT;
+         access_bus = READ_WRITE;
+         access_dev = READ_ONLY;
+      };
+
+      field {
+         name = "External UTC Status";
+         description = "read 1: External UTC is ready.\
+                        read 0: External UTC is not ready";
+         prefix = "EXT_TAI_READY";
+         type = BIT;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+      };
    };
+
+   reg {
+      name = "EXT UTC Counter register (least-significant part)";
+      description = "Lower 32 bits of current UTC time";
+
+      prefix = "EXT_CNTR_UTCLO";
+      field {
+         name = "UTC Counter";
+         type = SLV;
+         size = 32;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+         clock = "refclk_i";
+      };
+   };
+
+   reg {
+      name = "EXT UTC Counter register (most-significant part)";
+      description = "Highest 8 bits of current UTC time";
+
+      prefix = "EXT_CNTR_UTCHI";
+      field {
+         name = "UTC Counter";
+         type = SLV;
+         size = 8;
+         access_bus = READ_ONLY;
+         access_dev = WRITE_ONLY;
+         clock = "refclk_i";
+      };
+   };
+
+   
 };

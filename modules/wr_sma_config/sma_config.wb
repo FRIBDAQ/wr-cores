@@ -1,0 +1,175 @@
+-- -*- Mode: LUA; tab-width: 2 -*-
+-- CUTE-WR-A7 SMA Output Control
+--
+-- Use wbgen2 to generate code, documentation and more.
+-- wbgen2 is available at:
+-- http://www.ohwr.org/projects/wishbone-gen
+--
+
+peripheral {
+  name = "WR aux sma output generation module";
+  description = "The module allows gerating WR-aligned signal including PPS/mPPS/\
+    UTC Coding and other signal of a given frequency, duty cycle and phase. \
+    The output signals of two SMA interfaces can be configured. \
+    The fine delay chip can also be configured via this module.\
+    The  By default it is configured to generate 10MHz signal and PPS.";
+
+  hdl_entity = "sma_config_wb";
+  prefix = "sma_config";
+
+  reg {
+    name = "SMA0 MUX";
+    prefix = "SMA0";
+
+    field {
+      name = "SMA0 Signal Selection";
+      description = "Select the signal of SMA0.\
+                     0: UTC Coding\
+                     1: Customed Frequency.";
+      prefix = "MUX";
+      size = 8;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+
+  };
+
+  reg {
+    name = "SMA1 MUX";
+    prefix = "SMA1";
+    field {
+      name = "SMA1 Signal Selection";
+      description = "Select the signal of SMA1.\
+                     0: UTC Coding\
+                     1: Customed Frequency.";
+      prefix = "MUX";
+      size = 8;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+
+  };
+
+  reg {
+    name = "Customed Signal Period Register : High State";
+    prefix = "CUS_PRH";
+
+    field {
+      name = "High state length";
+      description = "Defined as a number of 2ns cycles.";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "Customed Signal Period Register : Low State";
+    prefix = "CUS_PRL";
+
+    field {
+      name = "Low state width";
+      description = "Defined as a number of 2ns cycles.";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "Customed Signal Coarse Shift Register";
+    prefix = "CUS_CSR";
+    
+    field {
+      name = "Coarse shift value in 2ns cycles.";
+      description = "MUST be not larger than the required clock period";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "PPS Period High Register";
+    prefix = "PPS_PRH";
+
+    field {
+      name = "High state width";
+      description = "Defined as a number of 2ns cycles.";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "PPS Coarse Shift Register";
+    prefix = "PPS_CSR";
+    
+    field {
+      name = "Coarse shift value";
+      description = "Defined as a number of 2ns cycles.";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "UTC Coding Coarse Shift Register";
+    prefix = "UTC_CSR";
+    
+    field {
+      name = "Coarse shift value";
+      description = "Defined as a number of 2ns cycles.";
+      size = 29;
+      type = SLV;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "SMA0 Fine Delays Register";
+    prefix = "SMA0_FDLY";
+    field {
+      name = "fine delay counter";
+      description = "delay chip value to SMA0 signals";
+      type = SLV;
+      size = 9;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+  reg {
+    name = "SMA1 Fine Delays Register";
+    prefix = "SMA1_FDLY";
+    field {
+      name = "fine delay counter";
+      description = "delay chip value to SMA1 signals";
+      type = SLV;
+      size = 9;
+      access_bus = READ_WRITE;
+      access_dev = READ_WRITE;
+      load = LOAD_EXT;
+    };
+  };
+
+}

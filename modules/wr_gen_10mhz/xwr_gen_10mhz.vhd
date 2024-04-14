@@ -59,8 +59,8 @@ port (
     pps_i        : in std_logic;
     pps_valid_i  : in std_logic;
 
-    sync_data_p_o  : out std_logic;
-    sync_data_n_o  : out std_logic;
+    sync_clk_10m_o_p  : out std_logic;
+    sync_clk_10m_o_n  : out std_logic;
 
     -- can be wired to IODelay component in top module for precise 1-PPS
     -- alignment with clk_aux
@@ -310,8 +310,8 @@ begin
         IO_RESET             => rst_oserdes
     );
 
-    sync_data_p_o  <= sd_out_p(0);
-    sync_data_n_o  <= sd_out_n(0);
+    sync_clk_10m_o_p  <= sd_out_p(0);
+    sync_clk_10m_o_n  <= sd_out_n(0);
     wb_regs_in.pps_ior_tap_cur_i  <= ppsdel_tap_i;
     ppsdel_tap_o                  <= wb_regs_out.pps_ior_tap_set_o;
     ppsdel_tap_wr_o               <= wb_regs_out.pps_ior_tap_set_wr_o;

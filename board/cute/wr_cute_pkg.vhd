@@ -186,7 +186,7 @@ package wr_cute_pkg is
       addr_first  => x"0000000000000000",
       addr_last   => x"00000000000000ff",
       product     => (
-      vendor_id => x"0000000000001103",  -- thu
+      vendor_id => x"0000000000746875",  -- thu
       device_id => x"c0413599",
       version   => x"00000001",
       date      => x"20160424",

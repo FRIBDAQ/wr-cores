@@ -193,6 +193,8 @@ architecture rtl of xwrc_platform_xilinx is
   signal phy16_out           : t_phy_16bits_to_wrc_array(2-1 downto 0);
   signal phy16_in            : t_phy_16bits_from_wrc_array(2-1 downto 0):=(others=>c_dummy_phy16_from_wrc);
   signal clk_sys             : std_logic;
+  signal clk_sys_out         : std_logic;
+  signal pll_sys_locked      : std_logic;
 
 begin  -- architecture rtl
 
@@ -217,7 +219,8 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
 
   -- active high async reset for PLLs
-  pll_arst <= not areset_n_i;
+  pll_arst   <= not areset_n_i;
+  clk_sys_o  <= clk_sys_out;
 
   gen_default_plls : if (g_use_default_plls = TRUE) generate
 
@@ -233,9 +236,7 @@ begin  -- architecture rtl
     gen_spartan6_default_plls : if (g_fpga_family = "spartan6") generate
 
       signal clk_20m          : std_logic;
-      signal clk_sys_out      : std_logic;
       signal clk_sys_fb       : std_logic;
-      signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic;
       signal clk_dmtd_fb      : std_logic;
       signal pll_dmtd_locked  : std_logic;
@@ -332,11 +333,10 @@ begin  -- architecture rtl
           I => clk_pllref_buf_int2);
 
       clk_20m_o        <= clk_20m_vcxo_buf;
-      clk_sys_o        <= clk_sys_out;
-      clk_ref_o(0)     <= clk_pllref_buf;
+      clk_ref_o        <= (others=>clk_pllref_buf);
+      clk_ref_locked_o <= (others=>'1');
       pll_locked_o     <= pll_sys_locked and pll_dmtd_locked;
       pll_aux_locked_o <= pll_sys_locked;
-      clk_ref_locked_o <= (others=>'1');
 
       -- DMTD PLL
       cmp_dmtd_clk_pll : PLL_BASE
@@ -377,7 +377,7 @@ begin  -- architecture rtl
         signal clk_ext_fbi  : std_logic;
         signal clk_ext_fbo  : std_logic;
         signal clk_ext_buf  : std_logic;
-        signal clk_ext      : std_logic;
+        signal clk_ext_mul  : std_logic;
         signal clk_ext_stat : std_logic_vector(7 downto 0);
         signal pll_ext_rst  : std_logic;
 
@@ -402,7 +402,7 @@ begin  -- architecture rtl
            CLKFB    => clk_ext_fbi,
            -- Output clocks
            CLK0     => clk_ext_fbo,
-           CLKFX    => clk_ext,
+           CLKFX    => clk_ext_mul,
            -- Ports for dynamic phase shift
            PSCLK    => '0',
            PSEN     => '0',
@@ -435,7 +435,7 @@ begin  -- architecture rtl
         cmp_clk_ext_buf_o : BUFG
           port map
           (O => clk_ext_mul_o,
-           I => clk_ext);
+           I => clk_ext_mul);
 
         cmp_extend_ext_reset : gc_extend_pulse
           generic map (
@@ -455,9 +455,7 @@ begin  -- architecture rtl
     ---------------------------------------------------------------------------
     gen_virtex5_default_plls : if (g_fpga_family = "virtex5") generate
 
-      signal clk_sys_out      : std_logic;
       signal clk_sys_fb       : std_logic;
-      signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic;
       signal clk_dmtd_fb      : std_logic;
       signal pll_dmtd_locked  : std_logic;
@@ -499,10 +497,9 @@ begin  -- architecture rtl
           O => clk_sys_out,
           I => clk_sys);
 
-      clk_sys_o      <= clk_sys_out;
-      clk_ref_o(0)   <= clk_pllref_buf;
-      pll_locked_o   <= pll_sys_locked and pll_dmtd_locked;
+      clk_ref_o(0)     <= clk_pllref_buf;
       clk_ref_locked_o <= (others=>'1');
+      pll_locked_o     <= pll_sys_locked and pll_dmtd_locked;
 
       -- DMTD PLL
       cmp_dmtd_clk_pll : PLL_BASE
@@ -545,9 +542,7 @@ begin  -- architecture rtl
     ---------------------------------------------------------------------------
     gen_kintex7_artix7_default_plls : if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
 
-      signal clk_sys_out      : std_logic;
       signal clk_sys_fb       : std_logic;
-      signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic;
       signal clk_dmtd_fb      : std_logic;
       signal pll_dmtd_locked  : std_logic;
@@ -608,7 +603,6 @@ begin  -- architecture rtl
         I => clk_sys,
         O => clk_sys_out);
 
-      clk_sys_o      <= clk_sys_out;
       pll_locked_o   <= pll_dmtd_locked and pll_sys_locked;
 
       gen_kintex7_artix7_dmtd_pll : if (g_direct_dmtd = FALSE) generate
@@ -696,119 +690,19 @@ begin  -- architecture rtl
           O => clk_dmtd_o,
           I => clk_dmtd);
 
-      -- External 10MHz reference PLL for Kintex7 and Artix7
-      gen_kintex7_artix7_ext_ref_pll : if (g_with_external_clock_input = TRUE) generate
-        
-        signal clk_ext_fbi : std_logic;
-        signal clk_ext_fbo : std_logic;
-        signal clk_ext_buf : std_logic;
-        signal clk_ext_mul : std_logic;
-        signal pll_ext_rst : std_logic;
-
-      begin
-        mmcm_adv_inst : MMCME2_ADV
-          generic map (
-            BANDWIDTH            => "OPTIMIZED",
-            CLKOUT4_CASCADE      => FALSE,
-            COMPENSATION         => "ZHOLD",
-            STARTUP_WAIT         => FALSE,
-            DIVCLK_DIVIDE        => 1,
-            CLKFBOUT_MULT_F      => 62.500,
-            CLKFBOUT_PHASE       => 0.000,
-            CLKFBOUT_USE_FINE_PS => FALSE,
-            CLKOUT0_DIVIDE_F     => 10.000,
-            CLKOUT0_PHASE        => 0.000,
-            CLKOUT0_DUTY_CYCLE   => 0.500,
-            CLKOUT0_USE_FINE_PS  => FALSE,
-            CLKIN1_PERIOD        => 100.000,
-            REF_JITTER1          => 0.005)
-          port map (
-            -- Output clocks
-            CLKFBOUT  => clk_ext_fbo,
-            CLKOUT0   => clk_ext_mul,
-            -- Input clock control
-            CLKFBIN   => clk_ext_fbi,
-            CLKIN1    => clk_ext_buf,
-            CLKIN2    => '0',
-            -- Tied to always select the primary input clock
-            CLKINSEL  => '1',
-            -- Ports for dynamic reconfiguration
-            DADDR     => (others => '0'),
-            DCLK      => '0',
-            DEN       => '0',
-            DI        => (others => '0'),
-            DO        => open,
-            DRDY      => open,
-            DWE       => '0',
-            -- Ports for dynamic phase shift
-            PSCLK     => '0',
-            PSEN      => '0',
-            PSINCDEC  => '0',
-            PSDONE    => open, -- Other control and status signals
-            LOCKED    => clk_ext_mul_locked_o,
-            CLKINSTOPPED => clk_ext_mul_stopped_o,
-            CLKFBSTOPPED => open,
-            PWRDWN   => '0',
-            RST      => pll_ext_rst);
-
-        -- External reference input buffer
-        cmp_clk_ext_buf_i : BUFG
-          port map (
-            O => clk_ext_buf,
-            I => clk_ext_i);
-
-        clk_ext_o <= clk_ext_buf;
-
-        -- External reference feedback buffer
-        cmp_clk_ext_buf_fb : BUFG
-          port map (
-            O => clk_ext_fbi,
-            I => clk_ext_fbo);
-
-        -- External reference output buffer
-        cmp_clk_ext_buf_o : BUFG
-          port map (
-            O => clk_ext_mul_o,
-            I => clk_ext_mul);
-
-        cmp_extend_ext_reset : gc_extend_pulse
-          generic map (
-            g_width => 1000)
-          port map (
-            clk_i      => clk_sys_out,
-            rst_n_i    => pll_sys_locked,
-            pulse_i    => clk_ext_rst_i,
-            extended_o => pll_ext_rst);
-
-      end generate gen_kintex7_artix7_ext_ref_pll;
-
     end generate gen_kintex7_artix7_default_plls;
-
-    ---------------------------------------------------------------------------
-    
-    gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
-      clk_ext_o             <= '0';
-      clk_ext_mul_o         <= '0';
-      clk_ext_mul_locked_o  <= '1';
-      clk_ext_mul_stopped_o <= '1';
-    end generate gen_no_ext_ref_pll;
 
   end generate gen_default_plls;
 
   -- If external PLLs are used, just copy clock inputs to outputs
   gen_custom_plls : if (g_use_default_plls = FALSE) generate
 
-    clk_sys_o        <= clk_sys_i;
+    clk_sys_out      <= clk_sys_i;
     clk_dmtd_o       <= clk_dmtd_i;
-    -- clk_ref_o(0)     <= clk_ref_i;
     clk_pllref_buf   <= clk_ref_i;
 
+    pll_sys_locked   <= clk_sys_locked_i;
     pll_locked_o     <= clk_sys_locked_i and clk_dmtd_locked_i;
-    clk_ref_locked_o <= (others=>clk_ref_locked_i);
-
-    clk_ext_mul_o         <= clk_ext_mul_i;
-    clk_ext_mul_locked_o  <= clk_ext_locked_i;
-    clk_ext_mul_stopped_o <= clk_ext_stopped_i;
 
   end generate gen_custom_plls;
 
@@ -821,7 +715,6 @@ begin  -- architecture rtl
 
   gen_phy_spartan6 : if(g_fpga_family = "spartan6") generate
 
-    signal clk_gtp_buf   : std_logic;
     signal clk_gtp       : std_logic_vector(2-1 downto 0);
 
     signal pad_txn_out : std_logic_vector(2-1 downto 0);
@@ -831,16 +724,25 @@ begin  -- architecture rtl
 
   begin
 
-    cmp_ibufgds_gtp : IBUFGDS
+    cmp_ibufgds_gtp0 : IBUFGDS
       generic map (
         DIFF_TERM    => TRUE,
         IBUF_LOW_PWR => TRUE,
         IOSTANDARD   => "DEFAULT")
       port map (
-        O  => clk_gtp_buf,
+        O  => clk_gtp(0),
         I  => clk_gtp_ref0_p_i,
         IB => clk_gtp_ref0_n_i);
 
+    cmp_ibufgds_gtp1 : IBUFGDS
+    generic map (
+      DIFF_TERM    => TRUE,
+      IBUF_LOW_PWR => TRUE,
+      IOSTANDARD   => "DEFAULT")
+    port map (
+      O  => clk_gtp(1),
+      I  => clk_gtp_ref1_p_i,
+      IB => clk_gtp_ref1_n_i);        
 
     cmp_gtp : wr_gtp_phy_spartan6
       generic map (
@@ -893,8 +795,6 @@ begin  -- architecture rtl
         );
 
     gen_gtp_ch0 : if (g_gtp_enable_ch0 = 1 and g_gtp_enable_ch1 = 0) generate
-      clk_gtp(0)                <= clk_gtp_buf;
-      clk_gtp(1)                <= '0';
       phy8_in(0)                <= phy8_i(0);
       phy8_o(0)                 <= phy8_out(0);
       phy8_out(0).ref_clk       <= clk_pllref_buf;
@@ -909,8 +809,6 @@ begin  -- architecture rtl
     end generate gen_gtp_ch0;
 
     gen_gtp_ch1 : if (g_gtp_enable_ch0 = 0 and g_gtp_enable_ch1 = 1) generate
-      clk_gtp(0)                <= '0';
-      clk_gtp(1)                <= clk_gtp_buf;
       phy8_in(1)                <= phy8_i(0);
       phy8_o(0)                 <= phy8_out(1);
       phy8_out(1).ref_clk       <= clk_pllref_buf;
@@ -925,8 +823,6 @@ begin  -- architecture rtl
     end generate gen_gtp_ch1;
 
     gen_gtp_ch01 : if (g_gtp_enable_ch0 = 1 and g_gtp_enable_ch1 = 1) generate
-      clk_gtp(0)                <= clk_gtp_buf;
-      clk_gtp(1)                <= '0';
       phy8_in                   <= phy8_i;
       phy8_o                    <= phy8_out;
       phy8_out(0).ref_clk       <= clk_pllref_buf;
@@ -954,7 +850,6 @@ begin  -- architecture rtl
   gen_phy_virtex5 : if(g_fpga_family = "virtex5") generate
     
     signal clk_gtp     : std_logic_vector(2-1 downto 0);
-    signal clk_gtp_buf : std_logic;
 
     signal pad_txp_out : std_logic_vector(g_num_phys-1 downto 0);
     signal pad_txn_out : std_logic_vector(g_num_phys-1 downto 0);
@@ -963,16 +858,25 @@ begin  -- architecture rtl
 
   begin
 
-    cmp_ibufgds_gtp : IBUFGDS
+    cmp_ibufgds_gtp0 : IBUFGDS
       generic map (
         DIFF_TERM    => FALSE,     -- ?: Tom's true, VXS: false
         IBUF_LOW_PWR => TRUE,      -- ?: Tom's commented out, VXS: true
         IOSTANDARD   => "DEFAULT") -- OK
       port map (
-        O  => clk_gtp_buf,
+        O  => clk_gtp(0),
         I  => clk_gtp_ref0_p_i,
         IB => clk_gtp_ref0_n_i);
 
+    cmp_ibufgds_gtp1 : IBUFGDS
+      generic map (
+        DIFF_TERM    => FALSE,     -- ?: Tom's true, VXS: false
+        IBUF_LOW_PWR => TRUE,      -- ?: Tom's commented out, VXS: true
+        IOSTANDARD   => "DEFAULT") -- OK
+      port map (
+        O  => clk_gtp(1),
+        I  => clk_gtp_ref1_p_i,
+        IB => clk_gtp_ref1_n_i);
 
     cmp_gtp : wr_gtp_phy_virtex5
       generic map (
@@ -980,7 +884,7 @@ begin  -- architecture rtl
         g_enable_ch0 => g_gtp_enable_ch0,
         g_enable_ch1 => g_gtp_enable_ch1)
       port map (
-        gtp_clk_i          => clk_gtp_buf,
+        gtp_clk_i          => clk_gtp(0),
         ch01_ref_clk_i     => clk_pllref_buf,
         ch0_tx_data_i      => phy8_in(0).tx_data,
         ch0_tx_k_i         => phy8_in(0).tx_k(0),
@@ -1043,8 +947,6 @@ begin  -- architecture rtl
     end generate gen_gtp_ch1;
 
     gen_gtp_ch01 : if (g_gtp_enable_ch0 = 1 and g_gtp_enable_ch1 = 1) generate
-      clk_gtp(0)                <= clk_gtp_buf;
-      clk_gtp(1)                <= '0';
       phy8_in                   <= phy8_i;
       phy8_o                    <= phy8_out;
       phy8_out(0).ref_clk       <= clk_pllref_buf;
@@ -1251,5 +1153,27 @@ begin  -- architecture rtl
     phy8_o         <= (others=>c_dummy_phy8_to_wrc);
 
   end generate gen_phy_artix7;
+
+  gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
+    clk_ext_o             <= '0';
+    clk_ext_mul_o         <= '0';
+    clk_ext_mul_locked_o  <= '1';
+    clk_ext_mul_stopped_o <= '1';
+  end generate gen_no_ext_ref_pll;
+
+  gen_with_ext_ref_pll : if (g_with_external_clock_input = TRUE) generate
+    clk_ext_mul_locked_o  <= clk_ext_locked_i;
+    clk_ext_mul_stopped_o <= clk_ext_stopped_i;
+    cmp_clk_ext_mul_buf : BUFG
+      port map (
+        I => clk_ext_mul_i,
+        O => clk_ext_mul_o
+      );
+    cmp_clk_ext_buf : BUFG
+    port map (
+      I => clk_ext_i,
+      O => clk_ext_o
+    );
+  end generate gen_with_ext_ref_pll;
 
 end architecture rtl;

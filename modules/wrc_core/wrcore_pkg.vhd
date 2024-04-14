@@ -86,9 +86,15 @@ package wrcore_pkg is
       pps_in_i        : in  std_logic;
       ppsin_term_o    : out std_logic;
       pps_csync_o     : out std_logic;
+      pps_valid_int_o : out std_logic;
       pps_out_o       : out std_logic;
       pps_led_o       : out std_logic;
       pps_valid_o     : out std_logic;
+      pps_unmask_o    : out std_logic;
+      todin_term_o      : out std_logic;
+      ext_tai_valid_p_i : in std_logic := '0';
+      ext_tai_i         : in std_logic_vector(39 downto 0) := (others => '0');
+      ext_tai_ready_i   : in std_logic := '0';
       tm_utc_o        : out std_logic_vector(39 downto 0);
       tm_cycles_o     : out std_logic_vector(27 downto 0);
       tm_time_valid_o : out std_logic
@@ -406,6 +412,10 @@ package wrcore_pkg is
       clk_ext_i            : in std_logic := '0';
       pps_ext_i            : in std_logic := '0';
       ppsin_term_o         : out std_logic;
+      todin_term_o         : out std_logic;
+      ext_tai_valid_p_i    : in std_logic := '0';
+      ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+      ext_tai_ready_i      : in std_logic := '0';
       rst_n_i              : in std_logic;
 
       dac_hpll_load_p1_o   : out std_logic;
@@ -521,10 +531,11 @@ package wrcore_pkg is
       tm_cycles_o          : out std_logic_vector(27 downto 0);
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
+      pps_unmask_o         : out std_logic;
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
-      sync_data_p_o        : out std_logic;
-      sync_data_n_o        : out std_logic;
+      sync_clk_10m_o_p     : out std_logic;
+      sync_clk_10m_o_n     : out std_logic;
 
       rst_aux_n_o : out std_logic;
 
@@ -602,6 +613,10 @@ package wrcore_pkg is
       -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
       pps_ext_i : in std_logic := '0';
       ppsin_term_o : out std_logic;
+      todin_term_o         : out std_logic;
+      ext_tai_valid_p_i    : in std_logic := '0';
+      ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+      ext_tai_ready_i      : in std_logic := '0';
       rst_n_i : in std_logic;
 
       -----------------------------------------
@@ -800,10 +815,11 @@ package wrcore_pkg is
       -- 1PPS output
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
+      pps_unmask_o         : out std_logic;
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
-      sync_data_p_o        : out std_logic;
-      sync_data_n_o        : out std_logic;
+      sync_clk_10m_o_p     : out std_logic;
+      sync_clk_10m_o_n     : out std_logic;
 
       rst_aux_n_o : out std_logic;
 
@@ -860,8 +876,8 @@ package wrcore_pkg is
       pps_i        : in std_logic;
       pps_valid_i  : in std_logic;
   
-      sync_data_p_o  : out std_logic;
-      sync_data_n_o  : out std_logic;
+      sync_clk_10m_o_p  : out std_logic;
+      sync_clk_10m_o_n  : out std_logic;
   
       -- can be wired to IODelay component in top module for precise 1-PPS
       -- alignment with clk_aux

@@ -108,9 +108,11 @@ architecture structure of wr_gtp_phy_family7 is
   type state_type_array is array(integer range <>) of state_type;
   signal state : state_type_array(g_num_phys-1 downto 0);
   
-  signal rst_synced         : std_logic_vector(1 downto 0);
-  signal rst_int            : std_logic_vector(1 downto 0);
-  
+  signal areset             : std_logic_vector(g_num_phys-1 downto 0);
+  signal rst_synced         : std_logic_vector(g_num_phys-1 downto 0);
+  signal rst_int            : std_logic_vector(g_num_phys-1 downto 0);
+  signal gttxreset          : std_logic_vector(g_num_phys-1 downto 0);
+
   signal PLL_RESET          : std_logic_vector(g_num_phys-1 downto 0);
   signal clk_tx_buf         : std_logic_vector(g_num_phys-1 downto 0);
   signal pll_locked         : std_logic_vector(g_num_phys-1 downto 0);
@@ -221,11 +223,12 @@ begin
 
   gen_RESET: for i in 0 to (g_num_phys-1) generate
 
+    areset(i) <= areset_i or phy16_i(i).rst;
     -- PLL reset
     U_EdgeDet_areset_i : gc_sync_ffs port map (
       clk_i     => clk_ref_i(i),
       rst_n_i   => '1',
-      data_i    => areset_i,
+      data_i    => areset(i),
       ppulse_o  => rst_synced(i));
 
     process(clk_ref_i(i), rst_synced(i))
@@ -348,6 +351,10 @@ gen_GTP: for i in 0 to (g_num_phys-1) generate
       I => GT_CHANNEL_SIG_o(i).TXOUTCLK,
       O => clk_tx_buf(i));
 
+  -- LPDC signals
+  gttxreset(i)                               <= pll_locked_n(i) or phy16_i(i).lpc_ctrl(0);
+  phy16_o(i).lpc_stat(0)                     <= GT_CHANNEL_SIG_o(i).TXRESETDONE;
+
   GT_CHANNEL_SIG_i(i).RST_IN                 <= '1' when state(i) = count_done else '0';
   GT_CHANNEL_SIG_i(i).DRPCLK_IN              <=  clk_ref_i(i);
   GT_CHANNEL_SIG_i(i).DRPDI_IN               <=  (others => '0');
@@ -363,7 +370,7 @@ gen_GTP: for i in 0 to (g_num_phys-1) generate
   GT_CHANNEL_SIG_i(i).RXLPMHFHOLD            <=  '0';
   GT_CHANNEL_SIG_i(i).RXLPMLFHOLD            <=  '0';
   GT_CHANNEL_SIG_i(i).GTRXRESET              <=  gs(i).GTRXRESET;
-  GT_CHANNEL_SIG_i(i).GTTXRESET              <=  pll_locked_n(i);
+  GT_CHANNEL_SIG_i(i).GTTXRESET              <=  gttxreset(i);
   GT_CHANNEL_SIG_i(i).TXUSERRDY              <=  pll_locked(i);
   GT_CHANNEL_SIG_i(i).TXDATA(15 downto 0)    <=  phy16_i(i).tx_data(7 downto 0) & phy16_i(i).tx_data(15 downto 8);
   GT_CHANNEL_SIG_i(i).TXUSRCLK               <=  clk_tx_buf(i);

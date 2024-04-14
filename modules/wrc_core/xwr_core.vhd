@@ -136,6 +136,10 @@ entity xwr_core is
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
     pps_ext_i : in std_logic := '0';
     ppsin_term_o : out std_logic;
+    todin_term_o         : out std_logic;
+    ext_tai_valid_p_i    : in std_logic := '0';
+    ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+    ext_tai_ready_i      : in std_logic := '0';
 
     rst_n_i : in std_logic;
 
@@ -299,10 +303,11 @@ entity xwr_core is
     -- 1PPS output
     pps_csync_o          : out std_logic;
     pps_valid_o          : out std_logic;
+    pps_unmask_o         : out std_logic;
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
-    sync_data_p_o        : out std_logic;
-    sync_data_n_o        : out std_logic;
+    sync_clk_10m_o_p     : out std_logic;
+    sync_clk_10m_o_n     : out std_logic;
 
     rst_aux_n_o          : out std_logic;
 
@@ -365,6 +370,10 @@ begin
       clk_ext_rst_o        => clk_ext_rst_o,
       pps_ext_i            => pps_ext_i,
       ppsin_term_o         => ppsin_term_o,
+      todin_term_o         => todin_term_o,
+      ext_tai_valid_p_i    => ext_tai_valid_p_i,
+      ext_tai_i            => ext_tai_i,
+      ext_tai_ready_i      => ext_tai_ready_i,
       rst_n_i              => rst_n_i,
 
       dac_hpll_load_p1_o   => dac_hpll_load_p1_o,
@@ -506,10 +515,11 @@ begin
       tm_cycles_o          => tm_cycles_o,
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
+      pps_unmask_o         => pps_unmask_o,
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
-      sync_data_p_o        => sync_data_p_o,
-      sync_data_n_o        => sync_data_n_o,
+      sync_clk_10m_o_p     => sync_clk_10m_o_p,
+      sync_clk_10m_o_n     => sync_clk_10m_o_n,
       rst_aux_n_o          => rst_aux_n_o,
       link_ok_o            => link_ok_o,
       aux_diag_i => aux_diag_i,

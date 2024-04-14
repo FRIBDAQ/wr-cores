@@ -62,7 +62,7 @@ entity wr_pps_gen is
     rst_ref_n_i : in std_logic;
     rst_sys_n_i : in std_logic;
 
-    wb_adr_i   : in  std_logic_vector(4 downto 0);
+    wb_adr_i   : in  std_logic_vector(5 downto 0);
     wb_dat_i   : in  std_logic_vector(31 downto 0);
     wb_dat_o   : out std_logic_vector(31 downto 0);
     wb_cyc_i   : in  std_logic;
@@ -83,11 +83,18 @@ entity wr_pps_gen is
     ppsin_term_o : out std_logic;
 
     -- Single-pulse PPS output for synchronizing endpoints to
+    pps_valid_int_o : out std_logic;
     pps_csync_o : out std_logic;
     pps_out_o   : out std_logic;
     pps_led_o   : out std_logic;
 
-    pps_valid_o : out std_logic;
+    pps_valid_o  : out std_logic;
+    pps_unmask_o : out std_logic;
+
+    todin_term_o         : out std_logic;
+    ext_tai_valid_p_i    : in std_logic := '0';
+    ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+    ext_tai_ready_i      : in std_logic := '0';
 
     tm_utc_o        : out std_logic_vector(39 downto 0);
     tm_cycles_o     : out std_logic_vector(27 downto 0);
@@ -105,7 +112,7 @@ architecture behavioral of wr_pps_gen is
     port (
       rst_n_i                : in  std_logic;
       clk_sys_i              : in  std_logic;
-      wb_adr_i               : in  std_logic_vector(2 downto 0);
+      wb_adr_i               : in  std_logic_vector(3 downto 0);
       wb_dat_i               : in  std_logic_vector(31 downto 0);
       wb_dat_o               : out std_logic_vector(31 downto 0);
       wb_cyc_i               : in  std_logic;
@@ -139,7 +146,12 @@ architecture behavioral of wr_pps_gen is
       ppsg_escr_sec_set_o    : out std_logic;
       ppsg_escr_nsec_set_o   : out std_logic;
       ppsg_escr_pps_unmask_o : out std_logic;
-      ppsg_escr_pps_in_term_o: out std_logic);
+      ppsg_escr_pps_in_term_o: out std_logic;
+      ppsg_escr_tod_in_term_o  : out std_logic;
+      ppsg_escr_ext_tai_sync_o : out std_logic;
+      ppsg_escr_ext_tai_ready_i: in  std_logic;
+      ppsg_ext_cntr_utclo_i    : in  std_logic_vector(31 downto 0);
+      ppsg_ext_cntr_utchi_i    : in  std_logic_vector(7 downto 0));
   end component pps_gen_wb;
 
 -- Wisbone slave signals
@@ -206,13 +218,18 @@ architecture behavioral of wr_pps_gen is
   signal pps_out_int   : std_logic;
   signal pps_in_refclk : std_logic;
 
-
+  signal set_ext_tai              : std_logic;
+  signal ext_tai                  : unsigned(39 downto 0);
+  signal ppsg_escr_ext_tai_sync   : std_logic;
+  signal ppsg_escr_ext_tai_ready  : std_logic;
+  signal ppsg_ext_cntr_utclo      : std_logic_vector(31 downto 0);
+  signal ppsg_ext_cntr_utchi      : std_logic_vector(7 downto 0);
 
 begin  -- behavioral
 
 
-  resized_addr(4 downto 0)                          <= wb_adr_i;
-  resized_addr(c_wishbone_address_width-1 downto 5) <= (others => '0');
+  resized_addr(5 downto 0)                          <= wb_adr_i;
+  resized_addr(c_wishbone_address_width-1 downto 6) <= (others => '0');
 
   U_Adapter : wb_slave_adapter
     generic map (
@@ -399,7 +416,9 @@ begin  -- behavioral
         adjust_in_progress_utc <= '0';
       elsif(ppsg_cr_cnt_en = '1') then
 
-        if(ppsg_cr_cnt_set_p = '1' or ppsg_escr_sec_set = '1') then
+        if(set_ext_tai = '1') then
+          cntr_utc        <= ext_tai;
+        elsif(ppsg_cr_cnt_set_p = '1' or ppsg_escr_sec_set = '1') then
           cntr_utc        <= adj_utc;
         elsif(cntr_adjust_p = '1') then
           adjust_in_progress_utc <= '1';
@@ -465,7 +484,7 @@ begin  -- behavioral
     port map (
       rst_n_i                => rst_n_i,
       clk_sys_i              => clk_sys_i,
-      wb_adr_i               => wb_in.adr(2 downto 0),
+      wb_adr_i               => wb_in.adr(3 downto 0),
       wb_dat_i               => wb_in.dat,
       wb_dat_o               => wb_out.dat,
       wb_cyc_i               => wb_in.cyc,
@@ -498,7 +517,12 @@ begin  -- behavioral
       ppsg_escr_sec_set_o    => ppsg_escr_sec_set,
       ppsg_escr_nsec_set_o   => ppsg_escr_nsec_set,
       ppsg_escr_pps_unmask_o => ppsg_escr_pps_unmask,
-      ppsg_escr_pps_in_term_o=> ppsin_term_o);
+      ppsg_escr_pps_in_term_o=> ppsin_term_o,
+      ppsg_escr_tod_in_term_o   => todin_term_o,
+      ppsg_escr_ext_tai_sync_o   => ppsg_escr_ext_tai_sync,
+      ppsg_escr_ext_tai_ready_i => ppsg_escr_ext_tai_ready,
+      ppsg_ext_cntr_utclo_i     => ppsg_ext_cntr_utclo,
+      ppsg_ext_cntr_utchi_i     => ppsg_ext_cntr_utchi);
 
 -- drive unused signals
   wb_out.rty   <= '0';
@@ -511,10 +535,63 @@ begin  -- behavioral
 -- drive the readout value of CNT_ADJ to 1 when the adjustment is over
   ppsg_cr_cnt_adj_i <= pps_valid_int;
 
-  pps_valid_o <= pps_valid_int;
+  pps_valid_int_o <= pps_valid_int;
+  pps_valid_o <= ppsg_escr_pps_valid;
 
   tm_utc_o        <= std_logic_vector(cntr_utc);
   tm_cycles_o     <= std_logic_vector(cntr_nsec);
   tm_time_valid_o <= ppsg_escr_tm_valid;
+
+  pps_unmask_o     <= ppsg_escr_pps_unmask;
+  process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      if rst_ref_n_i = '0' then
+        ppsg_escr_ext_tai_ready <= '0';
+      elsif(set_ext_tai = '1')then
+        ppsg_escr_ext_tai_ready <= '1';
+      end if;
+    end if;
+  end process;
+
+  process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      if rst_ref_n_i = '0' then
+        ppsg_ext_cntr_utclo <= (others => '0');
+      elsif(ext_tai_valid_p_i = '1') then
+        ppsg_ext_cntr_utclo <= ext_tai_i(31 downto 0);
+      end if;
+    end if;
+  end process;
+
+  process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      if rst_ref_n_i = '0' then
+        ppsg_ext_cntr_utchi <= (others => '0');
+      elsif(ext_tai_valid_p_i = '1') then
+        ppsg_ext_cntr_utchi <= ext_tai_i(39 downto 32);
+      end if;
+    end if;
+  end process;
+
+  process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      ext_tai <= unsigned(ext_tai_i);
+    end if;
+  end process;
+
+  process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      if((ext_tai_valid_p_i = '1') and (ext_tai_ready_i = '1') and (ppsg_escr_ext_tai_sync = '1')) then
+        set_ext_tai <= '1';
+      else
+        set_ext_tai <= '0';
+      end if;
+    end if;
+  end process;
 
 end behavioral;

@@ -19,4 +19,5 @@ doc/
 Makefile
 *.xml
 xgui/
+*_bd.bmm
 *.orig

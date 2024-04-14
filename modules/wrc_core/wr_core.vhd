@@ -108,6 +108,7 @@ entity wr_core is
     g_diag_ro_size              : integer                        := 0;
     g_diag_rw_size              : integer                        := 0;
     g_num_phys                  : integer                        := 2;
+    g_muxed_ports               : integer                        := 3;
     g_num_softpll_inputs        : integer                        := 2;
     g_with_10M_output           : boolean                        := true
 );
@@ -139,6 +140,10 @@ entity wr_core is
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
     pps_ext_i : in std_logic := '0';
     ppsin_term_o : out std_logic;
+    todin_term_o         : out std_logic;
+    ext_tai_valid_p_i    : in std_logic := '0';
+    ext_tai_i            : in std_logic_vector(39 downto 0) := (others => '0');
+    ext_tai_ready_i      : in std_logic := '0';
 
     rst_n_i : in std_logic;
 
@@ -342,11 +347,12 @@ entity wr_core is
     -- 1PPS output
     pps_csync_o          : out std_logic;
     pps_valid_o          : out std_logic;
+    pps_unmask_o         : out std_logic;
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
     -- clk output
-    sync_data_p_o        : out std_logic;
-    sync_data_n_o        : out std_logic;
+    sync_clk_10m_o_p        : out std_logic;
+    sync_clk_10m_o_n        : out std_logic;
 
     rst_aux_n_o : out std_logic;
 
@@ -551,11 +557,11 @@ architecture struct of wr_core is
   signal ep_snk_out : t_wrf_sink_out_array(g_num_phys-1 downto 0);
   signal ep_snk_in  : t_wrf_sink_in_array(g_num_phys-1 downto 0);
 
-  signal mux_src_out : t_wrf_source_out_array(3*g_num_phys-1 downto 0);
-  signal mux_src_in  : t_wrf_source_in_array(3*g_num_phys-1 downto 0);
-  signal mux_snk_out : t_wrf_sink_out_array(3*g_num_phys-1 downto 0);
-  signal mux_snk_in  : t_wrf_sink_in_array(3*g_num_phys-1 downto 0);
-  signal mux_class   : t_wrf_mux_class(2 downto 0);
+  signal mux_src_out : t_wrf_source_out_array(g_muxed_ports*g_num_phys-1 downto 0);
+  signal mux_src_in  : t_wrf_source_in_array(g_muxed_ports*g_num_phys-1 downto 0);
+  signal mux_snk_out : t_wrf_sink_out_array(g_muxed_ports*g_num_phys-1 downto 0);
+  signal mux_snk_in  : t_wrf_sink_in_array(g_muxed_ports*g_num_phys-1 downto 0);
+  signal mux_class   : t_wrf_mux_class(g_muxed_ports-1 downto 0);
 
   signal spll_out_locked : std_logic_vector(g_aux_clks downto 0);
 
@@ -673,15 +679,24 @@ begin
       slave_o => ppsg_wb_out,
 
       -- used for fast masking of PPS output when link goes down
-      link_ok_i => ppsg_link_ok,
+      --link_ok_i => ppsg_link_ok,
+      -- keep PPS generation 
+      link_ok_i => '1',
 
       -- Single-pulse PPS output for synchronizing endpoint to
       pps_in_i    => pps_ext_i,
       ppsin_term_o => ppsin_term_o,
       pps_csync_o => s_pps_csync,
+      pps_valid_int_o => pps_valid,
       pps_out_o   => pps_p_o,
       pps_led_o   => pps_led_o,
-      pps_valid_o => pps_valid,
+      pps_valid_o  => pps_valid_o,
+      pps_unmask_o => pps_unmask_o,
+
+      todin_term_o       => todin_term_o,
+      ext_tai_valid_p_i  => ext_tai_valid_p_i,
+      ext_tai_i          => ext_tai_i,
+      ext_tai_ready_i    => ext_tai_ready_i,
 
       tm_utc_o        => tm_tai_o,
       tm_cycles_o     => tm_cycles_o,
@@ -689,7 +704,7 @@ begin
       );
   ppsg_link_ok <= not phy_rst(0);
   pps_csync_o  <= s_pps_csync;
-  pps_valid_o  <= pps_valid;
+
 
   -----------------------------------------------------------------------------
   -- Software PLL
@@ -966,10 +981,10 @@ begin
         clk_sys_i => clk_sys_i,
         rst_n_i   => rst_net_n,
 
-        src_o => mux_snk_in(3*i),
-        src_i => mux_snk_out(3*i),
-        snk_o => mux_src_in(3*i),
-        snk_i => mux_src_out(3*i),
+        src_o => mux_snk_in(g_muxed_ports*i),
+        src_i => mux_snk_out(g_muxed_ports*i),
+        snk_o => mux_src_in(g_muxed_ports*i),
+        snk_i => mux_src_out(g_muxed_ports*i),
 
         txtsu_port_id_i     => ep_txtsu_port_id((i+1)*5-1 downto i*5),
         txtsu_frame_id_i    => ep_txtsu_frame_id((i+1)*16-1 downto i*16),
@@ -1131,8 +1146,8 @@ begin
         rst_n_i           => rst_n_i,
         pps_i             => s_pps_csync,
         pps_valid_i       => pps_valid,
-        sync_data_p_o     => sync_data_p_o,
-        sync_data_n_o     => sync_data_n_o,
+        sync_clk_10m_o_p  => sync_clk_10m_o_p,
+        sync_clk_10m_o_n  => sync_clk_10m_o_n,
         slave_i           => secbar_master_o(10),
         slave_o           => secbar_master_i(10));
 
@@ -1272,7 +1287,7 @@ begin
     
     U_WBP_Mux : xwrf_mux
       generic map(
-        g_muxed_ports => 3)
+        g_muxed_ports => g_muxed_ports)
       port map (
         clk_sys_i   => clk_sys_i,
         rst_n_i     => rst_net_n,
@@ -1280,61 +1295,61 @@ begin
         ep_src_i    => ep_snk_out(i),
         ep_snk_o    => ep_src_in(i),
         ep_snk_i    => ep_src_out(i),
-        mux_src_o   => mux_src_out((i+1)*3-1 downto i*3),
-        mux_src_i   => mux_src_in((i+1)*3-1 downto i*3),
-        mux_snk_o   => mux_snk_out((i+1)*3-1 downto i*3),
-        mux_snk_i   => mux_snk_in((i+1)*3-1 downto i*3),
+        mux_src_o   => mux_src_out((i+1)*g_muxed_ports-1 downto i*g_muxed_ports),
+        mux_src_i   => mux_src_in((i+1)*g_muxed_ports-1 downto i*g_muxed_ports),
+        mux_snk_o   => mux_snk_out((i+1)*g_muxed_ports-1 downto i*g_muxed_ports),
+        mux_snk_i   => mux_snk_in((i+1)*g_muxed_ports-1 downto i*g_muxed_ports),
         mux_class_i => mux_class);
         
-      wrf_src_o(i).adr <= mux_src_out((i+1)*3-1).adr;
-      wrf_src_o(i).dat <= mux_src_out((i+1)*3-1).dat;
-      wrf_src_o(i).stb <= mux_src_out((i+1)*3-1).stb;
-      wrf_src_o(i).cyc <= mux_src_out((i+1)*3-1).cyc;
-      wrf_src_o(i).sel <= mux_src_out((i+1)*3-1).sel;
+      wrf_src_o(i).adr <= mux_src_out((i+1)*g_muxed_ports-1).adr;
+      wrf_src_o(i).dat <= mux_src_out((i+1)*g_muxed_ports-1).dat;
+      wrf_src_o(i).stb <= mux_src_out((i+1)*g_muxed_ports-1).stb;
+      wrf_src_o(i).cyc <= mux_src_out((i+1)*g_muxed_ports-1).cyc;
+      wrf_src_o(i).sel <= mux_src_out((i+1)*g_muxed_ports-1).sel;
       wrf_src_o(i).we  <= '1';
-      mux_src_in((i+1)*3-1).ack   <= wrf_src_i(i).ack;
-      mux_src_in((i+1)*3-1).stall <= wrf_src_i(i).stall;
-      mux_src_in((i+1)*3-1).err   <= wrf_src_i(i).err;
-      mux_src_in((i+1)*3-1).rty   <= '0';
+      mux_src_in((i+1)*g_muxed_ports-1).ack   <= wrf_src_i(i).ack;
+      mux_src_in((i+1)*g_muxed_ports-1).stall <= wrf_src_i(i).stall;
+      mux_src_in((i+1)*g_muxed_ports-1).err   <= wrf_src_i(i).err;
+      mux_src_in((i+1)*g_muxed_ports-1).rty   <= '0';
         
-      mux_snk_in((i+1)*3-1).adr <= wrf_snk_i(i).adr;
-      mux_snk_in((i+1)*3-1).dat <= wrf_snk_i(i).dat;
-      mux_snk_in((i+1)*3-1).stb <= wrf_snk_i(i).stb;
-      mux_snk_in((i+1)*3-1).cyc <= wrf_snk_i(i).cyc;
-      mux_snk_in((i+1)*3-1).sel <= wrf_snk_i(i).sel;
-      mux_snk_in((i+1)*3-1).we  <= wrf_snk_i(i).we;
-      wrf_snk_o(i).ack   <= mux_snk_out((i+1)*3-1).ack;
-      wrf_snk_o(i).err   <= mux_snk_out((i+1)*3-1).err;
-      wrf_snk_o(i).stall <= mux_snk_out((i+1)*3-1).stall;
+      mux_snk_in((i+1)*g_muxed_ports-1).adr <= wrf_snk_i(i).adr;
+      mux_snk_in((i+1)*g_muxed_ports-1).dat <= wrf_snk_i(i).dat;
+      mux_snk_in((i+1)*g_muxed_ports-1).stb <= wrf_snk_i(i).stb;
+      mux_snk_in((i+1)*g_muxed_ports-1).cyc <= wrf_snk_i(i).cyc;
+      mux_snk_in((i+1)*g_muxed_ports-1).sel <= wrf_snk_i(i).sel;
+      mux_snk_in((i+1)*g_muxed_ports-1).we  <= wrf_snk_i(i).we;
+      wrf_snk_o(i).ack   <= mux_snk_out((i+1)*g_muxed_ports-1).ack;
+      wrf_snk_o(i).err   <= mux_snk_out((i+1)*g_muxed_ports-1).err;
+      wrf_snk_o(i).stall <= mux_snk_out((i+1)*g_muxed_ports-1).stall;
       wrf_snk_o(i).rty   <= '0';
 
-      eb_wrf_src_o(i).adr <= mux_src_out((i+1)*3-2).adr;
-      eb_wrf_src_o(i).dat <= mux_src_out((i+1)*3-2).dat;
-      eb_wrf_src_o(i).stb <= mux_src_out((i+1)*3-2).stb;
-      eb_wrf_src_o(i).cyc <= mux_src_out((i+1)*3-2).cyc;
-      eb_wrf_src_o(i).sel <= mux_src_out((i+1)*3-2).sel;
+      eb_wrf_src_o(i).adr <= mux_src_out((i+1)*g_muxed_ports-2).adr;
+      eb_wrf_src_o(i).dat <= mux_src_out((i+1)*g_muxed_ports-2).dat;
+      eb_wrf_src_o(i).stb <= mux_src_out((i+1)*g_muxed_ports-2).stb;
+      eb_wrf_src_o(i).cyc <= mux_src_out((i+1)*g_muxed_ports-2).cyc;
+      eb_wrf_src_o(i).sel <= mux_src_out((i+1)*g_muxed_ports-2).sel;
       eb_wrf_src_o(i).we  <= '1';
-      mux_src_in((i+1)*3-2).ack   <= eb_wrf_src_i(i).ack;
-      mux_src_in((i+1)*3-2).stall <= eb_wrf_src_i(i).stall;
-      mux_src_in((i+1)*3-2).err   <= eb_wrf_src_i(i).err;
-      mux_src_in((i+1)*3-2).rty   <= '0';
+      mux_src_in((i+1)*g_muxed_ports-2).ack   <= eb_wrf_src_i(i).ack;
+      mux_src_in((i+1)*g_muxed_ports-2).stall <= eb_wrf_src_i(i).stall;
+      mux_src_in((i+1)*g_muxed_ports-2).err   <= eb_wrf_src_i(i).err;
+      mux_src_in((i+1)*g_muxed_ports-2).rty   <= '0';
         
-      mux_snk_in((i+1)*3-2).adr <= eb_wrf_snk_i(i).adr;
-      mux_snk_in((i+1)*3-2).dat <= eb_wrf_snk_i(i).dat;
-      mux_snk_in((i+1)*3-2).stb <= eb_wrf_snk_i(i).stb;
-      mux_snk_in((i+1)*3-2).cyc <= eb_wrf_snk_i(i).cyc;
-      mux_snk_in((i+1)*3-2).sel <= eb_wrf_snk_i(i).sel;
-      mux_snk_in((i+1)*3-2).we  <= eb_wrf_snk_i(i).we;
-      eb_wrf_snk_o(i).ack   <= mux_snk_out((i+1)*3-2).ack;
-      eb_wrf_snk_o(i).err   <= mux_snk_out((i+1)*3-2).err;
-      eb_wrf_snk_o(i).stall <= mux_snk_out((i+1)*3-2).stall;
+      mux_snk_in((i+1)*g_muxed_ports-2).adr <= eb_wrf_snk_i(i).adr;
+      mux_snk_in((i+1)*g_muxed_ports-2).dat <= eb_wrf_snk_i(i).dat;
+      mux_snk_in((i+1)*g_muxed_ports-2).stb <= eb_wrf_snk_i(i).stb;
+      mux_snk_in((i+1)*g_muxed_ports-2).cyc <= eb_wrf_snk_i(i).cyc;
+      mux_snk_in((i+1)*g_muxed_ports-2).sel <= eb_wrf_snk_i(i).sel;
+      mux_snk_in((i+1)*g_muxed_ports-2).we  <= eb_wrf_snk_i(i).we;
+      eb_wrf_snk_o(i).ack   <= mux_snk_out((i+1)*g_muxed_ports-2).ack;
+      eb_wrf_snk_o(i).err   <= mux_snk_out((i+1)*g_muxed_ports-2).err;
+      eb_wrf_snk_o(i).stall <= mux_snk_out((i+1)*g_muxed_ports-2).stall;
       eb_wrf_snk_o(i).rty   <= '0';
       
   end generate gen_WBP_MUX;
 
   mux_class(0)  <= x"0f"; -- to lm32
-  mux_class(1)  <= x"10"; -- to etherbone
-  mux_class(2)  <= x"e0"; -- other external module
+  mux_class(1)  <= x"30"; -- to eb_wrf, other local module
+  mux_class(2)  <= x"c0"; -- to wrf, to another port
 
   -----------------------------------------------------------------------------
   -- External Tx Timestamping I/F

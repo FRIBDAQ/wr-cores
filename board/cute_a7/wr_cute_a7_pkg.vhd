@@ -53,7 +53,7 @@ generic(
     g_verbose                   : boolean                        := TRUE;
     g_with_external_clock_input : boolean                        := TRUE;
     g_board_name                : string                         := "cute";
-    g_flash_secsz_kb            : integer                        := 256;        -- default for N25Q128
+    g_flash_secsz_kb            : integer                        := 64;        -- default for N25Q128
     g_flash_sdbfs_baddr         : integer                        := 16#760000#; -- default for N25Q128
     g_phys_uart                 : boolean                        := TRUE;
     g_virtual_uart              : boolean                        := TRUE;
@@ -104,8 +104,12 @@ port(
     clk_ext_stopped_i    : in  std_logic := '0';
     clk_ext_rst_o        : out std_logic;
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
-    pps_i   : in std_logic := '0';
+    pps_ext_i   : in std_logic := '0';
     ppsin_term_o : out std_logic;
+    todin_term_o         : out   std_logic;
+    ext_tai_valid_p_i    : in    std_logic := '0';
+    ext_tai_i            : in    std_logic_vector(39 downto 0) := (others => '0');
+    ext_tai_ready_i      : in    std_logic := '0';
     rst_n_i : in std_logic;
     ---------------------------------------------------------------------------
     --Timing system
@@ -188,6 +192,11 @@ port(
     wrf_src_i : in  t_wrf_source_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_src_in);
     wrf_snk_o : out t_wrf_sink_out_array(g_num_phys-1 downto 0);
     wrf_snk_i : in  t_wrf_sink_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_snk_in);
+    
+    eb_wrf_src_o : out t_wrf_source_out_array(g_num_phys-1 downto 0);
+    eb_wrf_src_i : in  t_wrf_source_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_src_in);
+    eb_wrf_snk_o : out t_wrf_sink_out_array(g_num_phys-1 downto 0);
+    eb_wrf_snk_i : in  t_wrf_sink_in_array(g_num_phys-1 downto 0):=(others=>c_dummy_snk_in);
     ---------------------------------------------------------------------------
     -- Etherbone WB master interface (when g_fabric_iface = ETHERBONE)
     ---------------------------------------------------------------------------
@@ -232,16 +241,18 @@ port(
     ---------------------------------------------------------------------------
     -- Buttons, LEDs and PPS output
     ---------------------------------------------------------------------------
-    led_act_o  : out std_logic_vector(g_num_phys-1 downto 0);
-    led_link_o : out std_logic_vector(g_num_phys-1 downto 0);
-    btn1_i     : in  std_logic := '1';
-    btn2_i     : in  std_logic := '1';
+    led_act_o      : out std_logic_vector(g_num_phys-1 downto 0);
+    led_link_o     : out std_logic_vector(g_num_phys-1 downto 0);
+    btn1_i         : in  std_logic := '1';
+    btn2_i         : in  std_logic := '1';
     -- 1PPS output
-    pps_csync_o : out std_logic;
-    pps_o       : out std_logic;
-    pps_led_o   : out std_logic;
-    sync_data_p_o  : out std_logic;
-    sync_data_n_o  : out std_logic;
+    pps_csync_o    : out std_logic;
+    pps_valid_o    : out std_logic;
+    pps_unmask_o   : out std_logic;
+    pps_p_o        : out std_logic;
+    pps_led_o      : out std_logic;
+    sync_clk_10m_o_p : out std_logic;
+    sync_clk_10m_o_n : out std_logic;
     -- Link ok indication
     link_ok_o : out std_logic_vector(g_num_phys-1 downto 0)
 );
@@ -249,6 +260,7 @@ end component xwrc_board_cute_a7;
 
 component wr_pll_ctrl is
 generic (
+    g_project_name : string := "normal";
     g_spi_clk_freq : std_logic_vector(31 downto 0) := x"00000004");
 port (
     clk_i          : in  std_logic;
@@ -268,21 +280,31 @@ port (
     done_o         : out std_logic);
 end component wr_pll_ctrl;
 
-
-component wr_fdelay_ctrl is
+component xwr_sma_config is
 generic (
-    fdelay_ch0 : std_logic_vector(8 downto 0) := (others=>'0');
-    fdelay_ch1 : std_logic_vector(8 downto 0) := (others=>'0'));
+    g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
+    g_address_granularity : t_wishbone_address_granularity := WORD
+);
 port (
-    rst_sys_n_i      : in  std_logic;
-    clk_sys_i        : in  std_logic;
+    rst_n_i      : in std_logic;
+    clk_sys_i    : in std_logic;
+    clk_serdes_i : in std_logic;
+    pps_csync_i     : in std_logic;
+    pps_valid_i     : in std_logic;
+    tm_tai_i        : in std_logic_vector(39 downto 0);
+            
+    sync_data_o_p  : out std_logic_vector(1 downto 0);
+    sync_data_o_n  : out std_logic_vector(1 downto 0);
 
-    delay_en_o       : out std_logic;
-    delay_sload_o    : out std_logic;
-    delay_sdin_o     : out std_logic;
-    delay_sclk_o     : out std_logic
-    );
-end component wr_fdelay_ctrl;
+    fdly_en_o      : out std_logic;
+    fdly_sload_o   : out std_logic;
+    fdly_sdin_o    : out std_logic;
+    fdly_sclk_o    : out std_logic;
+
+    slave_i   : in  t_wishbone_slave_in := cc_dummy_slave_in;
+    slave_o   : out t_wishbone_slave_out
+);
+end component; 
 
 constant c_null_sdb : t_sdb_device := (
     abi_class     => x"0000",              -- undocumented device
@@ -300,5 +322,20 @@ constant c_null_sdb : t_sdb_device := (
         date      => x"20201119",
         name      => "WR-NULL            ")));
 
+constant c_sma_config_sdb : t_sdb_device := (
+        abi_class     => x"0000",              -- undocumented device
+        abi_ver_major => x"01",
+        abi_ver_minor => x"01",
+        wbd_endian    => c_sdb_endian_big,
+        wbd_width     => x"7",                 -- 8/16/32-bit port granularity
+        sdb_component => (
+        addr_first  => x"0000000000000000",
+        addr_last   => x"00000000000000ff",
+        product     => (
+            vendor_id => x"0000000000746875",  -- THU
+            device_id => x"736d6101",
+            version   => x"00000001",
+            date      => x"20210606",
+            name      => "WR-SMA-Config      ")));
 
 end wr_cute_a7_pkg;

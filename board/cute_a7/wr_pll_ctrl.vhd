@@ -8,6 +8,7 @@ use work.wr_pll_ctrl_pkg.all;
 
 entity wr_pll_ctrl is
 generic (
+  g_project_name : string := "NORMAL";
   -- clk_spi = clk/(div+1)/2 --> 6.25MHz sclk for 62.5 input (up to 25MHz)
   g_spi_clk_freq : std_logic_vector(31 downto 0) := x"00000004"
 );

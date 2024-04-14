@@ -509,6 +509,9 @@ begin
     generic map(
       g_with_virtual_uart   => g_virtual_uart,
       g_with_physical_uart  => g_phys_uart,
+      g_with_physical_uart_fifo => true,
+      g_tx_fifo_size            => 256,
+      g_rx_fifo_size            => 256,
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
       g_vuart_fifo_size     => g_vuart_fifo_size
@@ -525,7 +528,6 @@ begin
       uart_rxd_i => uart_rxd_i,
       uart_txd_o => uart_txd_o
       );
-
   --------------------------------------
   -- 1-WIRE
   --------------------------------------
