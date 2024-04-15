@@ -573,7 +573,7 @@ begin
         end generate cmu_pll;
     end generate scu4_pll_and_reset;
 
-    ftm4_pll_and_reset: if (g_family = "Arria 10 GX ftm4") generate
+    ftm4_pll_and_reset: if (g_family = "Arria 10 GX FTM4") generate
       inst_rst_ctl : wr_arria10_ftm4_rst_ctl
         port map (
           clock                 => clk_ref_i,
@@ -617,7 +617,7 @@ begin
         end generate cmu_pll;
     end generate ftm4_pll_and_reset;
 
-    pex10_pll_and_reset: if (g_family = "Arria 10 GX pex10") generate
+    pex10_pll_and_reset: if (g_family = "Arria 10 GX PEX10") generate
       inst_rst_ctl : wr_arria10_pex10_rst_ctl
         port map (
           clock                 => clk_ref_i,
@@ -661,7 +661,7 @@ begin
         end generate cmu_pll;
     end generate pex10_pll_and_reset;
 
-    ftm10_pll_and_reset: if (g_family = "Arria 10 GX ftm10") generate
+    ftm10_pll_and_reset: if (g_family = "Arria 10 GX FTM10") generate
       inst_rst_ctl : wr_arria10_ftm10_rst_ctl
         port map (
           clock                 => clk_ref_i,
