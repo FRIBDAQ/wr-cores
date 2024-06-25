@@ -108,7 +108,6 @@ architecture arch of damc_fmc2zup_ref_top is
   signal clk_sys_62m5             : std_logic;
   -- 125MHz ref clock output
   signal clk_ref_125m             : std_logic;
-  signal clk_125m_pci             : std_logic;
   -- active low reset outputs, synchronous to 62m5 and 125m clocks
   signal rst_sys_62m5_n           : std_logic;
   signal rst_ref_125m_n           : std_logic;
@@ -347,7 +346,6 @@ begin
     clk_125m_pllref_n_i     => clk_125m_pllref_n_i,
     clk_125m_gtp_n_i        => clk_125m_gtp_n_i,
     clk_125m_gtp_p_i        => clk_125m_gtp_p_i,
-    clk_125m_pci_i          => '0',
     -- 62.5MHz sys clock output
     clk_sys_62m5_o          => clk_sys_62m5,
     -- 125MHz ref clock output

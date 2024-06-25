@@ -45,7 +45,7 @@ entity xwrc_board_damc_fmc2zup is
     -- set to 1 to speed up some initialization processes during simulation
     g_simulation                : integer              := 0;
     -- Select whether to include external ref clock input
-    g_with_external_clock_input : boolean              := TRUE;
+    g_with_external_clock_input : boolean              := FALSE;
     -- Number of aux clocks syntonized by WRPC to WR timebase
     g_aux_clks                  : integer              := 0;
     -- plain     = expose WRC fabric interface
@@ -80,7 +80,6 @@ entity xwrc_board_damc_fmc2zup is
     clk_125m_pllref_n_i : in  std_logic;
     clk_125m_gtp_n_i    : in  std_logic;
     clk_125m_gtp_p_i    : in  std_logic;
-    clk_125m_pci_i      : in  std_logic;
     -- Aux clocks, which can be disciplined by the WR Core
     clk_aux_i           : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
     -- 10MHz ext ref clock input (g_with_external_clock_input = TRUE)
@@ -219,7 +218,7 @@ entity xwrc_board_damc_fmc2zup is
     ---------------------------------------------------------------------------
     -- Aux clocks control
     ---------------------------------------------------------------------------
-    tm_dac_value_o       : out std_logic_vector(23 downto 0);
+    tm_dac_value_o       : out std_logic_vector(31 downto 0);
     tm_dac_wr_o          : out std_logic_vector(g_aux_clks-1 downto 0);
     tm_clk_aux_lock_en_i : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
     tm_clk_aux_locked_o  : out std_logic_vector(g_aux_clks-1 downto 0);
@@ -316,10 +315,6 @@ architecture struct of xwrc_board_damc_fmc2zup is
   signal wb_slave_in  : t_wishbone_slave_in;
   signal zero : std_logic;
 
-  -- GTH clock path
-  signal clk_125m_gth_bufds       : std_logic;
-  signal clk_125m_gth             : std_logic;
-
   -- EEPROM IIC signals
   signal eeprom_sda_i : std_logic;
   signal eeprom_sda_o : std_logic;
@@ -337,35 +332,6 @@ architecture struct of xwrc_board_damc_fmc2zup is
   signal sfp_scl_t : std_logic;
 
 begin  -- architecture struct
-
-  -----------------------------------------------------------------------------
-  -- Clock buffers for GTH clock
-  -----------------------------------------------------------------------------
-
-   cmp_ibufds_gte4 : IBUFDS_GTE4
-   generic map (
-      REFCLK_EN_TX_PATH => '0',   -- Refer to Transceiver User Guide
-      REFCLK_HROW_CK_SEL => "00", -- Refer to Transceiver User Guide
-      REFCLK_ICNTL_RX => "00"     -- Refer to Transceiver User Guide
-   )
-   port map (
-      O => open,         -- 1-bit output: Refer to Transceiver User Guide
-      ODIV2 => clk_125m_gth_bufds, -- 1-bit output: Refer to Transceiver User Guide
-      CEB => '0',     -- 1-bit input: Refer to Transceiver User Guide
-      I => clk_125m_gtp_p_i,         -- 1-bit input: Refer to Transceiver User Guide
-      IB => clk_125m_gtp_n_i        -- 1-bit input: Refer to Transceiver User Guide
-   );
-
-   cmp_bufg_gt : BUFG_GT
-   port map (
-      O => clk_125m_gth,             -- 1-bit output: Buffer
-      CE => '1',           -- 1-bit input: Buffer enable
-      CEMASK => '0',   -- 1-bit input: CE Mask
-      CLR => '0',         -- 1-bit input: Asynchronous clear
-      CLRMASK => '0', -- 1-bit input: CLR Mask
-      DIV => "000",         -- 3-bit input: Dynamic divide Value
-      I => clk_125m_gth_bufds              -- 1-bit input: Buffer
-   );
 
   -----------------------------------------------------------------------------
   -- I2C signals
@@ -397,7 +363,7 @@ begin  -- architecture struct
 
   cmp_xwrc_platform : xwrc_platform_xilinx
     generic map (
-      g_fpga_family               => "zynqultrascaleplus",
+      g_fpga_family               => "zynqus",
       g_with_external_clock_input => g_with_external_clock_input,
       g_use_default_plls          => TRUE,
       g_simulation                => g_simulation)
@@ -406,9 +372,8 @@ begin  -- architecture struct
       clk_10m_ext_i         => clk_10m_ext_i,
       clk_20m_vcxo_i        => clk_20m_vcxo_i,
       clk_125m_pllref_i     => clk_125m_pllref_buf,
-      clk_125m_gtp_p_i      => '0',
-      clk_125m_gtp_n_i      => '0',
-      clk_125m_pci_i        => clk_125m_gth,
+      clk_125m_gtp_p_i      => clk_125m_gtp_p_i,
+      clk_125m_gtp_n_i      => clk_125m_gtp_n_i,
       sfp_txn_o             => sfp_txn_o,
       sfp_txp_o             => sfp_txp_o,
       sfp_rxn_i             => sfp_rxn_i,

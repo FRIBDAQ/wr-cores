@@ -47,7 +47,7 @@ package wr_damc_fmc2zup_pkg is
       -- set to 1 to speed up some initialization processes during simulation
       g_simulation                : integer              := 0;
       -- Select whether to include external ref clock input
-      g_with_external_clock_input : boolean              := TRUE;
+      g_with_external_clock_input : boolean              := FALSE;
       -- Number of aux clocks syntonized by WRPC to WR timebase
       g_aux_clks                  : integer              := 0;
       -- plain     = expose WRC fabric interface
@@ -82,7 +82,6 @@ package wr_damc_fmc2zup_pkg is
       clk_125m_pllref_n_i : in  std_logic;
       clk_125m_gtp_n_i    : in  std_logic;
       clk_125m_gtp_p_i    : in  std_logic;
-      clk_125m_pci_i      : in  std_logic;
       -- Aux clocks, which can be disciplined by the WR Core
       clk_aux_i           : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
       -- 10MHz ext ref clock input (g_with_external_clock_input = TRUE)
@@ -221,7 +220,7 @@ package wr_damc_fmc2zup_pkg is
       ---------------------------------------------------------------------------
       -- Aux clocks control
       ---------------------------------------------------------------------------
-      tm_dac_value_o       : out std_logic_vector(23 downto 0);
+      tm_dac_value_o       : out std_logic_vector(31 downto 0);
       tm_dac_wr_o          : out std_logic_vector(g_aux_clks-1 downto 0);
       tm_clk_aux_lock_en_i : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
       tm_clk_aux_locked_o  : out std_logic_vector(g_aux_clks-1 downto 0);
