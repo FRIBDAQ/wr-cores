@@ -47,7 +47,7 @@ package wr_damc_fmc2zup_pkg is
       -- set to 1 to speed up some initialization processes during simulation
       g_simulation                : integer              := 0;
       -- Select whether to include external ref clock input
-      g_with_external_clock_input : boolean              := FALSE;
+      g_with_external_clock_input : boolean              := TRUE;
       -- Number of aux clocks syntonized by WRPC to WR timebase
       g_aux_clks                  : integer              := 0;
       -- plain     = expose WRC fabric interface
