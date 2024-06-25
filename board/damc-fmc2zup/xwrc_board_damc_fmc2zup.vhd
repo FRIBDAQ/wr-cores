@@ -286,7 +286,7 @@ architecture struct of xwrc_board_damc_fmc2zup is
   -- Reset logic
   signal areset_edge_ppulse : std_logic;
   signal rst_62m5_n         : std_logic;
-  signal rstlogic_arst_n    : std_logic;
+  signal rstlogic_arst      : std_logic;
   signal rstlogic_clk_in    : std_logic_vector(1 downto 0);
   signal rstlogic_rst_out   : std_logic_vector(1 downto 0);
 
@@ -412,23 +412,21 @@ begin  -- architecture struct
       data_i   => areset_edge_n_i,
       ppulse_o => areset_edge_ppulse);
 
-  -- logic AND of all async reset sources (active low)
-  rstlogic_arst_n <= pll_locked and areset_n_i and (not areset_edge_ppulse);
+  -- logic OR of all async reset sources (active high)
+  rstlogic_arst <= (not pll_locked) or (not areset_n_i) or areset_edge_ppulse;
 
   -- concatenation of all clocks required to have synced resets
-  rstlogic_clk_in(0) <= clk_pll_62m5;
-  rstlogic_clk_in(1) <= clk_pll_125m;
+  rstlogic_clk_in(0)          <= clk_pll_62m5;
+  rstlogic_clk_in(1)          <= clk_pll_125m;
 
-  cmp_rstlogic_reset : gc_reset
+  cmp_rstlogic_reset : gc_reset_multi_aasd
     generic map (
-      g_clocks    => 2,                           -- 62.5MHz, 125MHz
-      g_logdelay  => 4,                           -- 16 clock cycles
-      g_syncdepth => 3)                           -- length of sync chains
+      g_CLOCKS  => 2,   -- 62.5MHz, 125MHz
+      g_RST_LEN => 16)  -- 16 clock cycles
     port map (
-      free_clk_i => clk_125m_pllref_buf,
-      locked_i   => rstlogic_arst_n,
-      clks_i     => rstlogic_clk_in,
-      rstn_o     => rstlogic_rst_out);
+      arst_i  => rstlogic_arst,
+      clks_i  => rstlogic_clk_in,
+      rst_n_o => rstlogic_rst_out);
 
   -- distribution of resets (already synchronized to their clock domains)
   rst_62m5_n <= rstlogic_rst_out(0);
