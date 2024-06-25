@@ -59,7 +59,7 @@ package wr_damc_fmc2zup_pkg is
       g_tx_streamer_params       : t_tx_streamer_params := c_tx_streamer_params_defaut;
       g_rx_streamer_params       : t_rx_streamer_params := c_rx_streamer_params_defaut;
       -- memory initialisation file for embedded CPU
-      g_dpram_initf               : string               := "/home/greg/wr/wr-cores/bin/wrpc/wrc_phy16.bram";
+      g_dpram_initf               : string               := "../../../../bin/wrpc/wrc_phy16.bram";
       -- identification (id and ver) of the layout of words in the generic diag interface
       g_diag_id                   : integer              := 0;
       g_diag_ver                  : integer              := 0;
@@ -113,12 +113,8 @@ package wr_damc_fmc2zup_pkg is
       sfp_rxp_i         : in  std_logic;
       sfp_rxn_i         : in  std_logic;
       sfp_det_i         : in  std_logic := '1';
-      sfp_sda_i         : in  std_logic;
-      sfp_sda_o         : out std_logic;
-      sfp_sda_t         : out std_logic;
-      sfp_scl_i         : in  std_logic;
-      sfp_scl_o         : out std_logic;
-      sfp_scl_t         : out std_logic;
+      sfp_scl_io        : inout std_logic;
+      sfp_sda_io        : inout std_logic;
       sfp_rate_select_o : out std_logic;
       sfp_tx_fault_i    : in  std_logic := '0';
       sfp_tx_disable_o  : out std_logic;
@@ -127,12 +123,8 @@ package wr_damc_fmc2zup_pkg is
       ---------------------------------------------------------------------------
       -- I2C EEPROM
       ---------------------------------------------------------------------------
-      eeprom_sda_i : in  std_logic;
-      eeprom_sda_o : out std_logic;
-      eeprom_sda_t : out std_logic;
-      eeprom_scl_i : in  std_logic;
-      eeprom_scl_o : out std_logic;
-      eeprom_scl_t : out std_logic;
+      eeprom_sda_io       : inout std_logic;
+      eeprom_scl_io       : inout std_logic;
 
       ---------------------------------------------------------------------------
       -- Onewire interface
@@ -165,29 +157,31 @@ package wr_damc_fmc2zup_pkg is
       -- Axi Slave Bus Interface S00_AXI
       ------------------------------------------
       -- aclk provided by this IP, wire to master!
-      s00_axi_aclk_o  : out std_logic;
-      s00_axi_aresetn : in  std_logic;
-      s00_axi_awaddr  : in std_logic_vector(31 downto 0);
-      s00_axi_awprot  : in  std_logic_vector(2 downto 0);
-      s00_axi_awvalid : in  std_logic;
-      s00_axi_awready : out std_logic;
-      s00_axi_wdata   : in std_logic_vector(31 downto 0);
-      s00_axi_wstrb   : in std_logic_vector(3 downto 0);
-      s00_axi_wvalid  : in  std_logic;
-      s00_axi_wready  : out std_logic;
-      s00_axi_bresp   : out std_logic_vector(1 downto 0);
-      s00_axi_bvalid  : out std_logic;
-      s00_axi_bready  : in std_logic;
-      s00_axi_araddr  : in std_logic_vector(31 downto 0);
-      s00_axi_arprot  : in std_logic_vector(2 downto 0);
-      s00_axi_arvalid : in std_logic;
-      s00_axi_arready : out std_logic;
-      s00_axi_rdata   : out std_logic_vector(31 downto 0);
-      s00_axi_rresp   : out std_logic_vector(1 downto 0);
-      s00_axi_rvalid  : out std_logic;
-      s00_axi_rready  : in std_logic;
-      s00_axi_rlast   : out std_logic;
-      axi_int_o       : out std_logic;  -- axi interrupt signal
+    -- for axi default values see c_axi4_lite_default_master_out_32 (axi4_pkg.vhd)
+    -- by default the interface is kept in reset state to allow port to be left unconnected
+    s00_axi_aclk_o  : out std_logic;
+    s00_axi_aresetn : in  std_logic                     := '0';
+    s00_axi_awaddr  : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_awprot  : in  std_logic_vector(2 downto 0)  := (others => '0');
+    s00_axi_awvalid : in  std_logic                     := '0';
+    s00_axi_awready : out std_logic;
+    s00_axi_wdata   : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_wstrb   : in std_logic_vector(3 downto 0)   := (others => '0');
+    s00_axi_wvalid  : in  std_logic                     := '0';
+    s00_axi_wready  : out std_logic;
+    s00_axi_bresp   : out std_logic_vector(1 downto 0); 
+    s00_axi_bvalid  : out std_logic;
+    s00_axi_bready  : in std_logic                      := '0';
+    s00_axi_araddr  : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_arprot  : in std_logic_vector(2 downto 0)   := (others => '0');
+    s00_axi_arvalid : in std_logic                      := '0';
+    s00_axi_arready : out std_logic;
+    s00_axi_rdata   : out std_logic_vector(31 downto 0);
+    s00_axi_rresp   : out std_logic_vector(1 downto 0);
+    s00_axi_rvalid  : out std_logic;
+    s00_axi_rready  : in std_logic                      := '0';
+    s00_axi_rlast   : out std_logic;
+    axi_int_o       : out std_logic;  -- axi interrupt signal
 
       ---------------------------------------------------------------------------
       -- WR fabric interface (when g_fabric_iface = "plainfbrc")

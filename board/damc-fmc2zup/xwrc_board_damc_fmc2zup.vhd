@@ -106,31 +106,23 @@ entity xwrc_board_damc_fmc2zup is
     ---------------------------------------------------------------------------
     -- SFP I/O for transceiver and SFP management info
     ---------------------------------------------------------------------------
-    sfp_txp_o         : out std_logic;
-    sfp_txn_o         : out std_logic;
-    sfp_rxp_i         : in  std_logic;
-    sfp_rxn_i         : in  std_logic;
-    sfp_det_i         : in  std_logic := '1';
-    sfp_sda_i         : in  std_logic;
-    sfp_sda_o         : out std_logic;
-    sfp_sda_t         : out std_logic;
-    sfp_scl_i         : in  std_logic;
-    sfp_scl_o         : out std_logic;
-    sfp_scl_t         : out std_logic;
-    sfp_rate_select_o : out std_logic;
-    sfp_tx_fault_i    : in  std_logic := '0';
-    sfp_tx_disable_o  : out std_logic;
-    sfp_los_i         : in  std_logic := '0';
+    sfp_txp_o         : out   std_logic;
+    sfp_txn_o         : out   std_logic;
+    sfp_rxp_i         : in    std_logic;
+    sfp_rxn_i         : in    std_logic;
+    sfp_det_i         : in    std_logic := '1';
+    sfp_scl_io        : inout std_logic;
+    sfp_sda_io        : inout std_logic;
+    sfp_rate_select_o : out   std_logic;
+    sfp_tx_fault_i    : in    std_logic := '0';
+    sfp_tx_disable_o  : out   std_logic;
+    sfp_los_i         : in    std_logic := '0';
 
     ---------------------------------------------------------------------------
     -- I2C EEPROM
     ---------------------------------------------------------------------------
-    eeprom_sda_i : in  std_logic;
-    eeprom_sda_o : out std_logic;
-    eeprom_sda_t : out std_logic;
-    eeprom_scl_i : in  std_logic;
-    eeprom_scl_o : out std_logic;
-    eeprom_scl_t : out std_logic;
+    eeprom_sda_io       : inout std_logic;
+    eeprom_scl_io       : inout std_logic;
 
     ---------------------------------------------------------------------------
     -- Onewire interface
@@ -328,7 +320,27 @@ architecture struct of xwrc_board_damc_fmc2zup is
   signal clk_125m_gth_bufds       : std_logic;
   signal clk_125m_gth             : std_logic;
 
+  -- EEPROM IIC signals
+  signal eeprom_sda_i : std_logic;
+  signal eeprom_sda_o : std_logic;
+  signal eeprom_sda_t : std_logic;
+  signal eeprom_scl_i : std_logic;
+  signal eeprom_scl_o : std_logic;
+  signal eeprom_scl_t : std_logic;
+    
+  -- SFP IIC signals
+  signal sfp_sda_i : std_logic;
+  signal sfp_sda_o : std_logic;
+  signal sfp_sda_t : std_logic;
+  signal sfp_scl_i : std_logic;
+  signal sfp_scl_o : std_logic;
+  signal sfp_scl_t : std_logic;
+
 begin  -- architecture struct
+
+  -----------------------------------------------------------------------------
+  -- Clock buffers for GTH clock
+  -----------------------------------------------------------------------------
 
    cmp_ibufds_gte4 : IBUFDS_GTE4
    generic map (
@@ -354,6 +366,20 @@ begin  -- architecture struct
       DIV => "000",         -- 3-bit input: Dynamic divide Value
       I => clk_125m_gth_bufds              -- 1-bit input: Buffer
    );
+
+  -----------------------------------------------------------------------------
+  -- I2C signals
+  -----------------------------------------------------------------------------
+
+  eeprom_sda_i <= eeprom_sda_io;
+  eeprom_sda_io <= eeprom_sda_o when eeprom_sda_t = '0' else 'Z';
+  eeprom_scl_i <= eeprom_scl_io;
+  eeprom_scl_io <= eeprom_scl_o when eeprom_scl_t = '0' else 'Z';
+
+  sfp_sda_i <= sfp_sda_io;
+  sfp_sda_io <= sfp_sda_o when sfp_sda_t = '0' else 'Z';
+  sfp_scl_i <= sfp_scl_io;
+  sfp_scl_io <= sfp_scl_o when sfp_scl_t = '0' else 'Z';
 
   -----------------------------------------------------------------------------
   -- Platform-dependent part (PHY, PLLs, buffers, etc)

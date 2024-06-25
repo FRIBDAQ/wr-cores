@@ -141,12 +141,6 @@ architecture arch of damc_fmc2zup_ref_top is
   alias sfp_los_i : std_logic is fmc2_la_n_io(4);
   alias sfp_tx_disable_o : std_logic is fmc2_la_n_io(8);
   alias sfp_rate_select_o : std_logic is fmc2_la_n_io(10);
-  signal sfp_sda_i                : std_logic;
-  signal sfp_sda_o                : std_logic;
-  signal sfp_sda_t                : std_logic;
-  signal sfp_scl_i                : std_logic;
-  signal sfp_scl_o                : std_logic;
-  signal sfp_scl_t                : std_logic;
 
   ---------------------------------------------------------------------------
   -- External WB interface
@@ -378,12 +372,8 @@ begin
     sfp_rxp_i               => sfp_rxp_i,
     sfp_rxn_i               => sfp_rxn_i,
     sfp_det_i               => sfp_det_i,
-    sfp_sda_i               => sfp_sda_i,
-    sfp_sda_o               => sfp_sda_o,
-    sfp_sda_t               => sfp_sda_t,
-    sfp_scl_i               => sfp_scl_i,
-    sfp_scl_o               => sfp_scl_o,
-    sfp_scl_t               => sfp_scl_t,
+    sfp_scl_io              => sfp_scl_io,
+    sfp_sda_io              => sfp_sda_io,
     sfp_rate_select_o       => sfp_rate_select_o,
     sfp_tx_fault_i          => sfp_tx_fault_i,
     sfp_tx_disable_o        => sfp_tx_disable_o,
@@ -392,12 +382,8 @@ begin
     ---------------------------------------------------------------------------
     -- I2C EEPROM
     ---------------------------------------------------------------------------
-    eeprom_sda_i            => eeprom_sda_i,
-    eeprom_sda_o            => eeprom_sda_o,
-    eeprom_sda_t            => eeprom_sda_t,
-    eeprom_scl_i            => eeprom_scl_i,
-    eeprom_scl_o            => eeprom_scl_o,
-    eeprom_scl_t            => eeprom_scl_t,
+    eeprom_sda_io           => eeprom_sda_io,
+    eeprom_scl_io           => eeprom_scl_io,
 
     ---------------------------------------------------------------------------
     -- I2C EEPROM
@@ -443,16 +429,6 @@ begin
     pps_p_o                 => pps_p_o,
     link_ok_o               => led_fp(1)
   );
-
-  eeprom_sda_i <= eeprom_sda_io;
-  eeprom_sda_io <= eeprom_sda_o when eeprom_sda_t = '0' else 'Z';
-  eeprom_scl_i <= eeprom_scl_io;
-  eeprom_scl_io <= eeprom_scl_o when eeprom_scl_t = '0' else 'Z';
-
-  sfp_sda_i <= sfp_sda_io;
-  sfp_sda_io <= sfp_sda_o when sfp_sda_t = '0' else 'Z';
-  sfp_scl_i <= sfp_scl_io;
-  sfp_scl_io <= sfp_scl_o when sfp_scl_t = '0' else 'Z';
 
   fplink_trig0_p <= pps_p_o;
   fplink_trig0_n <= '0';
