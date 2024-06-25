@@ -57,7 +57,7 @@ entity xwrc_board_damc_fmc2zup is
     g_tx_streamer_params       : t_tx_streamer_params := c_tx_streamer_params_defaut;
     g_rx_streamer_params       : t_rx_streamer_params := c_rx_streamer_params_defaut;
     -- memory initialisation file for embedded CPU
-    g_dpram_initf               : string               := "/home/greg/wr/wr-cores/bin/wrpc/wrc_phy16.bram";
+    g_dpram_initf               : string               := "../../../../bin/wrpc/wrc_phy16.bram";
     -- identification (id and ver) of the layout of words in the generic diag interface
     g_diag_id                   : integer              := 0;
     g_diag_ver                  : integer              := 0;
@@ -158,32 +158,33 @@ entity xwrc_board_damc_fmc2zup is
     ---------------------------------------------------------------------------
     aux_master_o : out t_wishbone_master_out;
     aux_master_i : in  t_wishbone_master_in := cc_dummy_master_in;
-
+    
     ------------------------------------------
     -- Axi Slave Bus Interface S00_AXI
     ------------------------------------------
     -- aclk provided by this IP, wire to master!
+    -- for axi default values see c_axi4_lite_default_master_out_32 (axi4_pkg.vhd)
     s00_axi_aclk_o  : out std_logic;
-    s00_axi_aresetn : in  std_logic;
-    s00_axi_awaddr  : in std_logic_vector(31 downto 0);
-    s00_axi_awprot  : in  std_logic_vector(2 downto 0);
-    s00_axi_awvalid : in  std_logic;
+    s00_axi_aresetn : in  std_logic                     := '0';
+    s00_axi_awaddr  : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_awprot  : in  std_logic_vector(2 downto 0)  := (others => '0');
+    s00_axi_awvalid : in  std_logic                     := '0';
     s00_axi_awready : out std_logic;
-    s00_axi_wdata   : in std_logic_vector(31 downto 0);
-    s00_axi_wstrb   : in std_logic_vector(3 downto 0);
-    s00_axi_wvalid  : in  std_logic;
+    s00_axi_wdata   : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_wstrb   : in std_logic_vector(3 downto 0)   := (others => '0');
+    s00_axi_wvalid  : in  std_logic                     := '0';
     s00_axi_wready  : out std_logic;
-    s00_axi_bresp   : out std_logic_vector(1 downto 0);
+    s00_axi_bresp   : out std_logic_vector(1 downto 0); 
     s00_axi_bvalid  : out std_logic;
-    s00_axi_bready  : in std_logic;
-    s00_axi_araddr  : in std_logic_vector(31 downto 0);
-    s00_axi_arprot  : in std_logic_vector(2 downto 0);
-    s00_axi_arvalid : in std_logic;
+    s00_axi_bready  : in std_logic                      := '0';
+    s00_axi_araddr  : in std_logic_vector(31 downto 0)  := (others => '0');
+    s00_axi_arprot  : in std_logic_vector(2 downto 0)   := (others => '0');
+    s00_axi_arvalid : in std_logic                      := '0';
     s00_axi_arready : out std_logic;
     s00_axi_rdata   : out std_logic_vector(31 downto 0);
     s00_axi_rresp   : out std_logic_vector(1 downto 0);
     s00_axi_rvalid  : out std_logic;
-    s00_axi_rready  : in std_logic;
+    s00_axi_rready  : in std_logic                      := '0';
     s00_axi_rlast   : out std_logic;
     axi_int_o       : out std_logic;  -- axi interrupt signal
 
