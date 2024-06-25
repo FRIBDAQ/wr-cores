@@ -113,9 +113,6 @@ architecture arch of damc_fmc2zup_ref_top is
   signal rst_sys_62m5_n           : std_logic;
   signal rst_ref_125m_n           : std_logic;
 
-  signal clk_125m_gth_bufds       : std_logic;
-  signal clk_125m_gth             : std_logic;
-
   signal reset_wr_n               : std_logic;
 
   ---------------------------------------------------------------------------
@@ -272,12 +269,12 @@ architecture arch of damc_fmc2zup_ref_top is
   ---------------------------------------------------------------------------
   signal clk_200_bufds, clk_200 : std_logic;
   signal cntr_200 : unsigned(15 downto 0);
-  signal cntr_125 : unsigned(7 downto 0);
+  --signal cntr_125 : unsigned(7 downto 0);
 
   attribute MARK_DEBUG : string;
   attribute MARK_DEBUG of clk_200 : signal is "true";
   attribute MARK_DEBUG of cntr_200 : signal is "true";
-  attribute MARK_DEBUG of cntr_125 : signal is "true";
+  --attribute MARK_DEBUG of cntr_125 : signal is "true";
 
 begin
 
@@ -289,12 +286,12 @@ begin
     end if;
   end process;
 
-  proc_cntr_125: process (clk_125m_gth)
-  begin
-    if rising_edge(clk_125m_gth) then
-      cntr_125 <= cntr_125 + 1;
-    end if;
-  end process;
+  --proc_cntr_125: process (clk_125m_gth)
+  --begin
+  --  if rising_edge(clk_125m_gth) then
+  --    cntr_125 <= cntr_125 + 1;
+  --  end if;
+  --end process;
 
   cmp_ibufds_clk_200 : IBUFDS
   port map (
@@ -339,31 +336,6 @@ begin
     reset_wr_n(0) => reset_wr_n
   );
 
-   cmp_ibufds_gte4 : IBUFDS_GTE4
-   generic map (
-      REFCLK_EN_TX_PATH => '0',   -- Refer to Transceiver User Guide
-      REFCLK_HROW_CK_SEL => "00", -- Refer to Transceiver User Guide
-      REFCLK_ICNTL_RX => "00"     -- Refer to Transceiver User Guide
-   )
-   port map (
-      O => open,         -- 1-bit output: Refer to Transceiver User Guide
-      ODIV2 => clk_125m_gth_bufds, -- 1-bit output: Refer to Transceiver User Guide
-      CEB => '0',     -- 1-bit input: Refer to Transceiver User Guide
-      I => clk_125m_gtp_p_i,         -- 1-bit input: Refer to Transceiver User Guide
-      IB => clk_125m_gtp_n_i        -- 1-bit input: Refer to Transceiver User Guide
-   );
-
-   cmp_bufg_gt : BUFG_GT
-   port map (
-      O => clk_125m_gth,             -- 1-bit output: Buffer
-      CE => '1',           -- 1-bit input: Buffer enable
-      CEMASK => '0',   -- 1-bit input: CE Mask
-      CLR => '0',         -- 1-bit input: Asynchronous clear
-      CLRMASK => '0', -- 1-bit input: CLR Mask
-      DIV => "000",         -- 3-bit input: Dynamic divide Value
-      I => clk_125m_gth_bufds              -- 1-bit input: Buffer
-   );
-
   cmp_xwrc_board_damc_fmc2zup: xwrc_board_damc_fmc2zup
   generic map (
     -- g_dpram_initf => "../../../../bin/wrpc/wrc_phy16_direct_dmtd.bram"
@@ -379,9 +351,9 @@ begin
     clk_20m_vcxo_i          => clk_20m_vcxo_i,
     clk_125m_pllref_p_i     => clk_125m_pllref_p_i,
     clk_125m_pllref_n_i     => clk_125m_pllref_n_i,
-    clk_125m_gtp_n_i        => '0',
-    clk_125m_gtp_p_i        => '0',
-    clk_125m_pci_i          => clk_125m_gth,
+    clk_125m_gtp_n_i        => clk_125m_gtp_n_i,
+    clk_125m_gtp_p_i        => clk_125m_gtp_p_i,
+    clk_125m_pci_i          => '0',
     -- 62.5MHz sys clock output
     clk_sys_62m5_o          => clk_sys_62m5,
     -- 125MHz ref clock output

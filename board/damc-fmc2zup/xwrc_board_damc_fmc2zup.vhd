@@ -164,6 +164,7 @@ entity xwrc_board_damc_fmc2zup is
     ------------------------------------------
     -- aclk provided by this IP, wire to master!
     -- for axi default values see c_axi4_lite_default_master_out_32 (axi4_pkg.vhd)
+    -- by default the interface is kept in reset state to allow port to be left unconnected
     s00_axi_aclk_o  : out std_logic;
     s00_axi_aresetn : in  std_logic                     := '0';
     s00_axi_awaddr  : in std_logic_vector(31 downto 0)  := (others => '0');
@@ -323,7 +324,36 @@ architecture struct of xwrc_board_damc_fmc2zup is
   signal wb_slave_in  : t_wishbone_slave_in;
   signal zero : std_logic;
 
+  -- GTH clock path
+  signal clk_125m_gth_bufds       : std_logic;
+  signal clk_125m_gth             : std_logic;
+
 begin  -- architecture struct
+
+   cmp_ibufds_gte4 : IBUFDS_GTE4
+   generic map (
+      REFCLK_EN_TX_PATH => '0',   -- Refer to Transceiver User Guide
+      REFCLK_HROW_CK_SEL => "00", -- Refer to Transceiver User Guide
+      REFCLK_ICNTL_RX => "00"     -- Refer to Transceiver User Guide
+   )
+   port map (
+      O => open,         -- 1-bit output: Refer to Transceiver User Guide
+      ODIV2 => clk_125m_gth_bufds, -- 1-bit output: Refer to Transceiver User Guide
+      CEB => '0',     -- 1-bit input: Refer to Transceiver User Guide
+      I => clk_125m_gtp_p_i,         -- 1-bit input: Refer to Transceiver User Guide
+      IB => clk_125m_gtp_n_i        -- 1-bit input: Refer to Transceiver User Guide
+   );
+
+   cmp_bufg_gt : BUFG_GT
+   port map (
+      O => clk_125m_gth,             -- 1-bit output: Buffer
+      CE => '1',           -- 1-bit input: Buffer enable
+      CEMASK => '0',   -- 1-bit input: CE Mask
+      CLR => '0',         -- 1-bit input: Asynchronous clear
+      CLRMASK => '0', -- 1-bit input: CLR Mask
+      DIV => "000",         -- 3-bit input: Dynamic divide Value
+      I => clk_125m_gth_bufds              -- 1-bit input: Buffer
+   );
 
   -----------------------------------------------------------------------------
   -- Platform-dependent part (PHY, PLLs, buffers, etc)
@@ -350,9 +380,9 @@ begin  -- architecture struct
       clk_10m_ext_i         => clk_10m_ext_i,
       clk_20m_vcxo_i        => clk_20m_vcxo_i,
       clk_125m_pllref_i     => clk_125m_pllref_buf,
-      clk_125m_gtp_p_i      => clk_125m_gtp_p_i,
-      clk_125m_gtp_n_i      => clk_125m_gtp_n_i,
-      clk_125m_pci_i        => clk_125m_pci_i,
+      clk_125m_gtp_p_i      => '0',
+      clk_125m_gtp_n_i      => '0',
+      clk_125m_pci_i        => clk_125m_gth,
       sfp_txn_o             => sfp_txn_o,
       sfp_txp_o             => sfp_txp_o,
       sfp_rxn_i             => sfp_rxn_i,
