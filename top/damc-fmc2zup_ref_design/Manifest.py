@@ -3,6 +3,7 @@ fetchto = "../../ip_cores"
 files = [
     "damc_fmc2zup_ref_top.vhd",
     "damc_fmc2zup_ref_top.xdc",
+    "damc_fmc2zup_ref_timing.xdc"
 ]
 
 modules = {
