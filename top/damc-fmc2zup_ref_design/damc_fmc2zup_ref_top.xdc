@@ -20,8 +20,11 @@ set_property IOSTANDARD LVCMOS18 [get_ports reset_mmc_n]
 set_property PACKAGE_PIN G16 [get_ports clk_20m_vcxo_i]
 set_property PACKAGE_PIN AT25 [get_ports clk_125m_pllref_p_i]
 set_property PACKAGE_PIN AT26 [get_ports clk_125m_pllref_n_i]
-set_property PACKAGE_PIN Y11 [get_ports clk_125m_gtp_n_i]
-set_property PACKAGE_PIN Y12 [get_ports clk_125m_gtp_p_i]
+
+# MGTREFCLK0N_229
+set_property PACKAGE_PIN Y11 [get_ports clk_125m_gtp_n_i]  
+# MGTREFCLK0P_229                                      
+set_property PACKAGE_PIN Y12 [get_ports clk_125m_gtp_p_i]                                                   
 
 set_property IOSTANDARD LVCMOS18 [get_ports clk_20m_vcxo_i]
 set_property IOSTANDARD LVDS [get_ports clk_125m_pllref_p_i]
@@ -32,9 +35,13 @@ set_property EQUALIZATION EQ_LEVEL0 [get_ports clk_125m_pllref_p_i]
 ################################################################################
 # SFP
 
+# MGTHRXP0_225                        
 set_property PACKAGE_PIN AT4 [get_ports sfp_rxp_i]
+# MGTHRXN0_225                        
 set_property PACKAGE_PIN AT3 [get_ports sfp_rxn_i]
+# MGTHTXP0_225                                                
 set_property PACKAGE_PIN AR6 [get_ports sfp_txp_o]
+# MGTHTXN0_225                        
 set_property PACKAGE_PIN AR5 [get_ports sfp_txn_o]
 
 

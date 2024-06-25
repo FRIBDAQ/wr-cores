@@ -20,3 +20,6 @@ set_clock_groups -asynchronous -group [get_clocks clk_pl_1] -group [get_clocks c
 #set_clock_groups -asynchronous -group [get_clocks clk_20m_vcxo] -group [get_clocks clk_125m_pllref] -group [get_clocks clk_125m_gtp]
 
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets cmp_ibufds_clk_200/O]
+
+# Demote to warning... note that we should use a GTH from the quad of the used MGTREFCLK (quad 229) or a quad within +/-2 to that
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets cmp_xwrc_board_damc_fmc2zup/cmp_xwrc_platform/gen_phy_zynqus.clk_125m_gth_buf]
