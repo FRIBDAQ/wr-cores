@@ -1,0 +1,389 @@
+# Patchfile to de-tune Si570 on the ZCU102 board for QPLL-based White Rabbit
+#
+# The 125M reference clock needs to be tuned to approx. 200ppm *below* the
+# center frequency, as the QPLLs can only tune (400ppm) in a single direction.
+#
+# Author(s)  : David Epping <david.epping@missinglinkelectronics.com>
+#              (based on work by Tomasz Wlostowski <tomasz.wlostowski@cern.ch>)
+# Company    : Missing Link Electronics
+#              CERN
+
+--- ./xfsbl_hooks.h	2023-04-12 13:50:29.830802817 +0200
++++ ./xfsbl_hooks.h	2023-05-16 15:17:21.357304915 +0200
+@@ -43,6 +43,8 @@
+ 
+ /************************** Variable Definitions *****************************/
+ 
++u32 XFsbl_HookBoardInit(void);
++
+ u32 XFsbl_HookBeforeBSDownload(void );
+ 
+ u32 XFsbl_HookAfterBSDownload(void );
+--- ./xfsbl_hooks.c	2023-04-12 13:50:29.850804060 +0200
++++ ./xfsbl_hooks.c	2023-05-16 15:06:04.609103125 +0200
+@@ -2,6 +2,25 @@
+ * Copyright (c) 2015 - 2020 Xilinx, Inc.  All rights reserved.
+ * SPDX-License-Identifier: MIT
+ ******************************************************************************/
++/*
++ * This work is part of the White Rabbit project
++ *
++ * Copyright (C) 2019 CERN (www.cern.ch)
++ * Author: Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
++ *
++ * This program is free software: you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation, either version 3 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
+ 
+ 
+ /*****************************************************************************/
+@@ -29,6 +48,7 @@
+ #include "xfsbl_hw.h"
+ #include "xfsbl_hooks.h"
+ #include "psu_init.h"
++#include "xiicps.h"
+ /************************** Constant Definitions *****************************/
+ 
+ /**************************** Type Definitions *******************************/
+@@ -38,6 +58,318 @@
+ /************************** Function Prototypes ******************************/
+ 
+ /************************** Variable Definitions *****************************/
++
++struct si57x_drv
++{
++	XIicPs *i2c_drv;
++	int n1;
++	int hsdiv;
++	uint64_t rfreq;
++};
++
++static const uint8_t si57x_i2c_addr = 0x5d;
++
++
++int si57x_read( struct si57x_drv *drv, uint8_t addr, uint8_t *data, int count )
++{
++	int rc;
++
++	XIicPs_SetOptions(drv->i2c_drv, XIICPS_REP_START_OPTION);
++	while (XIicPs_BusIsBusy(drv->i2c_drv));
++	rc = XIicPs_MasterSendPolled(drv->i2c_drv, &addr, 1, si57x_i2c_addr);
++	if (rc != XST_SUCCESS) {
++		XIicPs_ClearOptions(drv->i2c_drv, XIICPS_REP_START_OPTION);
++		xil_printf("Si57x: Failed to send register address for read (%u)\r\n",
++				rc);
++		return XST_FAILURE;
++	}
++	rc = XIicPs_MasterRecvPolled(drv->i2c_drv, data, count, si57x_i2c_addr);
++	if (rc != XST_SUCCESS) {
++		XIicPs_ClearOptions(drv->i2c_drv, XIICPS_REP_START_OPTION);
++		xil_printf("Si57x: Failed to read %u bytes @0x%x (%u)\r\n", count, addr,
++				rc);
++		return XST_FAILURE;
++	}
++	XIicPs_ClearOptions(drv->i2c_drv, XIICPS_REP_START_OPTION);
++	return XST_SUCCESS;
++}
++
++
++int si57x_write( struct si57x_drv *drv, uint8_t addr, uint8_t *data,
++		int count )
++{
++	int rc;
++	int i;
++	uint8_t buf[16];
++
++	if (sizeof(buf) <= count) {
++		xil_printf("Si57x: Write buffer has %ull bytes, but we need %u\r\n",
++				sizeof(buf), 1 + count);
++		return XST_FAILURE;
++	}
++
++	buf[0] = addr;
++	for(i = 0; i < count; ++i)
++	{
++		buf[1+i] = data[i];
++	}
++
++	while (XIicPs_BusIsBusy(drv->i2c_drv));
++	rc = XIicPs_MasterSendPolled(drv->i2c_drv, buf, 1 + count, si57x_i2c_addr);
++	if (rc != XST_SUCCESS) {
++		xil_printf("Si57x: Failed to write address or %u bytes @0x%x (%u)\r\n",
++				count, addr, rc);
++		return XST_FAILURE;
++	}
++	return XST_SUCCESS;
++}
++
++int si57x_get_xtal_frequency(struct si57x_drv *drv, uint32_t f0, uint32_t* f_xtal)
++{
++	uint8_t regs[16];
++
++	// R7... R15
++	if (si57x_read( drv, 7, regs, 9 )) {
++		xil_printf("Si57x: Failed to read xtal frequency data\r\n");
++		return XST_FAILURE;
++	}
++
++	uint64_t rfreq = ( (uint64_t) regs[12-7] ) | // R12
++					 ( ( (uint64_t) regs[11-7]) << 8 ) | // R11
++					 ( ( (uint64_t) regs[10-7]) << 16 ) | // R10
++					 ( ( (uint64_t) regs[9-7]) << 24 ) | // R9
++					 ( ( (uint64_t) regs[8-7] & 0x3f) << 32 ); // R8
++
++	uint64_t n1 = ( ( (regs[0] & 0x1f) << 2) | (regs[1] >> 6) ) + 1;
++	uint64_t hs_div = (regs[0] >> 5) + 4;
++
++	xil_printf("Si57x: RFREQ %08x %08x n1 %d hsdiv %d\r\n",
++			(uint32_t) (rfreq >> 32), (uint32_t) rfreq, (int)n1, (int)hs_div );
++
++	if( rfreq == 0 )
++	{
++		xil_printf("Si57x: strange, rfreq == 0\r\n");
++		return XST_FAILURE;
++	}
++
++	uint64_t f_xtal_64 = ((uint64_t)f0 * hs_div * n1 ) * ( 1ULL << 28 ) / rfreq;
++
++	
++	xil_printf("Si57x: xtal frequency = %llu Hz\r\n", f_xtal);
++
++	if(f_xtal)
++		*f_xtal = f_xtal_64;
++
++	return XST_SUCCESS;
++}
++
++int si57x_calc_frequency( uint32_t f_xtal, uint32_t freq_hz,
++		uint64_t *rfreq_out, int* hsdiv_out, int* n1_out )
++{
++	const uint8_t hsdiv_values[] = { 4, 5, 6, 7, 9, 11, 0 };
++	int hsdiv_idx, n1;
++	const uint64_t f_dco_min = 4850000000;
++	const uint64_t f_dco_max = 5670000000;
++
++		for( hsdiv_idx = 0; hsdiv_values[hsdiv_idx] != 0; hsdiv_idx++ )
++		{
++			for( n1 = 1; n1 <= 255; n1++ )
++			{
++				if ( n1 && (n1 & 1) )
++					continue;
++
++			uint64_t hs_div = hsdiv_values[hsdiv_idx];
++
++			uint64_t f_dco = (uint64_t) freq_hz * hs_div * n1;
++
++			if( f_dco < f_dco_min || f_dco > f_dco_max )
++				continue;
++
++			uint64_t rfreq = f_dco * (1ULL<<28) / f_xtal;
++
++			*rfreq_out = rfreq;
++			*hsdiv_out = hsdiv_idx;
++			*n1_out = n1;
++
++			xil_printf("Si57x: New RFREQ %08x %08x n1 %d hsdiv %d\r\n",
++					(uint32_t) (*rfreq_out >> 32), (uint32_t) *rfreq_out,
++					(int)*n1_out, (int)*hsdiv_out );
++
++			return 0;
++		}
++	}
++	return -1;
++}
++
++int si57x_reset(struct si57x_drv *drv )
++{
++	uint8_t r135 = 1;
++
++	if (si57x_read(drv, 135, &r135, 1)) {
++		xil_printf("Si57x: Failed to read reset bit\r\n");
++	}
++	xil_printf("Si57x: Read 0x%02x @0x%02x\r\n", r135, 135);
++
++/*	r135 = (1<<7);
++	if (si57x_write(drv, 135, &r135, 1)) {
++		xil_printf("Si57x: Failed to assert reset bit\r\n");
++	}
++	usleep(10*1000);*/
++	r135 =  (1 << 0);
++	if (si57x_write(drv, 135, &r135, 1)) {
++		xil_printf("Si57x: Failed to load defaults from NVM\r\n");
++	}
++
++	return XST_SUCCESS;
++}
++
++
++int si57x_set_frequency( struct si57x_drv *drv, uint32_t f_xtal,
++		uint32_t freq_hz, int vco_gain )
++{
++	uint8_t regs[16];
++	uint64_t rfreq;
++	int hsdiv;
++	int n1;
++
++	if( si57x_calc_frequency ( f_xtal, freq_hz, &rfreq, &hsdiv, &n1 ) < 0 )
++		return -1;
++
++	drv->n1 = n1;
++	drv->hsdiv = hsdiv;
++	drv->rfreq = rfreq;
++
++	regs[12] = (drv->rfreq & 0xff);
++	regs[11] = ((drv->rfreq >> 8) & 0xff);
++	regs[10] = ((drv->rfreq >> 16) & 0xff);
++	regs[9] =  ((drv->rfreq >> 24) & 0xff);
++	regs[8] = ((drv->rfreq >>32) & 0x3f) | (((drv->n1-1) & 0xff) << 6);
++	regs[7] = (drv->hsdiv << 5) | ((drv->n1-1) >> 2);
++
++	xil_printf("Si57x: New RFREQ %08x %08x n1 %d hsdiv %d\r\n",
++			(uint32_t) (drv->rfreq >> 32), (uint32_t) drv->rfreq,
++			(int)drv->n1, (int)drv->hsdiv );
++
++
++	uint8_t r137, r135;
++
++	usleep(10*1000);
++
++	xil_printf("Si57x: VCO Gain=%d\r\n", vco_gain);
++/*
++	writel( (uint32_t) ( rfreq & 0xffffffffULL),
++			drv->base_addr + SI570_REG_RFREQL );
++	writel( (uint32_t) ( rfreq >> 32) | (((n1-1) & 0xff) << 8) | (hsdiv << 16),
++			drv->base_addr + SI570_REG_RFREQH );
++	writel( SI570_CR_ENABLE | SI570_CR_CLK_DIV_W(200) | SI570_CR_I2C_ADDR_W ( ( drv->i2c_addr << 1 ) ) | SI570_CR_GAIN_W(vco_gain),
++			drv->base_addr + SI570_REG_CR );
++*/
++	si57x_read( drv, 135, &r135, 1 );
++	si57x_read( drv, 137, &r137, 1 );
++	r137 |= (1<<4); // freeze DCO
++	si57x_write( drv, 137, &r137, 1);
++	si57x_write( drv, 7, regs + 7, 6 );
++	r137 &= ~(1<<4); // unfreeze DCO
++	si57x_write( drv, 137, &r137, 1);
++	r135 |= (1<<6); // assert NewFreq
++	si57x_write( drv, 135, &r135, 1);
++
++	return 0;
++}
++
++void si57x_init(struct si57x_drv *drv, XIicPs *i2c_drv)
++{
++	drv->i2c_drv = i2c_drv;
++}
++
++
++// ZCU102 Rev 1.1 PS I2C1 TCA9548A U34 for EEPROM and both Si570 (and others)
++static const uint8_t ps_i2c1_tca9548a_misc_addr = 0x74;
++static const uint8_t ps_i2c1_tca9548a_misc_eeprom_mask = (1 << 0);
++static const uint8_t ps_i2c1_tca9548a_misc_si570_pl_mask = (1 << 2);
++static const uint8_t ps_i2c1_tca9548a_misc_si570_mgt_mask = (1 << 3);
++
++// WR reference uses a value of 3
++// https://ohwr.org/project/wrpc-sw/blob/tom-wrpc-v5-oversampled-dmtd/boards/spec_silabs/board.c
++// "hw interface VCO gain = 3 (~20 ppm)"
++static const int si570_vco_gain = 3;
++
++static const uint32_t si570_mgt_f0_hz = 156250000;
++static const uint32_t si570_mgt_fout_hz = 124975605;
++
++
++static int ps_i2c_init(XIicPs *drv, uint16_t id, int rate)
++{
++	int rc;
++	XIicPs_Config *config;
++
++	config = XIicPs_LookupConfig(id);
++	if (config == NULL) {
++		return XST_FAILURE;
++	}
++
++	rc = XIicPs_CfgInitialize(drv, config, config->BaseAddress);
++	if (rc != XST_SUCCESS) {
++		return XST_FAILURE;
++	}
++	XIicPs_SetSClk(drv, rate);
++	return XST_SUCCESS;
++}
++
++static int ps_i2c_tca9548a_set(XIicPs *drv, uint8_t mux_addr, uint8_t mux_data)
++{
++	int rc;
++
++	while (XIicPs_BusIsBusy(drv));
++	rc = XIicPs_MasterSendPolled(drv, &mux_data, 1, mux_addr);
++	if (rc != XST_SUCCESS) {
++		return XST_FAILURE;
++	}
++	return XST_SUCCESS;
++}
++
++
++u32 XFsbl_HookBoardInit(void )
++{
++	u32 Status = XFSBL_SUCCESS;
++	XIicPs ps_i2c1_drv;
++	struct si57x_drv si570_mgt_drv;
++	uint32_t si570_mgt_xtal_freq_hz;
++
++	xil_printf("ZCU102 WhiteRabbit Preload Application by MLE\r\n");
++	XFsbl_Printf(DEBUG_GENERAL,
++			"%s: ZCU102 WhiteRabbit Preload Application by MLE\r\n", __func__);
++
++	if (ps_i2c_init(&ps_i2c1_drv, 1, 100000)) {
++		xil_printf("Failed to initialize PS I2C1\r\n");
++		Status = XFSBL_FAILURE;
++	}
++	si57x_init(&si570_mgt_drv, &ps_i2c1_drv);
++
++	// Set both Si570 clock as expected by WR
++	if (ps_i2c_tca9548a_set(&ps_i2c1_drv, ps_i2c1_tca9548a_misc_addr,
++			ps_i2c1_tca9548a_misc_si570_mgt_mask))
++	{
++		xil_printf("Failed to configure I2C MUX U34\r\n");
++		Status = XFSBL_FAILURE;
++	}
++	si57x_reset(&si570_mgt_drv);
++	si57x_get_xtal_frequency(&si570_mgt_drv, si570_mgt_f0_hz,
++			&si570_mgt_xtal_freq_hz);
++	if (si57x_set_frequency(&si570_mgt_drv, si570_mgt_xtal_freq_hz,
++			si570_mgt_fout_hz, si570_vco_gain))
++	{
++		xil_printf("Failed to configure USER MGT Si570 U56\r\n");
++		Status = XFSBL_FAILURE;
++	}
++
++	XFsbl_Printf(DEBUG_GENERAL, "%s: Wait 1 second for clock to settle ...\r\n", __func__);
++	sleep(1);
++	XFsbl_Printf(DEBUG_GENERAL, "%s: DONE\r\n", __func__);
++
++	return Status;
++}
++
+ #ifdef XFSBL_BS
+ u32 XFsbl_HookBeforeBSDownload(void )
+ {
+--- ./xfsbl_initialization.c	2023-04-12 13:50:29.842803563 +0200
++++ ./xfsbl_initialization.c	2023-05-16 15:01:43.421578330 +0200
+@@ -392,6 +392,10 @@
+ 	if (XFSBL_SUCCESS != Status) {
+ 		goto END;
+ 	}
++	Status = XFsbl_HookBoardInit();
++	if (XFSBL_SUCCESS != Status) {
++		goto END;
++	}
+ 
+ 	/**
+ 	 * Validate the reset reason
