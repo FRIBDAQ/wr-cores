@@ -250,6 +250,7 @@ architecture struct of xwrc_board_zcu102 is
   signal phy16_to_wrc   : t_phy_16bits_to_wrc;
   signal phy16_from_wrc : t_phy_16bits_from_wrc;
 
+  signal sfp_tx_disable_n : std_logic;
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -309,13 +310,16 @@ begin  -- architecture struct
       sfp_rxp_i             => sfp_rxp_i,
       sfp_tx_fault_i        => sfp_tx_fault_i,
       sfp_los_i             => sfp_los_i,
-      sfp_tx_disable_o      => sfp_tx_disable_o,
+      sfp_tx_disable_o      => sfp_tx_disable_n,
       clk_62m5_sys_o        => clk_pll_62m5,
       clk_125m_ref_o        => clk_pll_125m,
       clk_62m5_dmtd_o       => clk_pll_dmtd,
       pll_locked_o          => pll_locked,
       phy16_o               => phy16_to_wrc,
       phy16_i               => phy16_from_wrc);
+
+  --  the board invert the tx_disable signal.
+  sfp_tx_disable_o <= not sfp_tx_disable_n;
 
   clk_ref_125m_o <= clk_pll_125m;
   clk_sys_62m5_o <= clk_pll_62m5;
