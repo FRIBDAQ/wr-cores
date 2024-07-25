@@ -3,8 +3,8 @@ target = "xilinx"
 action = "synthesis"
 
 syn_device = "xczu9eg"
-syn_grade = "-2"
-syn_package = "ffvb1156"
+syn_grade = "-2-e"
+syn_package = "-ffvb1156"
 
 syn_top = "zcu102_ref_top"
 syn_project = "zcu102_ref_top"
