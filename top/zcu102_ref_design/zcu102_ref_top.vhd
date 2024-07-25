@@ -81,7 +81,6 @@ entity zcu102_ref_top is
     sfp_txn_o         : out std_logic;
     sfp_rxp_i         : in  std_logic;
     sfp_rxn_i         : in  std_logic;
-    sfp_det_i         : in  std_logic;
     sfp_sda_b         : inout std_logic;
     sfp_scl_b         : inout std_logic;
     sfp_tx_disable_o  : out std_logic;
@@ -156,7 +155,7 @@ begin
       sfp_txn_o       => sfp_txn_o,
       sfp_rxp_i       => sfp_rxp_i,
       sfp_rxn_i       => sfp_rxn_i,
-      sfp_det_i       => sfp_det_i,
+      sfp_det_i       => '0', --  Force presence
       sfp_sda_i       => sfp_sda_in,
       sfp_sda_o       => sfp_sda_out,
       sfp_scl_i       => sfp_scl_in,

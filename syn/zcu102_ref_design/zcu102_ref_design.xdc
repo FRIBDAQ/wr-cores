@@ -41,12 +41,12 @@ set_property OFFCHIP_TERM NONE [get_ports uart_txd_o]
 
 # SFP2 (I2C via shared I2C1 hierarchy) (det and los not available on ZCU102 and placed on PMOD)
 set_property PACKAGE_PIN B13 [get_ports sfp_tx_disable_o]
-set_property PACKAGE_PIN A20 [get_ports sfp_det_i]
+#set_property PACKAGE_PIN A20 [get_ports sfp_det_i]
 set_property PACKAGE_PIN B20 [get_ports sfp_los_i]
 set_property PACKAGE_PIN K20 [get_ports sfp_scl_b]
 set_property PACKAGE_PIN L20 [get_ports sfp_sda_b]
 set_property PACKAGE_PIN B2 [get_ports sfp_rxp_i]
-set_property IOSTANDARD LVCMOS33 [get_ports sfp_det_i]
+#set_property IOSTANDARD LVCMOS33 [get_ports sfp_det_i]
 set_property IOSTANDARD LVCMOS33 [get_ports sfp_los_i]
 set_property IOSTANDARD LVCMOS33 [get_ports sfp_s??_b]
 set_property IOSTANDARD LVCMOS33 [get_ports sfp_tx_disable_o]
@@ -59,16 +59,22 @@ set_property PACKAGE_PIN AM13 [get_ports ps_por_i]
 set_property IOSTANDARD LVCMOS33 [get_ports ps_por_i]
 
 # Clock inputs
+# USER_MGT_SI570_CLOCK2
 set_property PACKAGE_PIN C8 [get_ports wr_clk_sfp_125m_p_i]
+# USER_MGT_SI570_CLOCK1
 set_property PACKAGE_PIN L27 [get_ports wr_clk_helper_125m_p_i]
+# CLK_125 from Si5341b
 set_property PACKAGE_PIN G21 [get_ports wr_clk_main_125m_p_i]
 set_property IOSTANDARD LVDS_25 [get_ports wr_clk_main_125m_p_i]
 
-# PMOD
-set_property PACKAGE_PIN D22 [get_ports clk_sys_62m5_o[0]]
+# PMOD (J87)
+# PMOD1_2
+set_property PACKAGE_PIN D22 [get_ports {clk_sys_62m5_o[0]}]
+# PMOD1_3
 set_property PACKAGE_PIN E22 [get_ports clk_ref_125m_o]
-set_property PACKAGE_PIN J20 [get_ports pps_p_o[0]]
-set_property IOSTANDARD LVCMOS33 [get_ports clk_sys_62m5_o[0]]
+# PMOD1_6
+set_property PACKAGE_PIN J20 [get_ports {pps_p_o[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {clk_sys_62m5_o[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports clk_ref_125m_o]
 set_property IOSTANDARD LVCMOS33 [get_ports pps_p_o[0]]
 set_property OFFCHIP_TERM NONE [get_ports clk_sys_62m5_o[0]]
