@@ -32,6 +32,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.axi4_pkg.all;
 --use work.gencores_pkg.all;
 --use work.wishbone_pkg.all;
 --use work.wr_board_pkg.all;
@@ -46,18 +47,57 @@ entity kr260_ref_top is
     refclk1_p_i : in std_logic;
 
     led1_o : out std_logic;
-    led2_o : out std_logic
+    led2_o : out std_logic;
+    sfp_led1_o : out std_logic;
+    sfp_led2_o : out std_logic
   );
 end;
 
 architecture top of kr260_ref_top is
+  --  In sources, select the mpsoc.bd file and right-click to view instantiation template
+  component mpsoc is
+    port (
+      M_AXI_araddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
+      M_AXI_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+      M_AXI_arready : in STD_LOGIC;
+      M_AXI_arvalid : out STD_LOGIC;
+      M_AXI_awaddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
+      M_AXI_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+      M_AXI_awready : in STD_LOGIC;
+      M_AXI_awvalid : out STD_LOGIC;
+      M_AXI_bready : out STD_LOGIC;
+      M_AXI_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+      M_AXI_bvalid : in STD_LOGIC;
+      M_AXI_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
+      M_AXI_rready : out STD_LOGIC;
+      M_AXI_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+      M_AXI_rvalid : in STD_LOGIC;
+      M_AXI_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
+      M_AXI_wready : in STD_LOGIC;
+      M_AXI_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
+      M_AXI_wvalid : out STD_LOGIC;
+      UART_0_0_rxd : in STD_LOGIC;
+      UART_0_0_txd : out STD_LOGIC;
+      clk_axi : in STD_LOGIC;
+      rst_axi_n : in STD_LOGIC
+    );
+  end component mpsoc;
 
   signal refclk_74m25, refclk_74m25_int : std_logic;
   signal rst_n : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
 
   signal count : natural range 0 to 74_250_000 - 1;
-  signal clk : std_logic;
+  signal clk_74m25, clk_62m5 : std_logic;
+  signal clk_fb, pll_locked : std_logic;
+
+  signal m_axi4_out : t_axi4_lite_master_out_32;
+  signal m_axi4_in : t_axi4_lite_master_in_32;
+  signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
+
+  signal gth_rst : std_logic;
+
+  signal uart_rx, uart_tx : std_logic;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -73,17 +113,79 @@ begin
 
   inst_buf_gt : BUFG_GT
       port map (
-        O => clk,
+        O => clk_74m25,
         CE => '1',
         CEMASK => '0',
         CLR => '0',
         CLRMASK => '0',
         DIV => "000",
         I => refclk_74m25_int);
+ 
+  --  VCO: 800-1600Mhz
+  --  input: 74.25 * 20 = 1485Mhz
+  --         74.25 * 16 = 1188Mhz  / 19 => 62.52
+  inst_mmcm: mmcme4_base
+    generic map (
+      BANDWIDTH => "OPTIMIZED",  -- Jitter programming
+      CLKFBOUT_MULT_F => 16.0,   -- Multiply value for all CLKOUT
+      CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB
+      CLKIN1_PERIOD => 13.468,    -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
+      CLKOUT0_DIVIDE_F => 19.0,  -- Divide amount for CLKOUT0
+      CLKOUT0_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT0
+      CLKOUT0_PHASE => 0.0,     -- Phase offset for CLKOUT0
+      CLKOUT1_DIVIDE => 1,  -- Divide amount for CLKOUT (1-128)
+      CLKOUT1_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT1_PHASE => 0.0,   -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT2_DIVIDE => 1,   -- Divide amount for CLKOUT (1-128)
+      CLKOUT2_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT2_PHASE => 0.0,  -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT3_DIVIDE => 1,   -- Divide amount for CLKOUT (1-128)
+      CLKOUT3_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT3_PHASE => 0.0, -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT4_CASCADE => "FALSE", -- Divide amount for CLKOUT (1-128)
+      CLKOUT4_DIVIDE => 1, -- Divide amount for CLKOUT (1-128)
+      CLKOUT4_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT4_PHASE => 0.0,  -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT5_DIVIDE => 1,  -- Divide amount for CLKOUT (1-128)
+      CLKOUT5_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT5_PHASE => 0.0,   -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT6_DIVIDE => 1,   -- Divide amount for CLKOUT (1-128)
+      CLKOUT6_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT6_PHASE => 0.0,    -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      DIVCLK_DIVIDE => 1,   -- Master division value
+      IS_CLKFBIN_INVERTED => '0', -- Optional inversion for CLKFBIN
+      IS_CLKIN1_INVERTED => '0', -- Optional inversion for CLKIN1
+      IS_PWRDWN_INVERTED => '0', -- Optional inversion for PWRDWN
+      IS_RST_INVERTED => '0',   -- Optional inversion for RST
+      REF_JITTER1 => 0.0,   -- Reference input jitter in UI (0.000-0.999).
+      STARTUP_WAIT => "FALSE" -- Delays DONE until MMCM is locked
+      )
+    port map (
+      CLKFBOUT => clk_fb,  -- 1-bit output: Feedback clock pin to the MMCM
+      CLKFBOUTB => open, -- 1-bit output: Inverted CLKFBOUT
+      CLKOUT0 => clk_62m5, -- 1-bit output: CLKOUT0
+      CLKOUT0B => open,  -- 1-bit output: Inverted CLKOUT0
+      CLKOUT1 => open,   -- 1-bit output: CLKOUT1
+      CLKOUT1B => open,  -- 1-bit output: Inverted CLKOUT1
+      CLKOUT2 => open,   -- 1-bit output: CLKOUT2
+      CLKOUT2B => open,  -- 1-bit output: Inverted CLKOUT2
+      CLKOUT3 => open,   -- 1-bit output: CLKOUT3
+      CLKOUT3B => open,  -- 1-bit output: Inverted CLKOUT3
+      CLKOUT4 => open,   -- 1-bit output: CLKOUT4
+      CLKOUT5 => open,   -- 1-bit output: CLKOUT5
+      CLKOUT6 => open,   -- 1-bit output: CLKOUT6
+      LOCKED => pll_locked,  -- 1-bit output: LOCK
+      CLKFBIN => clk_fb, -- 1-bit input: Feedback clock pin to the MMCM
+      CLKIN1 => clk_74m25, -- 1-bit input: Primary clock
+      PWRDWN => '0', -- 1-bit input: Power-down
+      RST => '0'  -- 1-bit input: Reset
+    );
 
-  process(clk)
+  process(clk_62m5, pll_locked)
   begin
-    if rising_edge(clk) then
+    if pll_locked = '0' then
+      rst_n <= '0';
+    elsif rising_edge(clk_62m5) then
       if rst_cnt = 15 then
         rst_n <= '1';
       else
@@ -93,19 +195,19 @@ begin
     end if;
   end process;
 
-  process(clk)
+  process(clk_62m5)
   begin
-    if rising_edge(clk) then
+    if rising_edge(clk_62m5) then
       if rst_n = '0' then
         led1_o <= '0';
         led2_o <= '1';
         count <= 0;
       else
-        if count = 37_125_000 - 1 then
+        if count = 31_250_000 - 1 then
           led1_o <= '1';
           led2_o <= '0';
           count <= count + 1;
-        elsif count = 74_250_000 - 1 then
+        elsif count = 62_500_000 - 1 then
           led1_o <= '0';
           led2_o <= '1';
           count <= 0;
@@ -115,4 +217,78 @@ begin
       end if;
     end if;
   end process;
+
+  inst_mpsoc: mpsoc
+    port map (
+      M_AXI_awaddr(31 downto 0) => m_axi4_out.awaddr,
+      M_AXI_awaddr(39 downto 32) => m_axi_awaddr,
+      M_AXI_awprot => open,
+      M_AXI_awvalid => m_axi4_out.awvalid,
+      M_AXI_awready => m_axi4_in.awready,
+      M_AXI_wdata => m_axi4_out.wdata,
+      M_AXI_wstrb => m_axi4_out.wstrb,
+      M_AXI_wvalid => m_axi4_out.wvalid,
+      M_AXI_wready => m_axi4_in.wready,
+      M_AXI_bresp => m_axi4_in.bresp,
+      M_AXI_bvalid => m_axi4_in.bvalid,
+      M_AXI_bready => m_axi4_out.bready,
+      M_AXI_araddr(31 downto 0) => m_axi4_out.araddr,
+      M_AXI_araddr(39 downto 32) => m_axi_araddr,
+      M_AXI_arprot => open,
+      M_AXI_arvalid => m_axi4_out.arvalid,
+      M_AXI_arready => m_axi4_in.arready,
+      M_AXI_rdata => m_axi4_in.rdata,
+      M_AXI_rresp => m_axi4_in.rresp,
+      M_AXI_rvalid => m_axi4_in.rvalid,
+      M_AXI_rready => m_axi4_out.rready,
+      UART_0_0_rxd => uart_rx,
+      UART_0_0_txd => uart_tx,
+      rst_axi_n => rst_n,
+      clk_axi => clk_62m5
+    );
+  inst_map: entity work.mpsoc_map
+  port map (
+    aclk => clk_62m5,
+    areset_n => rst_n,
+    awvalid => m_axi4_out.awvalid,
+    awready => m_axi4_in.awready,
+    awprot => "000",
+    wvalid => m_axi4_out.wvalid,
+    wready => m_axi4_in.wready,
+    wdata => m_axi4_out.wdata,
+    wstrb => m_axi4_out.wstrb,
+    bvalid => m_axi4_in.bvalid,
+    bready => m_axi4_out.bready,
+    bresp => m_axi4_in.bresp,
+    arvalid => m_axi4_out.arvalid,
+    arready => m_axi4_in.arready,
+    arprot => "000",
+    rvalid => m_axi4_in.rvalid,
+    rready => m_axi4_out.rready,
+    rdata => m_axi4_in.rdata,
+    rresp => m_axi4_in.rresp,
+    ctrl_led1_o => sfp_led1_o,
+    ctrl_led2_o => sfp_led2_o,
+    ctrl_gth_rst_o => gth_rst
+  );
+
+  inst_wrcore : entity work.xwr_core
+    generic map (
+      g_board_name => "KR26",
+      g_dpram_initf => "../../../../bin/wrpc/wrc_phy8.bram",
+      g_dpram_size => 192 * 1024 / 4
+    )
+    port map (
+      clk_sys_i => clk_62m5,
+      rst_n_i => rst_n,
+
+      clk_dmtd_i => clk_62m5,
+      clk_ref_i => clk_62m5,
+
+      sfp_det_i => '0',
+
+      uart_rxd_i => uart_tx,
+      uart_txd_o => uart_rx
+    );
+  -- uart_rx <= uart_tx;
 end top;

@@ -1,0 +1,20 @@
+memory-map:
+  bus: axi4-lite-32
+  name: mpsoc_map
+  description: Memmap from mpsoc
+  children:
+  - reg:
+      name: ctrl
+      comment: control register
+      width: 32
+      access: rw
+      children:
+      - field:
+          name: led1
+          range: 0
+      - field:
+          name: led2
+          range: 1
+      - field:
+          name: gth_rst
+          range: 2

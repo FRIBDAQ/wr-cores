@@ -1,12 +1,16 @@
 fetchto = "../../ip_cores"
 
-files = [ "kr260_ref_top.vhd", ]
+files = [ "kr260_ref_top.vhd",
+          "mpsoc.bd", "mpsoc_map.vhd",
+        ]
 
 modules = {
     "local" : [
         "../../",
     ],
     "git" : [
-        "git://ohwr.org/hdl-core-lib/general-cores.git",
+        "https://ohwr.org/project/general-cores.git",
+        "https://ohwr.org/project/wr-cores.git",
+        "https://ohwr.org/project/urv-core.git",
     ],
 }
