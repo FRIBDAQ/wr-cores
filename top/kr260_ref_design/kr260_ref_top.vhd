@@ -91,7 +91,8 @@ architecture top of kr260_ref_top is
 
   component gtwizard_ultrascale_qpll_example_top
     port (
-      clk_gth_i : in std_logic;
+      gt_refclk0_i : in std_logic;
+      gt_refclk1_i : in std_logic;
       pad_rxn_i : in std_logic;
       pad_rxp_i : in std_logic;
       pad_txn_o : out std_logic;
@@ -125,7 +126,9 @@ architecture top of kr260_ref_top is
       rx_pma_reset_done_o : out std_logic;
       tx_pma_reset_done_o : out std_logic;
       tx_prgdiv_reset_done_o : out std_logic;
-      gt_powergood_o : out std_logic
+      gt_powergood_o : out std_logic;
+      qpll0_lock_o : out std_logic;
+      qpll1_lock_o : out std_logic
     );
   end component;
 
@@ -142,7 +145,7 @@ architecture top of kr260_ref_top is
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst : std_logic;
-  signal gth_status_a, gth_status : std_logic_vector(21 downto 0);
+  signal gth_status_a, gth_status : std_logic_vector(23 downto 0);
   signal uart_rx, uart_tx : std_logic;
 
   signal wb_wrpc_in: t_wishbone_master_in;
@@ -356,7 +359,8 @@ begin
 
   inst_gth: gtwizard_ultrascale_qpll_example_top
     port map (
-      clk_gth_i => refclk_74m25,
+      gt_refclk0_i => refclk_74m25,
+      gt_refclk1_i => '0',
       pad_rxn_i => pad_rxn_i,
       pad_rxp_i => pad_rxp_i,
       pad_txn_o => pad_txn_o,
@@ -386,7 +390,9 @@ begin
       rx_pma_reset_done_o => gth_status_a(18),
       tx_pma_reset_done_o => gth_status_a(19),
       tx_prgdiv_reset_done_o => gth_status_a(20),
-      gt_powergood_o => gth_status_a(21)
+      gt_powergood_o => gth_status_a(21),
+      qpll0_lock_o => gth_status_a(22),
+      qpll1_lock_o => gth_status_a(23)
     );
 
   gen_sync: for i in gth_status'range generate
