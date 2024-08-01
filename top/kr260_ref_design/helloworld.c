@@ -94,13 +94,17 @@ int main()
     printf("addr %08x v=%08x\r\n", addr, v);
 #endif
 
+    // 4b523236
+    printf("HWIR: %08x\r\n", map->wrpc[(0x400 + 0x10) / 4]);
     while (1) {
     	for (i = 0; i < 2; i++) {
     		if (XUartPs_IsReceiveData(uart_addr[i])) {
     			unsigned char c = XUartPs_RecvByte(uart_addr[i]);
     			XUartPs_SendByte(uart_addr[1 - i], c);
-    			if (c == '@' && i == 0)
-    				map->ctrl ^= 3;
+    			if (c == '@' && i == 0) {
+    				printf("status: %08x\r\n", map->status);
+//    				map->ctrl ^= 3;
+    			}
 //    			printf("Got %c from %u\r\n", c, i);
     		}
     	}

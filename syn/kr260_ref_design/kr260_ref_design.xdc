@@ -2,7 +2,7 @@
 # Clocks
 ##################
 
-create_clock -period 12.500 -name clk [get_ports {refclk1_p_i}]
+create_clock -period 13.400 -name clk [get_ports {refclk1_p_i}]
 
 #create_clock -period 8.000 -name wr_clk_helper_125m -waveform {0.000  4.000} [get_ports {wr_clk_helper_125m_p_i}]
 #create_clock -period 8.000 -name wr_clk_main_125m   -waveform {0.000  4.000} [get_ports {wr_clk_main_125m_p_i}]
@@ -20,10 +20,20 @@ create_clock -period 12.500 -name clk [get_ports {refclk1_p_i}]
 ##################
 
 set_property PACKAGE_PIN V6 [get_ports {refclk1_p_i}]
-set_property PACKAGE_PIN V7 [get_ports {refclk1_n_i}]
+#set_property PACKAGE_PIN V7 [get_ports {refclk1_n_i}]
+
+set_property PACKAGE_PIN T2 [get_ports {pad_rxp_i}]
+set_property PACKAGE_PIN T1 [get_ports {pad_rxn_i}]
+
+set_property PACKAGE_PIN R4 [get_ports {pad_txp_o}]
+set_property PACKAGE_PIN R3 [get_ports {pad_txn_o}]
 
 set_property PACKAGE_PIN F8 [get_ports {led1_o}]
 set_property PACKAGE_PIN E8 [get_ports {led2_o}]
+set_property PACKAGE_PIN G8 [get_ports {sfp_led1_o}]
+set_property PACKAGE_PIN F7 [get_ports {sfp_led2_o}]
 
 set_property IOSTANDARD LVCMOS18 [get_ports led1_o]
 set_property IOSTANDARD LVCMOS18 [get_ports led2_o]
+set_property IOSTANDARD LVCMOS18 [get_ports sfp_led1_o]
+set_property IOSTANDARD LVCMOS18 [get_ports sfp_led2_o]
