@@ -34,7 +34,7 @@ use ieee.numeric_std.all;
 
 use work.axi4_pkg.all;
 --use work.gencores_pkg.all;
---use work.wishbone_pkg.all;
+use work.wishbone_pkg.all;
 --use work.wr_board_pkg.all;
 --use work.wr_pxie_fmc_pkg.all;
 
@@ -45,6 +45,12 @@ entity kr260_ref_top is
   port (
     refclk1_n_i : in std_logic;
     refclk1_p_i : in std_logic;
+
+    pad_txn_o : out std_logic;
+    pad_txp_o : out std_logic;
+
+    pad_rxn_i : in std_logic;
+    pad_rxp_i : in std_logic;
 
     led1_o : out std_logic;
     led2_o : out std_logic;
@@ -83,8 +89,48 @@ architecture top of kr260_ref_top is
     );
   end component mpsoc;
 
+  component gtwizard_ultrascale_qpll_example_top
+    port (
+      clk_gth_i : in std_logic;
+      pad_rxn_i : in std_logic;
+      pad_rxp_i : in std_logic;
+      pad_txn_o : out std_logic;
+      pad_txp_o : out std_logic;
+
+      hb_gtwiz_reset_clk_freerun_in : in std_logic;
+      hb_gtwiz_reset_all_in : in std_logic;
+
+      link_down_latched_reset_in : in std_logic;
+      serdes_ready_out : out std_logic;  
+      link_down_latched_out : out std_logic;
+
+      reset_all_o : out std_logic;
+      userclk_tx_reset_o : out std_logic;
+      userclk_tx_active_o : out std_logic;
+      userclk_rx_reset_o : out std_logic;
+      userclk_rx_active_o : out std_logic;
+      buffbypass_tx_reset_o : out std_logic;
+      buffbypass_tx_done_o : out std_logic;
+      buffbypass_tx_error_o : out std_logic;
+      buffbypass_rx_reset_o : out std_logic;
+      buffbypass_rx_done_o : out std_logic;
+      buffbypass_rx_error_o : out std_logic;
+      reset_tx_pll_and_datapath_o : out std_logic;
+      reset_tx_datapath_o : out std_logic;
+      reset_rx_pll_and_datapath_o : out std_logic;
+      reset_rx_datapath_o : out std_logic;
+      reset_rx_cdr_stable_o : out std_logic;
+      reset_tx_done_o : out std_logic;
+      reset_rx_done_o : out std_logic;
+      rx_pma_reset_done_o : out std_logic;
+      tx_pma_reset_done_o : out std_logic;
+      tx_prgdiv_reset_done_o : out std_logic;
+      gt_powergood_o : out std_logic
+    );
+  end component;
+
   signal refclk_74m25, refclk_74m25_int : std_logic;
-  signal rst_n : std_logic := '0';
+  signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
 
   signal count : natural range 0 to 74_250_000 - 1;
@@ -96,8 +142,11 @@ architecture top of kr260_ref_top is
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst : std_logic;
-
+  signal gth_status_a, gth_status : std_logic_vector(21 downto 0);
   signal uart_rx, uart_tx : std_logic;
+
+  signal wb_wrpc_in: t_wishbone_master_in;
+  signal wb_wrpc_out: t_wishbone_master_out;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -195,6 +244,8 @@ begin
     end if;
   end process;
 
+  rst <= not rst_n;
+
   process(clk_62m5)
   begin
     if rising_edge(clk_62m5) then
@@ -250,6 +301,7 @@ begin
   port map (
     aclk => clk_62m5,
     areset_n => rst_n,
+    awaddr => m_axi4_out.awaddr(13 downto 2),
     awvalid => m_axi4_out.awvalid,
     awready => m_axi4_in.awready,
     awprot => "000",
@@ -260,6 +312,7 @@ begin
     bvalid => m_axi4_in.bvalid,
     bready => m_axi4_out.bready,
     bresp => m_axi4_in.bresp,
+    araddr => m_axi4_out.araddr(13 downto 2),
     arvalid => m_axi4_out.arvalid,
     arready => m_axi4_in.arready,
     arprot => "000",
@@ -267,9 +320,15 @@ begin
     rready => m_axi4_out.rready,
     rdata => m_axi4_in.rdata,
     rresp => m_axi4_in.rresp,
-    ctrl_led1_o => sfp_led1_o,
+
+    wrpc_i => wb_wrpc_in,
+    wrpc_o => wb_wrpc_out,
+
+    ctrl_led1_o => open,
     ctrl_led2_o => sfp_led2_o,
-    ctrl_gth_rst_o => gth_rst
+    ctrl_gth_rst_o => gth_rst,
+    status_i (gth_status'range) => gth_status,
+    status_i (31 downto gth_status'left + 1) => (others => '0')
   );
 
   inst_wrcore : entity work.xwr_core
@@ -288,7 +347,55 @@ begin
       sfp_det_i => '0',
 
       uart_rxd_i => uart_tx,
-      uart_txd_o => uart_rx
+      uart_txd_o => uart_rx,
+
+      slave_i => wb_wrpc_out,
+      slave_o => wb_wrpc_in
     );
   -- uart_rx <= uart_tx;
+
+  inst_gth: gtwizard_ultrascale_qpll_example_top
+    port map (
+      clk_gth_i => refclk_74m25,
+      pad_rxn_i => pad_rxn_i,
+      pad_rxp_i => pad_rxp_i,
+      pad_txn_o => pad_txn_o,
+      pad_txp_o => pad_txp_o,
+      hb_gtwiz_reset_clk_freerun_in => clk_62m5,
+      hb_gtwiz_reset_all_in => rst,
+      link_down_latched_reset_in => rst,
+      serdes_ready_out => sfp_led1_o,
+      reset_all_o => gth_status_a(0),
+      userclk_tx_reset_o => gth_status_a(1),
+      userclk_tx_active_o => gth_status_a(2),
+      userclk_rx_reset_o => gth_status_a(3),
+      userclk_rx_active_o => gth_status_a(4),
+      buffbypass_tx_reset_o => gth_status_a(5),
+      buffbypass_tx_done_o => gth_status_a(6),
+      buffbypass_tx_error_o => gth_status_a(7),
+      buffbypass_rx_reset_o => gth_status_a(8),
+      buffbypass_rx_done_o => gth_status_a(9),
+      buffbypass_rx_error_o => gth_status_a(10),
+      reset_tx_pll_and_datapath_o => gth_status_a(11),
+      reset_tx_datapath_o => gth_status_a(12),
+      reset_rx_pll_and_datapath_o => gth_status_a(13),
+      reset_rx_datapath_o => gth_status_a(14),
+      reset_rx_cdr_stable_o => gth_status_a(15),
+      reset_tx_done_o => gth_status_a(16),
+      reset_rx_done_o => gth_status_a(17),
+      rx_pma_reset_done_o => gth_status_a(18),
+      tx_pma_reset_done_o => gth_status_a(19),
+      tx_prgdiv_reset_done_o => gth_status_a(20),
+      gt_powergood_o => gth_status_a(21)
+    );
+
+  gen_sync: for i in gth_status'range generate
+    inst_sync: entity work.gc_sync
+    port map (
+      clk_i => clk_62m5,
+      rst_n_a_i => rst_n,
+      d_i => gth_status_a(i),
+      q_o => gth_status(i)
+    );
+  end generate;
 end top;

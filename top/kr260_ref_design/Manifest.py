@@ -6,6 +6,7 @@ files = [ "kr260_ref_top.vhd",
 
 modules = {
     "local" : [
+        "gthe4_qpll",
         "../../",
     ],
     "git" : [
