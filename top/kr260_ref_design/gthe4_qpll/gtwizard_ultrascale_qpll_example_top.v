@@ -55,10 +55,12 @@
 // demonstration purposes
 // =====================================================================================================================
 
-module gtwizard_ultrascale_qpll_example_top (
+module gtwizard_ultrascale_qpll_example_top
+ (
 
   // GT reference clock
-  input wire  clk_gth_i,
+  input wire  gt_refclk0_i,
+  input wire  gt_refclk1_i,
 
   // Serial data ports for transceiver channel 0
   input wire  pad_rxn_i,
@@ -99,7 +101,9 @@ module gtwizard_ultrascale_qpll_example_top (
   output      rx_pma_reset_done_o,
   output      tx_pma_reset_done_o,
   output      tx_prgdiv_reset_done_o,
-  output      gt_powergood_o
+  output      gt_powergood_o,
+  output      qpll0_lock_o,
+  output      qpll1_lock_o
 );
 
 
@@ -140,10 +144,14 @@ module gtwizard_ultrascale_qpll_example_top (
   wire [15:0] gtwiz_userdata_tx_int; // Data
   wire [15:0] gtwiz_userdata_rx_int; // Data
 
-  wire [0:0] qpll0outclk_int;
-  wire [0:0] qpll1outclk_int;
-  wire [0:0] qpll0outrefclk_int;
-  wire [0:0] qpll1outrefclk_int;
+   wire       qpll0reset_int = 1'b0;
+   wire       qpll1reset_int = 1'b0;
+   wire       qpll0lock_int;
+   wire       qpll1lock_int;
+   wire       qpll0outclk_int;
+   wire       qpll1outclk_int;
+   wire       qpll0outrefclk_int;
+   wire       qpll1outrefclk_int;
 
   wire [0:0] rx8b10ben_int = 1'b1;
   wire [0:0] rxcommadeten_int = 1'b1;
@@ -243,6 +251,9 @@ module gtwizard_ultrascale_qpll_example_top (
    assign tx_pma_reset_done_o = txpmaresetdone_int;
    assign tx_prgdiv_reset_done_o = txprgdivresetdone_int;
    assign gt_powergood_o = gtpowergood_int;
+
+   assign qpll0_lock_o = qpll0lock_int;
+   assign qpll1_lock_o = qpll1lock_int;
    
   // ===================================================================================================================
   // PRBS STIMULUS, CHECKING, AND LINK MANAGEMENT
@@ -402,6 +413,96 @@ module gtwizard_ultrascale_qpll_example_top (
   // EXAMPLE WRAPPER INSTANCE
   // ===================================================================================================================
 
+   gtwizard_ultrascale_qpll_gthe4_common_wrapper gthe4_common_wrapper_inst (
+     .GTHE4_COMMON_BGBYPASSB         (1'b1),
+     .GTHE4_COMMON_BGMONITORENB      (1'b1),
+     .GTHE4_COMMON_BGPDB             (1'b1),
+     .GTHE4_COMMON_BGRCALOVRD        (5'b11111),
+     .GTHE4_COMMON_BGRCALOVRDENB     (1'b1),
+     .GTHE4_COMMON_DRPADDR           (16'b0000000000000000),
+     .GTHE4_COMMON_DRPCLK            (1'b0),
+     .GTHE4_COMMON_DRPDI             (16'b0000000000000000),
+     .GTHE4_COMMON_DRPEN             (1'b0),
+     .GTHE4_COMMON_DRPWE             (1'b0),
+     .GTHE4_COMMON_GTGREFCLK0        (1'b0),
+     .GTHE4_COMMON_GTGREFCLK1        (1'b0),
+     .GTHE4_COMMON_GTNORTHREFCLK00   (1'b0),
+     .GTHE4_COMMON_GTNORTHREFCLK01   (1'b0),
+     .GTHE4_COMMON_GTNORTHREFCLK10   (1'b0),
+     .GTHE4_COMMON_GTNORTHREFCLK11   (1'b0),
+     .GTHE4_COMMON_GTREFCLK00        (gt_refclk0_i),
+     .GTHE4_COMMON_GTREFCLK01        (gt_refclk1_i),
+     .GTHE4_COMMON_GTREFCLK10        (1'b0),
+     .GTHE4_COMMON_GTREFCLK11        (1'b0),
+     .GTHE4_COMMON_GTSOUTHREFCLK00   (1'b0),
+     .GTHE4_COMMON_GTSOUTHREFCLK01   (1'b0),
+     .GTHE4_COMMON_GTSOUTHREFCLK10   (1'b0),
+     .GTHE4_COMMON_GTSOUTHREFCLK11   (1'b0),
+     .GTHE4_COMMON_PCIERATEQPLL0     (3'b000),
+     .GTHE4_COMMON_PCIERATEQPLL1     (3'b000),
+     .GTHE4_COMMON_PMARSVD0          (8'b00000000),
+     .GTHE4_COMMON_PMARSVD1          (8'b00000000),
+     .GTHE4_COMMON_QPLL0CLKRSVD0     (1'b0),
+     .GTHE4_COMMON_QPLL0CLKRSVD1     (1'b0),
+     .GTHE4_COMMON_QPLL0FBDIV        (8'b00000000),
+     .GTHE4_COMMON_QPLL0LOCKDETCLK   (1'b0),
+     .GTHE4_COMMON_QPLL0LOCKEN       (1'b1),
+     .GTHE4_COMMON_QPLL0PD           (1'b0),
+     .GTHE4_COMMON_QPLL0REFCLKSEL    (3'b001),
+     .GTHE4_COMMON_QPLL0RESET        (qpll0reset_int),
+     .GTHE4_COMMON_QPLL1CLKRSVD0     (1'b0),
+     .GTHE4_COMMON_QPLL1CLKRSVD1     (1'b0),
+     .GTHE4_COMMON_QPLL1FBDIV        (8'b00000000),
+     .GTHE4_COMMON_QPLL1LOCKDETCLK   (1'b0),
+     .GTHE4_COMMON_QPLL1LOCKEN       (1'b1),
+     .GTHE4_COMMON_QPLL1PD           (1'b0),
+     .GTHE4_COMMON_QPLL1REFCLKSEL    (3'b001),
+     .GTHE4_COMMON_QPLL1RESET        (qpll1reset_int),
+     .GTHE4_COMMON_QPLLRSVD1         (8'b00000000),
+     .GTHE4_COMMON_QPLLRSVD2         (5'b00000),
+     .GTHE4_COMMON_QPLLRSVD3         (5'b00000),
+     .GTHE4_COMMON_QPLLRSVD4         (8'b00000000),
+     .GTHE4_COMMON_RCALENB           (1'b1),
+     .GTHE4_COMMON_SDM0DATA          (25'b0101011100001110101001110),
+     .GTHE4_COMMON_SDM0RESET         (1'b0),
+     .GTHE4_COMMON_SDM0TOGGLE        (1'b0),
+     .GTHE4_COMMON_SDM0WIDTH         (2'b00),
+     .GTHE4_COMMON_SDM1DATA          (25'b0000000000000000000000000),
+     .GTHE4_COMMON_SDM1RESET         (1'b0),
+     .GTHE4_COMMON_SDM1TOGGLE        (1'b0),
+     .GTHE4_COMMON_SDM1WIDTH         (2'b00),
+     .GTHE4_COMMON_TCONGPI           (10'b0000000000),
+     .GTHE4_COMMON_TCONPOWERUP       (1'b0),
+     .GTHE4_COMMON_TCONRESET         (2'b00),
+     .GTHE4_COMMON_TCONRSVDIN1       (2'b00),
+     .GTHE4_COMMON_DRPDO             (),
+     .GTHE4_COMMON_DRPRDY            (),
+     .GTHE4_COMMON_PMARSVDOUT0       (),
+     .GTHE4_COMMON_PMARSVDOUT1       (),
+     .GTHE4_COMMON_QPLL0FBCLKLOST    (),
+     .GTHE4_COMMON_QPLL0LOCK         (qpll0lock_int),
+     .GTHE4_COMMON_QPLL0OUTCLK       (qpll0outclk_int),
+     .GTHE4_COMMON_QPLL0OUTREFCLK    (qpll0outrefclk_int),
+     .GTHE4_COMMON_QPLL0REFCLKLOST   (),
+     .GTHE4_COMMON_QPLL1FBCLKLOST    (),
+     .GTHE4_COMMON_QPLL1LOCK         (qpll1lock_int),
+     .GTHE4_COMMON_QPLL1OUTCLK       (qpll1outclk_int),
+     .GTHE4_COMMON_QPLL1OUTREFCLK    (qpll1outrefclk_int),
+     .GTHE4_COMMON_QPLL1REFCLKLOST   (),
+     .GTHE4_COMMON_QPLLDMONITOR0     (),
+     .GTHE4_COMMON_QPLLDMONITOR1     (),
+     .GTHE4_COMMON_REFCLKOUTMONITOR0 (),
+     .GTHE4_COMMON_REFCLKOUTMONITOR1 (),
+     .GTHE4_COMMON_RXRECCLK0SEL      (),
+     .GTHE4_COMMON_RXRECCLK1SEL      (),
+     .GTHE4_COMMON_SDM0FINALOUT      (),
+     .GTHE4_COMMON_SDM0TESTDATA      (),
+     .GTHE4_COMMON_SDM1FINALOUT      (),
+     .GTHE4_COMMON_SDM1TESTDATA      (),
+     .GTHE4_COMMON_TCONGPO           (),
+     .GTHE4_COMMON_TCONRSVDOUT0      ()
+  );
+
   // Instantiate the example design wrapper, mapping its enabled ports to per-channel internal signals and example
   // resources as appropriate
   gtwizard_ultrascale_qpll_example_wrapper example_wrapper_inst (
@@ -438,11 +539,12 @@ module gtwizard_ultrascale_qpll_example_top (
    ,.gtwiz_reset_rx_done_out                 (gtwiz_reset_rx_done_int)
    ,.gtwiz_userdata_tx_in                    (gtwiz_userdata_tx_int)
    ,.gtwiz_userdata_rx_out                   (gtwiz_userdata_rx_int)
-   ,.gtrefclk00_in                           (gth_clk_i)
-   ,.qpll0outclk_out                         (qpll0outclk_int)
-   ,.qpll0outrefclk_out                      (qpll0outrefclk_int)
-   ,.qpll1outclk_out                         (qpll1outclk_int)
-   ,.qpll1outrefclk_out                      (qpll1outrefclk_int)
+   ,.qpll0outclk_in                         (qpll0outclk_int)
+   ,.qpll0outrefclk_in                      (qpll0outrefclk_int)
+   ,.qpll0lock_in (qpll0lock_int)
+   ,.qpll1outclk_in                         (qpll1outclk_int)
+   ,.qpll1outrefclk_in                      (qpll1outrefclk_int)
+   ,.qpll1lock_in (qpll1lock_int)
    ,.rx8b10ben_in                            (rx8b10ben_int)
    ,.rxcommadeten_in                         (rxcommadeten_int)
    ,.rxmcommaalignen_in                      (rxmcommaalignen_int)
