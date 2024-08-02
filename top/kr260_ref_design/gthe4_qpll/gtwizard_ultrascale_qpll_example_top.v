@@ -72,11 +72,7 @@ module gtwizard_ultrascale_qpll_example_top
   input wire  hb_gtwiz_reset_clk_freerun_in,
   input wire  hb_gtwiz_reset_all_in,
 
-  // PRBS-based link status ports
-  input wire  link_down_latched_reset_in,
   output wire serdes_ready_out,
-  output reg  link_down_latched_out = 1'b1,
-
   output      reset_all_o,
 
   output      userclk_tx_reset_o,
@@ -121,15 +117,15 @@ module gtwizard_ultrascale_qpll_example_top
   wire [0:0] gtwiz_userclk_tx_srcclk_int;
   wire [0:0] gtwiz_userclk_tx_usrclk_int;
   wire [0:0] gtwiz_userclk_tx_usrclk2_int;
-  wire [0:0] gtwiz_userclk_tx_active_int;
+  wire [0:0] gtwiz_userclk_tx_active_out;
   wire [0:0] gtwiz_userclk_rx_reset_int;
   wire [0:0] gtwiz_userclk_rx_srcclk_int;
   wire [0:0] gtwiz_userclk_rx_usrclk_int;
   wire [0:0] gtwiz_userclk_rx_usrclk2_int;
-  wire [0:0] gtwiz_userclk_rx_active_int;
+  wire [0:0] gtwiz_userclk_rx_active_out;
   wire [0:0] gtwiz_buffbypass_tx_reset_int;
   wire [0:0] gtwiz_buffbypass_tx_start_user_int = 1'b0;
-  wire [0:0] gtwiz_buffbypass_tx_done_int;
+  wire [0:0] gtwiz_buffbypass_tx_done_out;
   wire [0:0] gtwiz_buffbypass_tx_error_int;
   wire [0:0] gtwiz_buffbypass_rx_reset_int;
   wire [0:0] gtwiz_buffbypass_rx_start_user_int;
@@ -179,14 +175,32 @@ module gtwizard_ultrascale_qpll_example_top
   wire [0:0] txprgdivresetdone_int;
 
 
-  assign hb_gtwiz_reset_all_int = hb_gtwiz_reset_all_in || hb_gtwiz_reset_all_init_int;
+   wire      gtwiz_buffbypass_tx_reset_pre = ~gtwiz_userclk_tx_active_out;
+
+  // The TX buffer bypass controller helper block should be held in reset until the TX user clocking network helper
+  // block which drives it is active
+  (* DONT_TOUCH = "TRUE" *)
+  gtwizard_ultrascale_qpll_example_reset_synchronizer reset_synchronizer_gtwiz_buffbypass_tx_reset_inst (
+    .clk_in  (gtwiz_userclk_tx_usrclk2_int),
+    .rst_in  (gtwiz_buffbypass_tx_reset_pre),
+    .rst_out (gtwiz_buffbypass_tx_reset_int)
+  );
+
+   wire      gtwiz_buffbypass_rx_reset_pre = ~gtwiz_userclk_rx_active_out || ~gtwiz_buffbypass_tx_done_out;
+
+  // The RX buffer bypass controller helper block should be held in reset until the RX user clocking network helper
+  // block which drives it is active and the TX buffer bypass sequence has completed for this loopback configuration
+  (* DONT_TOUCH = "TRUE" *)
+  gtwizard_ultrascale_qpll_example_reset_synchronizer reset_synchronizer_gtwiz_buffbypass_rx_reset_inst (
+    .clk_in  (gtwiz_userclk_rx_usrclk2_int),
+    .rst_in  (gtwiz_buffbypass_rx_reset_pre),
+    .rst_out (gtwiz_buffbypass_rx_reset_int)
+  );
+
+   assign hb_gtwiz_reset_all_int = hb_gtwiz_reset_all_in;
 
 
-  // ===================================================================================================================
-  // USER CLOCKING RESETS
-  // ===================================================================================================================
-
-  // The TX user clocking helper block should be held in reset until the clock source of that block is known to be
+   // The TX user clocking helper block should be held in reset until the clock source of that block is known to be
   // stable. The following assignment is an example of how that stability can be determined, based on the selected TX
   // user clock source. Replace the assignment with the appropriate signal or logic to achieve that behavior as needed.
    wire gtwiz_userclk_tx_reset_int;
@@ -199,41 +213,29 @@ module gtwizard_ultrascale_qpll_example_top
 
 
   // ===================================================================================================================
+  // USER CLOCKING RESETS
+  // ===================================================================================================================
+
+
+  // ===================================================================================================================
   // BUFFER BYPASS CONTROLLER RESETS
   // ===================================================================================================================
 
-  // The TX buffer bypass controller helper block should be held in reset until the TX user clocking network helper
-  // block which drives it is active
-  (* DONT_TOUCH = "TRUE" *)
-  gtwizard_ultrascale_qpll_example_reset_synchronizer reset_synchronizer_gtwiz_buffbypass_tx_reset_inst (
-    .clk_in  (gtwiz_userclk_tx_usrclk2_int),
-    .rst_in  (~gtwiz_userclk_tx_active_int),
-    .rst_out (gtwiz_buffbypass_tx_reset_int)
-  );
-
-  // The RX buffer bypass controller helper block should be held in reset until the RX user clocking network helper
-  // block which drives it is active and the TX buffer bypass sequence has completed for this loopback configuration
-  (* DONT_TOUCH = "TRUE" *)
-  gtwizard_ultrascale_qpll_example_reset_synchronizer reset_synchronizer_gtwiz_buffbypass_rx_reset_inst (
-    .clk_in  (gtwiz_userclk_rx_usrclk2_int),
-    .rst_in  (~gtwiz_userclk_rx_active_int || ~gtwiz_buffbypass_tx_done_int),
-    .rst_out (gtwiz_buffbypass_rx_reset_int)
-  );
 
    wire serdes_ready_a;
 
-   assign serdes_ready_a = !(hb_gtwiz_reset_all_int || ~gtwiz_reset_rx_done_int || ~gtwiz_buffbypass_rx_done_int || ~gtwiz_buffbypass_tx_done_int);
+   assign serdes_ready_a = !(hb_gtwiz_reset_all_int || ~gtwiz_reset_rx_done_int || ~gtwiz_buffbypass_rx_done_int || ~gtwiz_buffbypass_tx_done_out);
 		
    assign serdes_ready_out = serdes_ready_a;
 
    assign reset_all_o = hb_gtwiz_reset_all_int;
 
    assign userclk_tx_reset_o = gtwiz_userclk_tx_reset_int;
-   assign userclk_tx_active_o = gtwiz_userclk_tx_active_int;
+   assign userclk_tx_active_o = gtwiz_userclk_tx_active_out;
    assign userclk_rx_reset_o = gtwiz_userclk_rx_reset_int;
-   assign userclk_rx_active_o = gtwiz_userclk_rx_active_int;
+   assign userclk_rx_active_o = gtwiz_userclk_rx_active_out;
    assign buffbypass_tx_reset_o = gtwiz_buffbypass_tx_reset_int;
-   assign buffbypass_tx_done_o = gtwiz_buffbypass_tx_done_int;
+   assign buffbypass_tx_done_o = gtwiz_buffbypass_tx_done_out;
    assign buffbypass_tx_error_o = gtwiz_buffbypass_tx_error_int;
    assign buffbypass_rx_reset_o = gtwiz_buffbypass_rx_reset_int;
    assign buffbypass_rx_done_o = gtwiz_buffbypass_rx_done_int;
@@ -254,129 +256,6 @@ module gtwizard_ultrascale_qpll_example_top
 
    assign qpll0_lock_o = qpll0lock_int;
    assign qpll1_lock_o = qpll1lock_int;
-   
-  // ===================================================================================================================
-  // PRBS STIMULUS, CHECKING, AND LINK MANAGEMENT
-  // ===================================================================================================================
-
-  // PRBS stimulus
-  // -------------------------------------------------------------------------------------------------------------------
-
-  // PRBS-based data stimulus module for transceiver channel 0
-  (* DONT_TOUCH = "TRUE" *)
-  gtwizard_ultrascale_qpll_example_stimulus_8b10b example_stimulus_inst0 (
-    .gtwiz_reset_all_in          (!serdes_ready_a),
-    .gtwiz_userclk_tx_usrclk2_in (gtwiz_userclk_tx_usrclk2_int),
-    .gtwiz_userclk_tx_active_in  (gtwiz_userclk_tx_active_int),
-    .txctrl0_out                 (txctrl0_int),
-    .txctrl1_out                 (txctrl1_int),
-    .txctrl2_out                 (txctrl2_int),
-    .txdata_out                  (gtwiz_userdata_tx_int)
-  );
-
-  // PRBS checking
-  // -------------------------------------------------------------------------------------------------------------------
-
-  // Declare a signal vector of PRBS match indicators, with one indicator bit per transceiver channel
-  wire [0:0] prbs_match_int;
-
-  // PRBS-based data checking module for transceiver channel 0
-  gtwizard_ultrascale_qpll_example_checking_8b10b example_checking_inst0 (
-    .gtwiz_reset_all_in          (!serdes_ready_a),
-    .gtwiz_userclk_rx_usrclk2_in (gtwiz_userclk_rx_usrclk2_int),
-    .gtwiz_userclk_rx_active_in  (gtwiz_userclk_rx_active_int),
-    .rxctrl0_in                  (rxctrl0_int),
-    .rxctrl1_in                  (rxctrl1_int),
-    .rxctrl2_in                  (rxctrl2_int),
-    .rxctrl3_in                  (rxctrl3_int),
-    .rxdata_in                   (gtwiz_userdata_rx_int),
-    .prbs_match_out              (prbs_match_int[0])
-  );
-
-  // PRBS match and related link management
-  // -------------------------------------------------------------------------------------------------------------------
-
-  // Perform a bitwise NAND of all PRBS match indicators, creating a combinatorial indication of any PRBS mismatch
-  // across all transceiver channels
-  wire prbs_error_any_async = ~(&prbs_match_int);
-  wire prbs_error_any_sync;
-
-  // Synchronize the PRBS mismatch indicator the free-running clock domain, using a reset synchronizer with asynchronous
-  // reset and synchronous removal
-  (* DONT_TOUCH = "TRUE" *)
-  gtwizard_ultrascale_qpll_example_reset_synchronizer reset_synchronizer_prbs_match_all_inst (
-    .clk_in (hb_gtwiz_reset_clk_freerun_in),
-    .rst_in (prbs_error_any_async),
-    .rst_out(prbs_error_any_sync)
-  );
-
-  // Implement an example link status state machine using a simple leaky bucket mechanism. The link status indicates
-  // the continual PRBS match status to both the top-level observer and the initialization state machine, while being
-  // tolerant of occasional bit errors. This is an example and can be modified as necessary.
-  localparam ST_LINK_DOWN = 1'b0;
-  localparam ST_LINK_UP   = 1'b1;
-  reg        sm_link      = ST_LINK_DOWN;
-  reg [6:0]  link_ctr     = 7'd0;
-
-  always @(posedge hb_gtwiz_reset_clk_freerun_in) begin
-    case (sm_link)
-      // The link is considered to be down when the link counter initially has a value less than 67. When the link is
-      // down, the counter is incremented on each cycle where all PRBS bits match, but reset whenever any PRBS mismatch
-      // occurs. When the link counter reaches 67, transition to the link up state.
-      ST_LINK_DOWN: begin
-        if (prbs_error_any_sync !== 1'b0) begin
-          link_ctr <= 7'd0;
-        end
-        else begin
-          if (link_ctr < 7'd67)
-            link_ctr <= link_ctr + 7'd1;
-          else
-            sm_link <= ST_LINK_UP;
-        end
-      end
-
-      // When the link is up, the link counter is decreased by 34 whenever any PRBS mismatch occurs, but is increased by
-      // only 1 on each cycle where all PRBS bits match, up to its saturation point of 67. If the link counter reaches
-      // 0 (including rollover protection), transition to the link down state.
-      ST_LINK_UP: begin
-        if (prbs_error_any_sync !== 1'b0) begin
-          if (link_ctr > 7'd33) begin
-            link_ctr <= link_ctr - 7'd34;
-            if (link_ctr == 7'd34)
-              sm_link  <= ST_LINK_DOWN;
-          end
-          else begin
-            link_ctr <= 7'd0;
-            sm_link  <= ST_LINK_DOWN;
-          end
-        end
-        else begin
-          if (link_ctr < 7'd67)
-            link_ctr <= link_ctr + 7'd1;
-        end
-      end
-    endcase
-  end
-
-  // Synchronize the latched link down reset input and the VIO-driven signal into the free-running clock domain
-  wire link_down_latched_reset_sync;
-
-  (* DONT_TOUCH = "TRUE" *)
-  gtwizard_ultrascale_qpll_example_bit_synchronizer bit_synchronizer_link_down_latched_reset_inst (
-    .clk_in (hb_gtwiz_reset_clk_freerun_in),
-    .i_in   (link_down_latched_reset_in),
-    .o_out  (link_down_latched_reset_sync)
-  );
-
-  // Reset the latched link down indicator when the synchronized latched link down reset signal is high. Otherwise, set
-  // the latched link down indicator upon losing link. This indicator is available for user reference.
-  always @(posedge hb_gtwiz_reset_clk_freerun_in) begin
-    if (link_down_latched_reset_sync)
-      link_down_latched_out <= 1'b0;
-    else if (!sm_link)
-      link_down_latched_out <= 1'b1;
-  end
-
 
   // ===================================================================================================================
   // INITIALIZATION
@@ -385,28 +264,7 @@ module gtwizard_ultrascale_qpll_example_top
   // Declare the receiver reset signals that interface to the reset controller helper block. For this configuration,
   // which uses the same PLL type for transmitter and receiver, the "reset RX PLL and datapath" feature is not used.
   wire hb_gtwiz_reset_rx_pll_and_datapath_int = 1'b0;
-  wire hb_gtwiz_reset_rx_datapath_int;
-
-  // Declare signals which connect the VIO instance to the initialization module for debug purposes
-  wire       init_done_int;
-  wire [3:0] init_retry_ctr_int;
-
-  // The example initialization module interacts with the reset controller helper block and other example design logic
-  // to retry failed reset attempts in order to mitigate bring-up issues such as initially-unavilable reference clocks
-  // or data connections. It also resets the receiver in the event of link loss in an attempt to regain link, so please
-  // note the possibility that this behavior can have the effect of overriding or disturbing user-provided inputs that
-  // destabilize the data stream. It is a demonstration only and can be modified to suit your system needs.
-  gtwizard_ultrascale_qpll_example_init example_init_inst (
-    .clk_freerun_in  (hb_gtwiz_reset_clk_freerun_in),
-    .reset_all_in    (hb_gtwiz_reset_all_int),
-    .tx_init_done_in (gtwiz_reset_tx_done_int && gtwiz_buffbypass_tx_done_int),
-    .rx_init_done_in (gtwiz_reset_rx_done_int && gtwiz_buffbypass_rx_done_int),
-    .rx_data_good_in (sm_link),
-    .reset_all_out   (hb_gtwiz_reset_all_init_int),
-    .reset_rx_out    (hb_gtwiz_reset_rx_datapath_int),
-    .init_done_out   (init_done_int),
-    .retry_ctr_out   (init_retry_ctr_int)
-  );
+   wire hb_gtwiz_reset_rx_datapath_int = 1'b0;
 
 
   // ===================================================================================================================
@@ -514,15 +372,15 @@ module gtwizard_ultrascale_qpll_example_top
    ,.gtwiz_userclk_tx_srcclk_out             (gtwiz_userclk_tx_srcclk_int)
    ,.gtwiz_userclk_tx_usrclk_out             (gtwiz_userclk_tx_usrclk_int)
    ,.gtwiz_userclk_tx_usrclk2_out            (gtwiz_userclk_tx_usrclk2_int)
-   ,.gtwiz_userclk_tx_active_out             (gtwiz_userclk_tx_active_int)
+   ,.gtwiz_userclk_tx_active_out             (gtwiz_userclk_tx_active_out)
    ,.gtwiz_userclk_rx_reset_in               (gtwiz_userclk_rx_reset_int)
    ,.gtwiz_userclk_rx_srcclk_out             (gtwiz_userclk_rx_srcclk_int)
    ,.gtwiz_userclk_rx_usrclk_out             (gtwiz_userclk_rx_usrclk_int)
    ,.gtwiz_userclk_rx_usrclk2_out            (gtwiz_userclk_rx_usrclk2_int)
-   ,.gtwiz_userclk_rx_active_out             (gtwiz_userclk_rx_active_int)
+   ,.gtwiz_userclk_rx_active_out             (gtwiz_userclk_rx_active_out)
    ,.gtwiz_buffbypass_tx_reset_in            (gtwiz_buffbypass_tx_reset_int)
    ,.gtwiz_buffbypass_tx_start_user_in       (gtwiz_buffbypass_tx_start_user_int)
-   ,.gtwiz_buffbypass_tx_done_out            (gtwiz_buffbypass_tx_done_int)
+   ,.gtwiz_buffbypass_tx_done_out            (gtwiz_buffbypass_tx_done_out)
    ,.gtwiz_buffbypass_tx_error_out           (gtwiz_buffbypass_tx_error_int)
    ,.gtwiz_buffbypass_rx_reset_in            (gtwiz_buffbypass_rx_reset_int)
    ,.gtwiz_buffbypass_rx_start_user_in       (gtwiz_buffbypass_rx_start_user_int)
