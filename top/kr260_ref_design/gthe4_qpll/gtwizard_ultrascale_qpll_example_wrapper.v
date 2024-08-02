@@ -139,19 +139,19 @@ module gtwizard_ultrascale_qpll_example_wrapper (
   // Transmitter user clocking network helper block
   // -------------------------------------------------------------------------------------------------------------------
 
-  wire [0:0] txusrclk_int;
-  wire [0:0] txusrclk2_int;
-  wire [0:0] txoutclk_int;
+  wire [0:0] tx_usrclk_int;
+  wire [0:0] tx_usrclk2_int;
+  wire  txoutclk_int;
 
   // Generate a single module instance which is driven by a clock source associated with the master transmitter channel,
   // and which drives TXUSRCLK and TXUSRCLK2 for all channels
 
   // The source clock is TXOUTCLK from the master transmitter channel
-  assign gtwiz_userclk_tx_srcclk_out = txoutclk_int[P_TX_MASTER_CH_PACKED_IDX];
+   assign gtwiz_userclk_tx_srcclk_out = txoutclk_int;
 
   // Instantiate a single instance of the transmitter user clocking network helper block
   gtwizard_ultrascale_qpll_example_gtwiz_userclk_tx gtwiz_userclk_tx_inst (
-    .gtwiz_userclk_tx_srcclk_in   (gtwiz_userclk_tx_srcclk_out),
+    .gtwiz_userclk_tx_srcclk_in   (txoutclk_int),
     .gtwiz_userclk_tx_reset_in    (gtwiz_userclk_tx_reset_in),
     .gtwiz_userclk_tx_usrclk_out  (gtwiz_userclk_tx_usrclk_out),
     .gtwiz_userclk_tx_usrclk2_out (gtwiz_userclk_tx_usrclk2_out),
@@ -159,8 +159,8 @@ module gtwizard_ultrascale_qpll_example_wrapper (
   );
 
   // Drive TXUSRCLK and TXUSRCLK2 for all channels with the respective helper block outputs
-  assign txusrclk_int  = {1{gtwiz_userclk_tx_usrclk_out}};
-  assign txusrclk2_int = {1{gtwiz_userclk_tx_usrclk2_out}};
+  assign tx_usrclk_int  = {1{gtwiz_userclk_tx_usrclk_out}};
+  assign tx_usrclk2_int = {1{gtwiz_userclk_tx_usrclk2_out}};
 
   // -------------------------------------------------------------------------------------------------------------------
   // Receiver user clocking network helper block
@@ -382,8 +382,8 @@ module gtwizard_ultrascale_qpll_example_wrapper (
    ,.txctrl2_in                              (txctrl2_in)
    ,.txprogdivreset_in                       (txprogdivreset_int)
    ,.txuserrdy_in                            (txuserrdy_int)
-   ,.txusrclk_in                             (txusrclk_int)
-   ,.txusrclk2_in                            (txusrclk2_int)
+   ,.txusrclk_in                             (tx_usrclk_int)
+   ,.txusrclk2_in                            (tx_usrclk2_int)
    ,.gtpowergood_out                         (gtpowergood_int)
    ,.rxbyteisaligned_out                     (rxbyteisaligned_out)
    ,.rxbyterealign_out                       (rxbyterealign_out)
