@@ -17,6 +17,15 @@ doc/
 *.elf
 *.ucdb
 *.xml
+*.bsf
+*.cmp
+*.qgsynthc
 Makefile
 xgui/
 *.orig
+
+**/synth/*
+**/sim/*
+**/*_bb.v
+**/*_inst.v
+**/*_inst.vhd

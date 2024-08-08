@@ -48,7 +48,7 @@ entity xwrc_platform_altera is
   generic
     (
       -- Define the family/model of Altera FPGA
-      -- (supported: for now only arria5)
+      -- (supported: arria5, arria10)
       g_fpga_family               : string  := "arria5";
       -- Select whether to include external ref clock input
       g_with_external_clock_input : boolean := FALSE;
@@ -153,7 +153,7 @@ begin  -- architecture rtl
   -----------------------------------------------------------------------------
   -- Check for unsupported features and/or misconfiguration
   -----------------------------------------------------------------------------
-  gen_unknown_fpga : if (g_fpga_family /= "arria5") generate
+  gen_unknown_fpga : if not ((g_fpga_family = "arria5") or (g_fpga_family = "arria10")) generate
     assert FALSE
       report "Altera FPGA family [" & g_fpga_family & "] is not supported"
       severity ERROR;
@@ -299,6 +299,38 @@ begin  -- architecture rtl
         pad_rxp_i      => sfp_rx_i);
 
   end generate gen_arria5_phy;
+
+  gen_arria10_phy : if (g_fpga_family = "arria10") generate
+
+  cmp_phy : wr_arria10_transceiver
+    generic map (
+      g_family          => "Arria 10 GX Idrogen",
+      g_use_simple_wa   => false,
+      g_use_atx_pll     =>  true,    -- Use ATX PLL?
+      g_use_cmu_pll     => false,    -- Use CMU PLL?
+      g_use_ext_rst     => false     -- required to prevent PHY to be stuck when connected to same other hardware
+      )
+    port map (
+      clk_ref_i      => clk_pll_ref,
+      clk_phy_i      => phy_clk,
+      ready_o        => phy_ready,
+      drop_link_i    => phy_rst,
+      loopen_i       => phy_loopen,
+      sfp_los_i      => sfp_los_i,
+      tx_clk_o       => phy_tx_clk,
+      tx_data_i      => phy_tx_data,
+      tx_disparity_o => phy_tx_disparity,
+      tx_enc_err_o   => phy_tx_enc_err,
+      tx_data_k_i    => phy_tx_k(0),
+      rx_clk_o       => phy_rx_rbclk,
+      rx_data_o      => phy_rx_data,
+      rx_data_k_o    => phy_rx_k(0),
+      rx_enc_err_o   => phy_rx_enc_err,
+      rx_bitslide_o  => phy_rx_bitslide,
+      pad_txp_o      => sfp_tx_o,
+      pad_rxp_i      => sfp_rx_i);
+
+  end generate gen_arria10_phy;
 
   gen_pcs_8bit : if (g_pcs_16bit = FALSE) generate
 
