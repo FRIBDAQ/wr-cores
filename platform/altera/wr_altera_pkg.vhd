@@ -434,126 +434,49 @@ package wr_altera_pkg is
       );
     end component wr_arria10_scu4_phy;
 
-    component wr_arria10_idrogen_det_phy is
-      port (
-          tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
-          tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
-          rx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_analogreset
-          rx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_digitalreset
-          tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
-          rx_cal_busy               : out std_logic_vector(0 downto 0);                      -- rx_cal_busy
-          tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X'); -- clk
-          rx_cdr_refclk0            : in  std_logic                      := 'X';             -- clk
-          tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
-          rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
-          rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
-          rx_is_lockedtoref         : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtoref
-          rx_is_lockedtodata        : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtodata
-          tx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          rx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          tx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
-          rx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
-          tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-          tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
-          unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-          rx_parallel_data          : out std_logic_vector(7 downto 0);                      -- rx_parallel_data
-          rx_datak                  : out std_logic;                                         -- rx_datak
-          rx_errdetect              : out std_logic;                                         -- rx_errdetect
-          rx_disperr                : out std_logic;                                         -- rx_disperr
-          rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
-          rx_patterndetect          : out std_logic;                                         -- rx_patterndetect
-          rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
-          unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
-          tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
-          rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-          reconfig_clk              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          reconfig_reset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- reset
-          reconfig_write            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- write
-          reconfig_read             : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- read
-          reconfig_address          : in  std_logic_vector(9 downto 0)   := (others => 'X'); -- address
-          reconfig_writedata        : in  std_logic_vector(31 downto 0)  := (others => 'X'); -- writedata
-          reconfig_readdata         : out std_logic_vector(31 downto 0);                     -- readdata
-          reconfig_waitrequest      : out std_logic_vector(0 downto 0)                       -- waitrequest
-      );
-    end component wr_arria10_idrogen_det_phy;
 
-
-  component gtp_bitslide
-    generic (
-      g_simulation : integer := 0;
-      g_target     : string := "Arria 10 GX Idrogen");
+  component wr_arria10_idrogen_det_phy is
     port (
-      gtp_rst_i                : in  std_logic;
-      gtp_rx_clk_i             : in  std_logic;
-      gtp_rx_comma_det_i       : in  std_logic;
-      gtp_rx_byte_is_aligned_i : in  std_logic;
-      serdes_ready_i           : in  std_logic;
-      gtp_rx_slide_o           : out std_logic;
-      gtp_rx_cdr_rst_o         : out std_logic;
-      bitslide_o               : out std_logic_vector(4 downto 0);
-      synced_o                 : out std_logic);
-  end component;  
-
-
-    component wr_arria10_idrogen_det_phy is
-      port (
-          tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
-          tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
-          rx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_analogreset
-          rx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_digitalreset
-          tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
-          rx_cal_busy               : out std_logic_vector(0 downto 0);                      -- rx_cal_busy
-          tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X'); -- clk
-          rx_cdr_refclk0            : in  std_logic                      := 'X';             -- clk
-          tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
-          rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
-          rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
-          rx_is_lockedtoref         : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtoref
-          rx_is_lockedtodata        : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtodata
-          tx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          rx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          tx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
-          rx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
-          tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
-          tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
-          unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
-          rx_parallel_data          : out std_logic_vector(7 downto 0);                      -- rx_parallel_data
-          rx_datak                  : out std_logic;                                         -- rx_datak
-          rx_errdetect              : out std_logic;                                         -- rx_errdetect
-          rx_disperr                : out std_logic;                                         -- rx_disperr
-          rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
-          rx_patterndetect          : out std_logic;                                         -- rx_patterndetect
-          rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
-          unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
-          tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
-          rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
-          reconfig_clk              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
-          reconfig_reset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- reset
-          reconfig_write            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- write
-          reconfig_read             : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- read
-          reconfig_address          : in  std_logic_vector(9 downto 0)   := (others => 'X'); -- address
-          reconfig_writedata        : in  std_logic_vector(31 downto 0)  := (others => 'X'); -- writedata
-          reconfig_readdata         : out std_logic_vector(31 downto 0);                     -- readdata
-          reconfig_waitrequest      : out std_logic_vector(0 downto 0)                       -- waitrequest
-      );
-    end component wr_arria10_idrogen_det_phy;
-
-
-  component gtp_bitslide
-    generic (
-      g_simulation : integer := 0;
-      g_target     : string := "Arria 10 GX Idrogen");
-    port (
-      gtp_rst_i                : in  std_logic;
-      gtp_rx_clk_i             : in  std_logic;
-      gtp_rx_comma_det_i       : in  std_logic;
-      gtp_rx_byte_is_aligned_i : in  std_logic;
-      serdes_ready_i           : in  std_logic;
-      gtp_rx_slide_o           : out std_logic;
-      gtp_rx_cdr_rst_o         : out std_logic;
-      bitslide_o               : out std_logic_vector(4 downto 0);
-      synced_o                 : out std_logic);
-  end component;  
+        tx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_analogreset
+        tx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- tx_digitalreset
+        rx_analogreset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_analogreset
+        rx_digitalreset           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_digitalreset
+        tx_cal_busy               : out std_logic_vector(0 downto 0);                      -- tx_cal_busy
+        rx_cal_busy               : out std_logic_vector(0 downto 0);                      -- rx_cal_busy
+        tx_bonding_clocks         : in  std_logic_vector(5 downto 0)   := (others => 'X'); -- clk
+        rx_cdr_refclk0            : in  std_logic                      := 'X';             -- clk
+        tx_serial_data            : out std_logic_vector(0 downto 0);                      -- tx_serial_data
+        rx_serial_data            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_serial_data
+        rx_seriallpbken           : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- rx_seriallpbken
+        rx_is_lockedtoref         : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtoref
+        rx_is_lockedtodata        : out std_logic_vector(0 downto 0);                      -- rx_is_lockedtodata
+        tx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
+        rx_coreclkin              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
+        tx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
+        rx_clkout                 : out std_logic_vector(0 downto 0);                      -- clk
+        tx_parallel_data          : in  std_logic_vector(7 downto 0)   := (others => 'X'); -- tx_parallel_data
+        tx_datak                  : in  std_logic                      := 'X';             -- tx_datak
+        unused_tx_parallel_data   : in  std_logic_vector(118 downto 0) := (others => 'X'); -- unused_tx_parallel_data
+        rx_parallel_data          : out std_logic_vector(7 downto 0);                      -- rx_parallel_data
+        rx_datak                  : out std_logic;                                         -- rx_datak
+        rx_errdetect              : out std_logic;                                         -- rx_errdetect
+        rx_disperr                : out std_logic;                                         -- rx_disperr
+        rx_runningdisp            : out std_logic;                                         -- rx_runningdisp
+        rx_patterndetect          : out std_logic;                                         -- rx_patterndetect
+        rx_syncstatus             : out std_logic;                                         -- rx_syncstatus
+        unused_rx_parallel_data   : out std_logic_vector(113 downto 0);                    -- unused_rx_parallel_data
+        tx_std_bitslipboundarysel : in  std_logic_vector(4 downto 0)   := (others => 'X'); -- tx_std_bitslipboundarysel
+        rx_std_bitslipboundarysel : out std_logic_vector(4 downto 0);                      -- rx_std_bitslipboundarysel
+        reconfig_clk              : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- clk
+        reconfig_reset            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- reset
+        reconfig_write            : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- write
+        reconfig_read             : in  std_logic_vector(0 downto 0)   := (others => 'X'); -- read
+        reconfig_address          : in  std_logic_vector(9 downto 0)   := (others => 'X'); -- address
+        reconfig_writedata        : in  std_logic_vector(31 downto 0)  := (others => 'X'); -- writedata
+        reconfig_readdata         : out std_logic_vector(31 downto 0);                     -- readdata
+        reconfig_waitrequest      : out std_logic_vector(0 downto 0)                       -- waitrequest
+    );
+  end component wr_arria10_idrogen_det_phy;
 
 
     component wr_arria10_ftm4_det_phy is
