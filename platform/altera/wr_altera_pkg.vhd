@@ -1043,4 +1043,32 @@ package wr_altera_pkg is
       locked   : out std_logic);
   end component arria5_ext_ref_pll_default;
 
+  component arria10_dmtd_pll_default is
+    port (
+        rst      : in  std_logic := 'X';
+        refclk   : in  std_logic := 'X';
+        locked   : out std_logic;
+        outclk_0 : out std_logic
+    );
+  end component arria10_dmtd_pll_default;
+
+  component arria10_sys_pll_default is
+    port (
+        rst      : in  std_logic := 'X';
+        refclk   : in  std_logic := 'X';
+        locked   : out std_logic;
+        outclk_0 : out std_logic;
+        outclk_1 : out std_logic
+    );
+  end component arria10_sys_pll_default;
+
+  component arria10_ext_ref_pll_default is
+    port (
+        rst      : in  std_logic := 'X';
+        refclk   : in  std_logic := 'X';
+        locked   : out std_logic;
+        outclk_0 : out std_logic
+    );
+  end component arria10_ext_ref_pll_default;
+
 end wr_altera_pkg;

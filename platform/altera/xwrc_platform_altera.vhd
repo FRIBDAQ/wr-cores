@@ -244,6 +244,66 @@ begin  -- architecture rtl
 
     end generate gen_arria5_default_plls;
 
+    gen_arria10_default_plls : if (g_fpga_family = "arria10") generate
+
+        signal pll_sys_locked  : std_logic;
+        signal pll_dmtd_locked : std_logic;
+  
+      begin  --gen_arria10_default_plls
+  
+        cmp_sys_clk_pll : arria10_sys_pll_default
+          port map (
+            refclk   => clk_125m_pllref_i,
+            rst      => pll_arst,
+            outclk_0 => clk_pll_sys,
+            outclk_1 => clk_pll_ref,
+            locked   => pll_sys_locked);
+  
+        cmp_dmtd_clk_pll : arria10_dmtd_pll_default
+          port map (
+            refclk   => clk_20m_vcxo_i,
+            rst      => pll_arst,
+            outclk_0 => clk_62m5_dmtd_o,
+            locked   => pll_dmtd_locked);
+  
+        clk_62m5_sys_o <= clk_pll_sys;
+        clk_125m_ref_o <= clk_pll_ref;
+        pll_locked_o   <= pll_sys_locked and pll_dmtd_locked;
+  
+        gen_arria10_ext_ref_pll : if (g_with_external_clock_input = TRUE) generate
+  
+          signal pll_ext_rst : std_logic;
+  
+        begin  --gen_arria10_ext_ref_pll
+  
+          cmp_ext_ref_pll : arria10_ext_ref_pll_default
+            port map (
+              refclk   => clk_10m_ext_i,
+              rst      => pll_ext_rst,
+              outclk_0 => ext_ref_mul_o,
+              locked   => ext_ref_mul_locked_o);
+  
+          cmp_extend_ext_reset : gc_extend_pulse
+            generic map (
+              g_width => 1000)
+            port map (
+              clk_i      => clk_pll_sys,
+              rst_n_i    => pll_sys_locked,
+              pulse_i    => ext_ref_rst_i,
+              extended_o => pll_ext_rst);
+  
+        end generate gen_arria10_ext_ref_pll;
+  
+        gen_arria10_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
+          ext_ref_mul_o         <= '0';
+          ext_ref_mul_locked_o  <= '1';
+        end generate gen_arria10_no_ext_ref_pll;
+  
+        -- not provided by Altera PLL
+        ext_ref_mul_stopped_o <= '0';
+  
+      end generate gen_arria10_default_plls;
+
   end generate gen_default_plls;
 
   -- If external PLLs are used, just copy clock inputs to outputs
