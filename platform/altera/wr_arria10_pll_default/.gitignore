@@ -1,0 +1,6 @@
+qdb
+*.qpf
+*.qsf
+*.ip
+.qsys_edit
+quartus_sh_tcl_file_for_qsyspro.tcl
