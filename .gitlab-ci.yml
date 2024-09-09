@@ -1,0 +1,15 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
+stages:
+- wrpc_compile
+
+job_wrpc_compile:
+  stage: wrpc_compile
+  tags:
+  - modelsim
+  - 10.0c
+  script:
+    - source ~/setup_modelsim.sh
+    - cd testbench/wrc_core; hdlmake makefile; make clean; make
+
