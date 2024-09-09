@@ -9,4 +9,4 @@
 	url = https://ohwr.org/project/gn4124-core.git
 [submodule "ip_cores/vme64x-core"]
 	path = ip_cores/vme64x-core
-	url = https://ohwr.org/project/urv-core.git
+	url = https://ohwr.org/project/vme64x-core.git
