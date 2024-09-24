@@ -169,22 +169,20 @@ architecture rtl of xtx_streamer is
   signal tx_idle : std_logic;
 
   signal tx_fifo_last, tx_fifo_we, tx_fifo_full, tx_fifo_empty, tx_fifo_rd : std_logic;
-  signal tx_fifo_empty_int, tx_fifo_rd_int, tx_fifo_rd_int_d : std_logic;
-  signal tx_fifo_q_int, tx_fifo_q_reg : std_logic_vector(g_data_width downto 0);
+  signal tx_fifo_empty_int, tx_fifo_rd_int : std_logic;
+  signal tx_fifo_q_int : std_logic_vector(g_data_width downto 0);
   signal tx_fifo_q_valid : std_logic;
-  signal tx_fifo_q, tx_fifo_d                                              : std_logic_vector(g_data_width downto 0);
-  signal tx_flush, tx_flush_p2                                             : std_logic;
-  signal state                                                             : t_tx_state;
-  signal seq_no, count                                                     : unsigned(14 downto 0);
-  signal ser_count                                                         : unsigned(7 downto 0);
-  signal word_count                                                        : unsigned(11 downto 0); --2^12 = 4096*2 bytes (can accommodate jambo frame)
-  signal total_words                                                       : unsigned(10 downto 0);
+  signal tx_fifo_q, tx_fifo_d  : std_logic_vector(g_data_width downto 0);
+  signal tx_flush, tx_flush_p2 : std_logic;
+  signal state                 : t_tx_state;
+  signal seq_no, count         : unsigned(14 downto 0);
+  signal ser_count             : unsigned(7 downto 0);
+  signal word_count            : unsigned(11 downto 0); --2^12 = 4096*2 bytes (can accommodate jambo frame)
+  signal total_words           : unsigned(10 downto 0);
 
   signal timeout_counter : unsigned(11 downto 0);
 
-  signal pack_data : std_logic_vector(15 downto 0);
-
-  signal fsm_out, escaper, fab_src     : t_pipe;
+  signal fsm_out, fab_src     : t_pipe;
   signal fsm_escape, fsm_escape_enable : std_logic;
 
   signal crc_en, crc_en_masked, crc_reset : std_logic;
@@ -272,7 +270,7 @@ begin  -- rtl
 
   crc_en_masked <= crc_en and fsm_out.dvalid;
 
-  U_Fab_Source : xwb_fabric_source
+  U_Fab_Source : entity work.xwb_fabric_source
     port map (
       clk_i     => clk_sys_i,
       rst_n_i   => rst_int_n,
