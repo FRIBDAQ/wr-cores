@@ -101,9 +101,7 @@ architecture top of kr260_ref_top is
       hb_gtwiz_reset_clk_freerun_in : in std_logic;
       hb_gtwiz_reset_all_in : in std_logic;
 
-      link_down_latched_reset_in : in std_logic;
       serdes_ready_out : out std_logic;  
-      link_down_latched_out : out std_logic;
 
       reset_all_o : out std_logic;
       userclk_tx_reset_o : out std_logic;
@@ -367,7 +365,6 @@ begin
       pad_txp_o => pad_txp_o,
       hb_gtwiz_reset_clk_freerun_in => clk_62m5,
       hb_gtwiz_reset_all_in => rst,
-      link_down_latched_reset_in => rst,
       serdes_ready_out => sfp_led1_o,
       reset_all_o => gth_status_a(0),
       userclk_tx_reset_o => gth_status_a(1),
