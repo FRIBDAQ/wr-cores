@@ -51,6 +51,15 @@
 -- None
 ------------------------------------------------------------------------------
 
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_misc.all;
+use ieee.numeric_std.all;
+ 
+library unisim;
+use unisim.vcomponents.all;
 
 entity oserdes_8_to_1_7series is
 generic
@@ -61,7 +70,7 @@ generic
 port
  (
   -- From the device out to the system
-  DATA_OUT_FROM_DEVICE    : in    std_logic_vector(DEV_W-1 downto 0);
+  DATA_OUT_FROM_DEVICE    : in  std_logic_vector(DEV_W-1 downto 0);
   DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
   CLK_IN                  : in std_logic;
   CLK_DIV_IN              : in std_logic;
@@ -70,7 +79,7 @@ port
 end entity oserdes_8_to_1_7series;
 
 architecture xilinx of oserdes_8_to_1_7series is
-  constant num_serial_bits         : integer := DEV_WSYS_W;
+  constant num_serial_bits         : integer := SYS_W;
   signal clock_enable : std_logic := '1';
 
   signal data_out_to_pins_int : std_logic_vector(SYS_W-1 downto 0);
@@ -106,14 +115,14 @@ begin
          TRISTATE_WIDTH => 1,
          SERDES_MODE    => "MASTER")
        port map(
-         D1             => oserdes_d(13)(pin_count)),
-         D2             => oserdes_d(12)(pin_count)),
-         D3             => oserdes_d(11)(pin_count)),
-         D4             => oserdes_d(10)(pin_count)),
-         D5             => oserdes_d(9)(pin_count)),
-         D6             => oserdes_d(8)(pin_count)),
-         D7             => oserdes_d(7)(pin_count)),
-         D8             => oserdes_d(6)(pin_count)),
+         D1             => oserdes_d(13)(pin_count),
+         D2             => oserdes_d(12)(pin_count),
+         D3             => oserdes_d(11)(pin_count),
+         D4             => oserdes_d(10)(pin_count),
+         D5             => oserdes_d(9)(pin_count),
+         D6             => oserdes_d(8)(pin_count),
+         D7             => oserdes_d(7)(pin_count),
+         D8             => oserdes_d(6)(pin_count),
          T1             => '0',
          T2             => '0',
          T3             => '0',
@@ -132,7 +141,7 @@ begin
          TBYTEIN        => '0',
          TBYTEOUT       => open,
          TCE            => '0',
-         RST            => IO_RESET)
+         RST            => IO_RESET
       );
 
      -- Concatenate the serdes outputs together. Keep the timesliced
@@ -142,8 +151,8 @@ begin
      -----------------------------------------------------------
     out_slices: for slice_count in 0 to num_serial_bits-1 generate begin
         -- This places the first data in time on the right
-        oserdes_d(14-slice_count-1) <=
-           data_out_from_device(slice_count);
+        oserdes_d(14-slice_count-1)(0) <=
+           DATA_OUT_FROM_DEVICE(slice_count);
         -- To place the first data in time on the left, use the
         --   following code, instead
         --  oserdes_d(slice_count) <=
