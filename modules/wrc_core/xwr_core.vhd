@@ -108,7 +108,8 @@ entity xwr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
-    g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
+    g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+    g_with_auxclk_gen           : boolean                        := false
     );
   port(
     ---------------------------------------------------------------------------
@@ -279,6 +280,9 @@ entity xwr_core is
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
+    auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
+    pll_serdes_locked_i  : in std_logic := '0';
+
     rst_aux_n_o : out std_logic;
 
     aux_diag_i    : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others =>(others=>'0'));
@@ -327,7 +331,8 @@ begin
       g_use_platform_specific_dpram => g_use_platform_specific_dpram,
       g_softpll_aux_channel_config => g_softpll_aux_channel_config,
       g_with_clock_freq_monitor   => g_with_clock_freq_monitor,
-      g_hwbld_date                => g_hwbld_date
+      g_hwbld_date                => g_hwbld_date,
+      g_with_auxclk_gen           => g_with_auxclk_gen
       )
     port map(
       clk_sys_i     => clk_sys_i,
@@ -475,6 +480,9 @@ begin
       pps_valid_o          => pps_valid_o,
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
+
+      auxclk_sd_data_o     => auxclk_sd_data_o,
+      pll_serdes_locked_i  => pll_serdes_locked_i,
 
       rst_aux_n_o => rst_aux_n_o,
 

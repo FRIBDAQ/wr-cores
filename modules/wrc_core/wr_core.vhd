@@ -110,6 +110,7 @@ entity wr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
+    g_with_auxclk_gen           : boolean                        := false;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
     );
   port(
@@ -325,6 +326,10 @@ entity wr_core is
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
+    --auxclk generator word to serdes
+    auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
+    pll_serdes_locked_i  : in std_logic := '0';
+
     rst_aux_n_o : out std_logic;
 
     link_ok_o : out std_logic;
@@ -383,6 +388,13 @@ architecture struct of wr_core is
   signal ppsg_wb_out : t_wishbone_slave_out;
 
   -----------------------------------------------------------------------------
+  --Aux Clock generator
+  -----------------------------------------------------------------------------
+  signal auxclk_data    : std_logic_vector(7 downto 0);
+  signal auxclk_wb_in  : t_wishbone_slave_in;
+  signal auxclk_wb_out : t_wishbone_slave_out;
+
+  -----------------------------------------------------------------------------
   --Timing system
   -----------------------------------------------------------------------------
   signal phy_rx_clk  : std_logic;
@@ -423,28 +435,28 @@ architecture struct of wr_core is
   -----------------------------------------------------------------------------
   --WB Secondary Crossbar
   -----------------------------------------------------------------------------
-  constant c_secbar_layout : t_sdb_record_array(11 downto 0) :=
-    (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb, x"00000000"),
-     1  => f_sdb_embed_device(c_xwr_endpoint_sdb, x"00000100"),
+  constant c_secbar_layout : t_sdb_record_array(12 downto 0) :=
+    (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb,   x"00000000"),
+     1  => f_sdb_embed_device(c_xwr_endpoint_sdb,   x"00000100"),
      2  => f_sdb_embed_device(c_xwr_softpll_ng_sdb, x"00000200"),
-     3  => f_sdb_embed_device(c_xwr_pps_gen_sdb,  x"00000300"),
-     4  => f_sdb_embed_device(c_wrc_periph0_sdb,  x"00000400"),  -- Syscon
-     5  => f_sdb_embed_device(c_wrc_periph1_sdb,  x"00000500"),  -- UART
-     6  => f_sdb_embed_device(c_wrc_periph2_sdb,  x"00000600"),  -- 1-Wire
-     7  => f_sdb_embed_device(c_wrc_periph4_sdb,  x"00000800"),  -- wdiag (usr)
-     8  => f_sdb_embed_device(c_wrc_periph5_sdb,  x"00000900"),  -- wdiag (cpu)
-     9  => f_sdb_embed_device(c_wrc_periph6_sdb,  x"00000a00"),  -- freq mon
-     10 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,  x"00000b00"),  -- cpu csr
-     --                     secbar sdb            x"00000c00"
-     11 => f_sdb_embed_device(g_aux_sdb,          x"00008000")   -- aux WB bus
+     3  => f_sdb_embed_device(c_xwr_pps_gen_sdb,    x"00000300"),
+     4  => f_sdb_embed_device(c_wrc_periph0_sdb,    x"00000400"),  -- Syscon
+     5  => f_sdb_embed_device(c_wrc_periph1_sdb,    x"00000500"),  -- UART
+     6  => f_sdb_embed_device(c_wrc_periph2_sdb,    x"00000600"),  -- 1-Wire
+     7  => f_sdb_embed_device(c_wrc_periph4_sdb,    x"00000800"),  -- wdiag (usr)
+     8  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
+     9  => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
+     10 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
+     11 => f_sdb_embed_device(c_wrc_auxclk_sdb,     x"00000c00"),  -- aux clk gen
+     12 => f_sdb_embed_device(g_aux_sdb,            x"00008000")   -- aux WB bus
    );
 
-  constant c_secbar_sdb_address : t_wishbone_address := x"00000C00";
+  constant c_secbar_sdb_address : t_wishbone_address := x"00001000";
   constant c_secbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_secbar_layout, c_secbar_sdb_address);
 
-  signal secbar_master_i : t_wishbone_master_in_array(11 downto 0);
-  signal secbar_master_o : t_wishbone_master_out_array(11 downto 0);
+  signal secbar_master_i : t_wishbone_master_in_array(12 downto 0);
+  signal secbar_master_o : t_wishbone_master_out_array(12 downto 0);
 
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
@@ -634,6 +646,32 @@ begin
   ppsg_link_ok <= ep_led_link;
   pps_csync_o  <= s_pps_csync;
   pps_valid_o  <= pps_valid;
+
+
+  --------------------------------------
+  -- Aux Clock generator
+  --------------------------------------
+  gen_auxclk: if g_with_auxclk_gen = true generate
+
+    AUXCLK_GEN: xwr_auxclk_gen
+    generic map (
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE
+    )
+    port map(
+      rst_n_i       => rst_n_i,
+      clk_i         => clk_sys_i,
+      pps_i         => s_pps_csync,
+      pps_valid_i   => pps_valid,
+      pll_locked_i  => pll_serdes_locked_i,
+      sd_data_o     => auxclk_data,
+      slave_i       => auxclk_wb_in,
+      slave_o       => auxclk_wb_out
+    );
+
+    auxclk_sd_data_o <= auxclk_data;
+
+  end generate gen_auxclk;
 
   -----------------------------------------------------------------------------
   -- Software PLL
@@ -963,7 +1001,7 @@ begin
     generic map(
       g_verbose     => g_verbose,
       g_num_masters => 2,
-      g_num_slaves  => 12,
+      g_num_slaves  => 13,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_secbar_layout,
@@ -1013,19 +1051,21 @@ begin
   cpu_csr_wb_in <= secbar_master_o(10);
   secbar_master_i(10) <= cpu_csr_wb_out;
 
-  aux_adr_o <= secbar_master_o(11).adr;
-  aux_dat_o <= secbar_master_o(11).dat;
-  aux_sel_o <= secbar_master_o(11).sel;
-  aux_cyc_o <= secbar_master_o(11).cyc;
-  aux_stb_o <= secbar_master_o(11).stb;
-  aux_we_o  <= secbar_master_o(11).we;
+  secbar_master_i(11) <= auxclk_wb_out;
+  auxclk_wb_in       <= secbar_master_o(11);
 
-  secbar_master_i(11).dat   <= aux_dat_i;
-  secbar_master_i(11).ack   <= aux_ack_i;
-  secbar_master_i(11).stall <= aux_stall_i;
-  secbar_master_i(11).err   <= '0';
-  secbar_master_i(11).rty   <= '0';
+  aux_adr_o <= secbar_master_o(12).adr;
+  aux_dat_o <= secbar_master_o(12).dat;
+  aux_sel_o <= secbar_master_o(12).sel;
+  aux_cyc_o <= secbar_master_o(12).cyc;
+  aux_stb_o <= secbar_master_o(12).stb;
+  aux_we_o  <= secbar_master_o(12).we;
 
+  secbar_master_i(12).dat   <= aux_dat_i;
+  secbar_master_i(12).ack   <= aux_ack_i;
+  secbar_master_i(12).stall <= aux_stall_i;
+  secbar_master_i(12).err   <= '0';
+  secbar_master_i(12).rty   <= '0';
 
   -----------------------------------------------------------------------------
   -- WBP MUX
