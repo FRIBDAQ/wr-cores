@@ -83,7 +83,8 @@ entity xwrc_board_spec is
     -- User-defined PLL_BASE outputs config
     g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
     g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
-    g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config);
+    g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
+    g_with_auxclk_gen            : boolean             := false);
   port (
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -263,6 +264,8 @@ entity xwrc_board_spec is
     pps_csync_o : out std_logic;
     pps_valid_o : out std_logic;
     pps_led_o  : out std_logic;
+
+    clk_aux_o  : out std_logic;
     -- Link ok indication
     link_ok_o  : out std_logic
     );
@@ -315,6 +318,10 @@ architecture struct of xwrc_board_spec is
   signal ext_ref_mul_stopped : std_logic;
   signal ext_ref_rst         : std_logic;
 
+  -- Auxclock serdes word
+  signal auxclk_sd_data : std_logic_vector(7 downto 0);
+  signal pll_serdes_locked : std_logic;
+
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -338,6 +345,7 @@ begin  -- architecture struct
       g_use_default_plls          => TRUE,
       g_aux_pll_cfg               => g_aux_pll_cfg,
       g_phy_refclk_sel            => 4,
+      g_with_auxclk_gen           => g_with_auxclk_gen,
       g_simulation                => g_simulation)
     port map (
       areset_n_i            => areset_n_i,
@@ -365,7 +373,10 @@ begin  -- architecture struct
       ext_ref_mul_o         => ext_ref_mul,
       ext_ref_mul_locked_o  => ext_ref_mul_locked,
       ext_ref_mul_stopped_o => ext_ref_mul_stopped,
-      ext_ref_rst_i         => ext_ref_rst);
+      ext_ref_rst_i         => ext_ref_rst,
+      auxclk_sd_data_i      => auxclk_sd_data,
+      pll_serdes_locked_o   => pll_serdes_locked,
+      clk_aux_o             => clk_aux_o);
 
   clk_sys_62m5_o <= clk_pll_62m5;
   clk_ref_125m_o <= clk_pll_125m;
@@ -465,7 +476,8 @@ begin  -- architecture struct
       g_tx_streamer_params        => g_tx_streamer_params,
       g_rx_streamer_params        => g_rx_streamer_params,
       g_fabric_iface              => g_fabric_iface,
-      g_softpll_aux_channel_config => g_softpll_aux_channel_config
+      g_softpll_aux_channel_config => g_softpll_aux_channel_config,
+      g_with_auxclk_gen            => g_with_auxclk_gen
       )
     port map (
       clk_sys_i            => clk_pll_62m5,
@@ -551,7 +563,9 @@ begin  -- architecture struct
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
-      link_ok_o            => link_ok_o);
+      link_ok_o            => link_ok_o,
+      auxclk_sd_data_o     => auxclk_sd_data,
+      pll_serdes_locked_i  => pll_serdes_locked);
 
   sfp_rate_select_o <= '1';
 

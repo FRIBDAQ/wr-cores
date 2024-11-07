@@ -286,6 +286,8 @@ architecture top of spec_wr_ref_top is
   signal wrc_pps_in  : std_logic;
   signal svec_led    : std_logic_vector(15 downto 0);
 
+  signal clk_aux_out : std_logic;
+
   -- DIO Mezzanine
   signal dio_in  : std_logic_vector(4 downto 0);
   signal dio_out : std_logic_vector(4 downto 0);
@@ -375,7 +377,9 @@ begin  -- architecture top
       g_simulation                => g_simulation,
       g_with_external_clock_input => TRUE,
       g_dpram_initf               => g_dpram_initf,
-      g_fabric_iface              => LOOPBACK)
+      g_fabric_iface              => LOOPBACK,
+      g_with_auxclk_gen           => TRUE
+    )
     port map (
       areset_n_i          => button1_i,
       areset_edge_n_i     => gn_rst_n,
@@ -430,15 +434,17 @@ begin  -- architecture top
 
       wb_eth_master_o     => cnx_master_out(c_WB_MASTER_ETHBONE),
       wb_eth_master_i     => cnx_master_in(c_WB_MASTER_ETHBONE),
-      
+
       abscal_txts_o       => wrc_abscal_txts_out,
       abscal_rxts_o       => wrc_abscal_rxts_out,
 
       pps_ext_i           => wrc_pps_in,
       pps_p_o             => wrc_pps_out,
       pps_led_o           => wrc_pps_led,
+      clk_aux_o           => clk_aux_out,
       led_link_o          => led_link_o,
-      led_act_o           => led_act_o);
+      led_act_o           => led_act_o
+      );
 
   -- Tristates for SFP EEPROM
   sfp_mod_def1_b <= '0' when sfp_scl_out = '0' else 'Z';
@@ -453,7 +459,7 @@ begin  -- architecture top
   ------------------------------------------------------------------------------
   -- Digital I/O FMC Mezzanine connections
   ------------------------------------------------------------------------------
-  gen_dio_iobufs: for I in 0 to 4 generate
+  gen_dio_ibufs: for I in 0 to 4 generate
     U_ibuf: IBUFDS
       generic map (
         DIFF_TERM => true)
@@ -462,12 +468,16 @@ begin  -- architecture top
         I  => dio_p_i(i),
         IB => dio_n_i(i));
 
+  end generate;
+
+  gen_dio_obufs: for I in 0 to 4 generate
     U_obuf : OBUFDS
       port map (
         I  => dio_out(i),
         O  => dio_p_o(i),
         OB => dio_n_o(i));
   end generate;
+
   -- Configure Digital I/Os 0 to 3 as outputs
   dio_oe_n_o(2 downto 0) <= (others => '0');
   -- Configure Digital I/Os 3 and 4 as inputs for external reference
@@ -501,7 +511,8 @@ begin  -- architecture top
   wrc_pps_in    <= dio_in(3);
   dio_out(0)    <= wrc_pps_out;
   dio_out(1)    <= wrc_abscal_rxts_out;
-  dio_out(2)    <= wrc_abscal_txts_out;
+  --dio_out(2)    <= wrc_abscal_txts_out;
+  dio_out(2)    <= clk_aux_out;
 
   -- LEDs
   U_Extend_PPS : gc_extend_pulse

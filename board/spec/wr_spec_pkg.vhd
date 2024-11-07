@@ -62,7 +62,8 @@ package wr_spec_pkg is
       g_diag_ro_size              : integer              := 0;
       g_diag_rw_size              : integer              := 0;
       g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
-      g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb
+      g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
+      g_with_auxclk_gen           : boolean              := TRUE
     );
     port (
       areset_n_i           : in  std_logic;
@@ -158,6 +159,7 @@ package wr_spec_pkg is
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
       pps_led_o            : out std_logic;
+      clk_aux_o            : out std_logic;
       link_ok_o            : out std_logic);
   end component xwrc_board_spec;
 
@@ -177,7 +179,8 @@ package wr_spec_pkg is
       g_diag_ver                  : integer := 0;
       g_diag_ro_vector_width      : integer := 0;
       g_diag_rw_vector_width      : integer := 0;
-      g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb
+      g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
+      g_with_auxclk_gen           : boolean := TRUE
     );
     port (
       areset_n_i           : in  std_logic;
@@ -321,6 +324,7 @@ package wr_spec_pkg is
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
       pps_led_o            : out std_logic;
+      clk_aux_o            : out std_logic;
       link_ok_o            : out std_logic);
   end component wrc_board_spec;
 

@@ -79,7 +79,8 @@ entity wrc_board_spec is
     -- size the generic diag interface
     g_diag_ro_vector_width      : integer := 0;
     g_diag_rw_vector_width      : integer := 0;
-    g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb
+    g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
+    g_with_auxclk_gen           : boolean := true
     );
   port (
     ---------------------------------------------------------------------------
@@ -306,6 +307,8 @@ entity wrc_board_spec is
     pps_csync_o : out std_logic;
     pps_valid_o : out std_logic;
     pps_led_o  : out std_logic;
+    --Auxclk output
+    clk_aux_o  : out std_logic;
     -- Link ok indication
     link_ok_o  : out std_logic
     );
@@ -451,7 +454,8 @@ begin  -- architecture struct
       g_diag_ver                  => g_diag_ver,
       g_diag_ro_size              => c_diag_ro_size,
       g_diag_rw_size              => c_diag_rw_size,
-      g_aux_sdb                   => g_aux_sdb)
+      g_aux_sdb                   => g_aux_sdb,
+      g_with_auxclk_gen           => g_with_auxclk_gen)
     port map (
       areset_n_i           => areset_n_i,
       areset_edge_n_i      => areset_edge_n_i,
@@ -542,6 +546,7 @@ begin  -- architecture struct
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
+      clk_aux_o            => clk_aux_o,
       link_ok_o            => link_ok_o);
 
 end architecture std_wrapper;
