@@ -222,7 +222,9 @@ package wr_board_pkg is
       pps_valid_o          : out std_logic;
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
-      link_ok_o            : out std_logic);
+      link_ok_o            : out std_logic;
+      auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
+      pll_serdes_locked_i  : in std_logic := '0');
   end component xwrc_board_common;
 
   component eb_ethernet_slave is

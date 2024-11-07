@@ -82,7 +82,8 @@ entity xwrc_board_common is
     -- mux also the I2C acess to their memory
     g_sfp_i2c_mux_enable        : boolean                        := FALSE;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
-    g_fabric_iface              : t_board_fabric_iface           := PLAIN);
+    g_fabric_iface              : t_board_fabric_iface           := PLAIN;
+    g_with_auxclk_gen           : boolean                        := FALSE);
   port(
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -271,7 +272,11 @@ entity xwrc_board_common is
     pps_p_o     : out std_logic;
     pps_led_o   : out std_logic;
     -- Link ok indication
-    link_ok_o : out std_logic
+    link_ok_o : out std_logic;
+
+    -- Aux clock generator output
+    auxclk_sd_data_o : out std_logic_vector(7 downto 0);
+    pll_serdes_locked_i : in std_logic := '0'
     );
 
 end entity xwrc_board_common;
@@ -406,7 +411,8 @@ begin  -- architecture struct
       g_diag_ro_size              => c_diag_ro_size,
       g_diag_rw_size              => c_diag_rw_size,
       g_dac_bits                  => g_dac_bits,
-      g_softpll_aux_channel_config => g_softpll_aux_channel_config)
+      g_softpll_aux_channel_config => g_softpll_aux_channel_config,
+      g_with_auxclk_gen            => g_with_auxclk_gen)
     port map (
       clk_sys_i            => clk_sys_i,
       clk_dmtd_i           => clk_dmtd_i,
@@ -498,6 +504,8 @@ begin  -- architecture struct
       pps_valid_o          => pps_valid,
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
+      auxclk_sd_data_o     => auxclk_sd_data_o,
+      pll_serdes_locked_i  => pll_serdes_locked_i,
       rst_aux_n_o          => aux_rst_n,
       aux_diag_i           => aux_diag_in,
       aux_diag_o           => aux_diag_out,
