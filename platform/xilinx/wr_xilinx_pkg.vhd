@@ -364,4 +364,35 @@ package wr_xilinx_pkg is
     );
   end component;
 
+  component oserdes_8_to_1_spartan6 is
+  generic (
+    SYS_W       : integer := 1;
+    DEV_W       : integer := 8);
+  port (
+    -- From the device out to the system
+    DATA_OUT_FROM_DEVICE    : in    std_logic_vector(DEV_W-1 downto 0);
+    DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
+    -- Clock and reset signals
+    CLK_IN                  : in    std_logic;                    -- Single ended Fast clock from PLL
+    PLL_LOCKED_IN           : in    std_logic;                    -- CLK_IN PLL locked
+    CLK_DIV_IN              : in    std_logic;                    -- divided clock in (must come from from BUFG)
+    IO_RESET                : in    std_logic                   -- Reset signal for IO circuit
+    );
+  end component oserdes_8_to_1_spartan6;
+
+  component oserdes_8_to_1_7series is
+  generic (
+    SYS_W       : integer := 1;
+    -- width of the data for the device
+    DEV_W       : integer := 8);
+  port (
+    -- From the device out to the system
+    DATA_OUT_FROM_DEVICE    : in std_logic_vector(DEV_W-1 downto 0);
+    DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
+    CLK_IN                  : in std_logic;
+    CLK_DIV_IN              : in std_logic;
+    IO_RESET                : in std_logic
+    );
+  end component oserdes_8_to_1_7series;
+
 end wr_xilinx_pkg;

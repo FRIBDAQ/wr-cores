@@ -75,6 +75,8 @@ entity xwrc_platform_xilinx is
       -- default value of 4 selects CLK10 / CLK11 (see UG386, Fig 2-3, page 41)
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
       g_gtp_mux_enable            : boolean := FALSE;
+      -- Set to TRUE to enable auxclk generator
+      g_with_auxclk_gen           : boolean := FALSE;
       -- Set to TRUE will speed up some initialization processes
       g_simulation                : integer := 0);
   port (
@@ -172,7 +174,11 @@ entity xwrc_platform_xilinx is
     ext_ref_mul_o         : out std_logic;
     ext_ref_mul_locked_o  : out std_logic;
     ext_ref_mul_stopped_o : out std_logic;
-    ext_ref_rst_i         : in  std_logic             := '0'
+    ext_ref_rst_i         : in  std_logic             := '0';
+    -- Aux clock generation
+    auxclk_sd_data_i      : in std_logic_vector(7 downto 0) := (others => '0');
+    pll_serdes_locked_o   : out std_logic;
+    clk_aux_o             : out std_logic
     );
 
 end entity xwrc_platform_xilinx;
@@ -186,6 +192,7 @@ architecture rtl of xwrc_platform_xilinx is
   signal pll_arst            : std_logic := '0';
   signal clk_125m_pllref_buf : std_logic;
   signal clk_sys             : std_logic;
+  signal clk_sys_out         : std_logic;
 
 begin  -- architecture rtl
 
@@ -227,6 +234,13 @@ begin  -- architecture rtl
       report "Dual GTP/SFP is not supported yet (TODO) !"
       severity ERROR;
   end generate gen_dual_SFP_support;
+
+  gen_auxclk_support: if (g_with_auxclk_gen = TRUE and g_fpga_family /= "spartan6" and g_fpga_family /= "kintex7" and g_fpga_family /= "artix7")
+  generate
+    assert FALSE
+      report "Auxclk output not supported on [" & g_fpga_family & "]"
+      severity ERROR;
+  end generate gen_auxclk_support;
   -----------------------------------------------------------------------------
   -- Clock PLLs
   -----------------------------------------------------------------------------
@@ -248,7 +262,6 @@ begin  -- architecture rtl
     gen_spartan6_default_plls : if (g_fpga_family = "spartan6") generate
 
       signal clk_20m          : std_logic;
-      signal clk_sys_out      : std_logic;
       signal clk_sys_fb       : std_logic;
       signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic;
@@ -1317,6 +1330,175 @@ begin  -- architecture rtl
 
   end generate gen_phy_artix7;
 
+
+  gen_auxclk_generator: if g_with_auxclk_gen = TRUE generate
+
+    signal serdes_div_clk : std_logic;
+    signal auxclk_out_vec : std_logic_vector(0 downto 0);
+    signal rst_serdes  : std_logic;
+
+    begin
+
+      gen_use_pll_clks: if g_use_default_plls = TRUE generate
+        serdes_div_clk <= clk_sys_out;
+      end generate gen_use_pll_clks;
+
+      gen_use_ext_clks: if g_use_default_plls = FALSE generate
+
+        cmp_clk_div_buf_i : BUFG
+        port map (
+          O => serdes_div_clk,
+          I => clk_62m5_sys_i);
+
+      end generate gen_use_ext_clks;
+
+      gen_spartan6_auxclk_serdes: if g_fpga_family = "spartan6" generate
+
+        signal pll_serdes_fb     : std_logic;
+        signal pll_serdes_out    : std_logic;
+        signal pll_serdes_locked : std_logic;
+
+        begin
+
+          --62.5MHz - 500MHz for auxclk serdes
+          cmp_serdes_pll : PLL_BASE
+          generic map(
+            BANDWIDTH            => "OPTIMIZED",
+            CLK_FEEDBACK         => "CLKFBOUT",
+            COMPENSATION         => "INTERNAL",
+            DIVCLK_DIVIDE        => 1,
+            CLKFBOUT_MULT        => 8,
+            CLKFBOUT_PHASE       => 0.000,
+            CLKOUT0_DIVIDE       => 1,
+            CLKOUT0_PHASE        => 0.000,
+            CLKOUT0_DUTY_CYCLE   => 0.500,
+            CLKIN_PERIOD         => 16.000,
+            REF_JITTER           => 0.010)
+          port map
+            -- Output clocks
+           (CLKFBOUT            => pll_serdes_fb,
+            CLKOUT0             => pll_serdes_out,
+            CLKOUT1             => open,
+            CLKOUT2             => open,
+            CLKOUT3             => open,
+            CLKOUT4             => open,
+            CLKOUT5             => open,
+            -- Status and control signals
+            LOCKED              => pll_serdes_locked,
+            RST                 => pll_arst,
+            -- Input clock control
+            CLKFBIN             => pll_serdes_fb,
+            CLKIN               => serdes_div_clk);
+
+          rst_serdes  <= not pll_serdes_locked;
+
+          cmp_auxclk_serdes: oserdes_8_to_1_spartan6
+          generic map(
+            SYS_W => 1,
+            DEV_W => 8
+          )
+          port map(
+            DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
+            DATA_OUT_TO_PINS     => auxclk_out_vec,
+            CLK_IN               => pll_serdes_out,
+            PLL_LOCKED_IN        => pll_serdes_locked,
+            CLK_DIV_IN           => serdes_div_clk,
+            IO_RESET             => rst_serdes
+          );
+
+         clk_aux_o   <= auxclk_out_vec(0);
+         pll_serdes_locked_o <= pll_serdes_locked;
+
+    end generate gen_spartan6_auxclk_serdes;
+
+    gen_kintex7_artix7_auxclk_serdes: if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
+
+        signal pll_serdes_fb     : std_logic;
+        signal pll_serdes_out    : std_logic;
+        signal pll_serdes_locked : std_logic;
+
+      begin
+
+        cmp_serdes_pll: MMCME2_ADV
+        generic map(
+          BANDWIDTH            => "OPTIMIZED",
+          CLKOUT4_CASCADE      => FALSE,
+          COMPENSATION         => "INTERNAL",
+          STARTUP_WAIT         => FALSE,
+          DIVCLK_DIVIDE        => 1,
+          CLKFBOUT_MULT_F      => 16.000,
+          CLKFBOUT_PHASE       => 0.000,
+          CLKFBOUT_USE_FINE_PS => FALSE,
+          CLKOUT0_DIVIDE_F     => 2.000,
+          CLKOUT0_PHASE        => 0.000,
+          CLKOUT0_DUTY_CYCLE   => 0.500,
+          CLKOUT0_USE_FINE_PS  => FALSE,
+          CLKIN1_PERIOD        => 16.000,
+          REF_JITTER1          => 0.010
+        )
+        port map(
+          CLKFBOUT            => pll_serdes_fb,
+          CLKFBOUTB           => open,
+          CLKOUT0             => pll_serdes_out,
+          CLKOUT0B            => open,
+          CLKOUT1             => open,
+          CLKOUT1B            => open,
+          CLKOUT2             => open,
+          CLKOUT2B            => open,
+          CLKOUT3             => open,
+          CLKOUT3B            => open,
+          CLKOUT4             => open,
+          CLKOUT5             => open,
+          CLKOUT6             => open,
+          -- Input clock control
+          CLKFBIN             => pll_serdes_fb,
+          CLKIN1              => clk_sys_out,
+          CLKIN2              => '0',
+          -- Tied to always select the primary input clock
+          CLKINSEL            => '1',
+          -- Ports for dynamic reconfiguration
+          DADDR               => (others => '0'),
+          DCLK                => '0',
+          DEN                 => '0',
+          DI                  => (others => '0'),
+          DO                  => open,
+          DRDY                => open,
+          DWE                 => '0',
+          -- Ports for dynamic phase shift
+          PSCLK               => '0',
+          PSEN                => '0',
+          PSINCDEC            => '0',
+          PSDONE              => open,
+          -- Other control and status signals
+          LOCKED              => pll_serdes_locked,
+          CLKINSTOPPED        => open,
+          CLKFBSTOPPED        => open,
+          PWRDWN              => '0',
+          RST                 => pll_arst
+          );
+
+        rst_serdes  <= not pll_serdes_locked;
+
+        cmp_auxclk_serdes: oserdes_8_to_1_7series
+        generic map(
+          SYS_W => 1,
+          DEV_W => 8
+        )
+        port map(
+          DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
+          DATA_OUT_TO_PINS     => auxclk_out_vec,
+          CLK_IN               => pll_serdes_out,
+          CLK_DIV_IN           => clk_sys_out,
+          IO_RESET             => rst_serdes
+        );
+
+       clk_aux_o   <= auxclk_out_vec(0);
+       pll_serdes_locked_o <= pll_serdes_locked;
+
+    end generate gen_kintex7_artix7_auxclk_serdes;
+
+
+  end generate gen_auxclk_generator;
 
   ---------------------------------------------------------------------------
 
