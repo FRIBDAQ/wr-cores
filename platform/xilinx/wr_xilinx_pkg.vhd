@@ -61,6 +61,7 @@ package wr_xilinx_pkg is
       g_gtp_enable_ch1            : integer := 1;
       g_gtp_mux_enable            : boolean := FALSE;
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
+      g_with_auxclk_gen           : boolean := FALSE;
       g_simulation                : integer := 0
       );
     port (
@@ -112,7 +113,10 @@ package wr_xilinx_pkg is
       ext_ref_mul_o         : out std_logic;
       ext_ref_mul_locked_o  : out std_logic;
       ext_ref_mul_stopped_o : out std_logic;
-      ext_ref_rst_i         : in  std_logic             := '0');
+      ext_ref_rst_i         : in  std_logic             := '0';
+      auxclk_sd_data_i      : in std_logic_vector(7 downto 0) := (others => '0');
+      pll_serdes_locked_o   : out std_logic;
+      clk_aux_o             : out std_logic);
   end component xwrc_platform_xilinx;
 
   component wr_gtp_phy_spartan6
