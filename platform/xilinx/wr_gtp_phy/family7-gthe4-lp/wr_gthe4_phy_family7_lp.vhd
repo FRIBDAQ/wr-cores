@@ -538,7 +538,7 @@ begin
     port map (
       clk_i       => rx_rec_clk,
       rst_n_i     => rst_rxclk_n,
-      in_10b_i    => (rx_data_decode(19 downto 10)),
+      in_10b_i    => rx_data_decode(19 downto 10),
       ctrl_o      => rx_k_int(1),
       code_err_o  => rx_code_err(1),
       rdisp_err_o => open,
@@ -548,7 +548,7 @@ begin
     port map (
       clk_i       => rx_rec_clk,
       rst_n_i     => rst_rxclk_n,
-      in_10b_i    => (rx_data_decode(9 downto 0)),
+      in_10b_i    => rx_data_decode(9 downto 0),
       ctrl_o      => rx_k_int(0),
       code_err_o  => rx_code_err(0),
       rdisp_err_o => open,
