@@ -1344,12 +1344,7 @@ begin  -- architecture rtl
       end generate gen_use_pll_clks;
 
       gen_use_ext_clks: if g_use_default_plls = FALSE generate
-
-        cmp_clk_div_buf_i : BUFG
-        port map (
-          O => serdes_div_clk,
-          I => clk_62m5_sys_i);
-
+        serdes_div_clk <= clk_62m5_sys_i;
       end generate gen_use_ext_clks;
 
       gen_spartan6_auxclk_serdes: if g_fpga_family = "spartan6" generate
@@ -1417,7 +1412,7 @@ begin  -- architecture rtl
         signal pll_serdes_out    : std_logic;
         signal pll_serdes_locked : std_logic;
 
-      begin
+    begin
 
         cmp_serdes_pll: MMCME2_ADV
         generic map(
@@ -1452,7 +1447,7 @@ begin  -- architecture rtl
           CLKOUT6             => open,
           -- Input clock control
           CLKFBIN             => pll_serdes_fb,
-          CLKIN1              => clk_sys_out,
+          CLKIN1              => serdes_div_clk,
           CLKIN2              => '0',
           -- Tied to always select the primary input clock
           CLKINSEL            => '1',
@@ -1488,7 +1483,7 @@ begin  -- architecture rtl
           DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
           DATA_OUT_TO_PINS     => auxclk_out_vec,
           CLK_IN               => pll_serdes_out,
-          CLK_DIV_IN           => clk_sys_out,
+          CLK_DIV_IN           => serdes_div_clk,
           IO_RESET             => rst_serdes
         );
 
@@ -1496,7 +1491,6 @@ begin  -- architecture rtl
        pll_serdes_locked_o <= pll_serdes_locked;
 
     end generate gen_kintex7_artix7_auxclk_serdes;
-
 
   end generate gen_auxclk_generator;
 
