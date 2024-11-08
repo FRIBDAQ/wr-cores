@@ -79,7 +79,7 @@ port
 end entity oserdes_8_to_1_7series;
 
 architecture xilinx of oserdes_8_to_1_7series is
-  constant num_serial_bits         : integer := SYS_W;
+  constant num_serial_bits         : integer := DEV_W/SYS_W;
   signal clock_enable : std_logic := '1';
 
   signal data_out_to_pins_int : std_logic_vector(SYS_W-1 downto 0);
@@ -151,7 +151,7 @@ begin
      -----------------------------------------------------------
     out_slices: for slice_count in 0 to num_serial_bits-1 generate begin
         -- This places the first data in time on the right
-        oserdes_d(14-slice_count-1)(0) <=
+        oserdes_d(14-slice_count-1)(pin_count) <=
            DATA_OUT_FROM_DEVICE(slice_count);
         -- To place the first data in time on the left, use the
         --   following code, instead
