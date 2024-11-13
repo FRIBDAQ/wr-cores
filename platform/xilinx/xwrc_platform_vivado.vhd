@@ -972,6 +972,109 @@ begin  -- architecture rtl
 
     end generate gen_kintex7_artix7_auxclk_serdes;
 
+    gen_zynqus_serdes: if (g_fpga_family = "zynqus" or g_fpga_family = "zynqus_epll") generate
+
+        signal pll_serdes_fb      : std_logic;
+        signal pll_serdes_fb_buf  : std_logic;
+        signal pll_serdes_out     : std_logic;
+        signal pll_serdes_out_buf : std_logic;
+        signal pll_serdes_locked  : std_logic;
+
+    begin
+
+      cmp_bufg_fb: BUFG
+      port map(
+        O => pll_serdes_fb_buf,
+        I => pll_serdes_fb);
+
+
+      --62.5MHz to 250MHz
+      --Serdes 8:1 DDR
+      cmp_serdes_pll: MMCME4_ADV
+      generic map
+       (BANDWIDTH            => "OPTIMIZED",
+        CLKOUT4_CASCADE      => "FALSE",
+        COMPENSATION         => "ZHOLD",
+        STARTUP_WAIT         => "FALSE",
+        DIVCLK_DIVIDE        => 1,
+        CLKFBOUT_MULT_F      => 19.000,
+        CLKFBOUT_PHASE       => 0.000,
+        CLKFBOUT_USE_FINE_PS => "FALSE",
+        CLKOUT0_DIVIDE_F     => 4.750,
+        CLKOUT0_PHASE        => 0.000,
+        CLKOUT0_DUTY_CYCLE   => 0.500,
+        CLKOUT0_USE_FINE_PS  => "FALSE",
+        CLKIN1_PERIOD        => 16.000,
+        REF_JITTER1          => 0.010)
+      port map
+        -- Output clocks
+       (CLKFBOUT            => pll_serdes_fb,
+        CLKFBOUTB           => open,
+        CLKOUT0             => pll_serdes_out,
+        CLKOUT0B            => open,
+        CLKOUT1             => open,
+        CLKOUT1B            => open,
+        CLKOUT2             => open,
+        CLKOUT2B            => open,
+        CLKOUT3             => open,
+        CLKOUT3B            => open,
+        CLKOUT4             => open,
+        CLKOUT5             => open,
+        CLKOUT6             => open,
+        -- Input clock control
+        CLKFBIN             => pll_serdes_fb_buf,
+        CLKIN1              => serdes_div_clk,
+        CLKIN2              => '0',
+        -- Tied to always select the primary input clock
+        CLKINSEL            => '1',
+        -- Ports for dynamic reconfiguration
+        DADDR               => (others => '0'),
+        DCLK                => '0',
+        DEN                 => '0',
+        DI                  => (others => '0'),
+        DO                  => open,
+        DRDY                => open,
+        DWE                 => '0',
+        CDDCDONE            => open,
+        CDDCREQ             => '0',
+        -- Ports for dynamic phase shift
+        PSCLK               => '0',
+        PSEN                => '0',
+        PSINCDEC            => '0',
+        PSDONE              => open,
+        -- Other control and status signals
+        LOCKED              => pll_serdes_locked,
+        CLKINSTOPPED        => open,
+        CLKFBSTOPPED        => open,
+        PWRDWN              => '0',
+        RST                 => pll_arst);
+
+        rst_serdes  <= not pll_serdes_locked;
+
+        cmp_clk_serdes_buf: BUFG
+        port map(
+          I => pll_serdes_out,
+          O => pll_serdes_out_buf
+        );
+
+        cmp_auxclk_serdes: oserdes_8_to_1_ultrascale
+        generic map(
+          SYS_W => 1,
+          DEV_W => 8
+        )
+        port map(
+          DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
+          DATA_OUT_TO_PINS     => auxclk_out_vec,
+          CLK_IN               => pll_serdes_out_buf,
+          CLK_DIV_IN           => serdes_div_clk,
+          IO_RESET             => rst_serdes
+        );
+
+       clk_aux_o   <= auxclk_out_vec(0);
+       pll_serdes_locked_o <= pll_serdes_locked;
+
+    end generate gen_zynqus_serdes;
+
   end generate gen_auxclk_generator;
 
 end architecture rtl;
