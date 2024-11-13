@@ -651,7 +651,7 @@ begin
   --------------------------------------
   -- Aux Clock generator
   --------------------------------------
-  gen_auxclk: if g_with_auxclk_gen = true generate
+  gen_auxclk: if g_with_auxclk_gen generate
 
     AUXCLK_GEN: xwr_auxclk_gen
     generic map (
@@ -672,6 +672,14 @@ begin
     auxclk_sd_data_o <= auxclk_data;
 
   end generate gen_auxclk;
+
+  gen_without_auxclk : if not g_with_auxclk_gen generate
+    auxclk_wb_out <= (dat => (others => '0'),
+                           stall => '0',
+                           err => '0',
+                           rty => '0',
+                           ack => '1');
+  end generate gen_without_auxclk;
 
   -----------------------------------------------------------------------------
   -- Software PLL
