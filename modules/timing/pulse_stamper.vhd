@@ -16,7 +16,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity pulse_stamper is
-
   generic (
     -- reference clock frequency
     g_ref_clk_rate : integer := 125000000);
@@ -39,17 +38,14 @@ entity pulse_stamper is
     -- number of clk_ref_i cycles
     tm_cycles_i     : in std_logic_vector(27 downto 0);
 
-
     ---------------------------------------------------------------------------
-    -- Time tag output (clk_sys_i domain)
+    -- Time tag output (clk_sys_i domain), tag_cycles_o is in 8ns steps
     ---------------------------------------------------------------------------
     tag_tai_o      : out std_logic_vector(39 downto 0);
     tag_cycles_o   : out std_logic_vector(27 downto 0);
     -- single-cycle pulse: strobe tag on tag_utc_o and tag_cycles_o
     tag_valid_o : out std_logic
     );
-
-
 end pulse_stamper;
 
 architecture rtl of pulse_stamper is
