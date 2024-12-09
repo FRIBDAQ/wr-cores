@@ -779,9 +779,6 @@ begin  -- architecture rtl
     ---------------------------------------------------------------------------
     gen_zynqus_sdm_qplls: if (g_fpga_family = "zynqus_qpll_sdm") generate
 
-      constant CLK_FREERUN_FREQ_HZ : std_logic_vector(31 downto 0) :=
-          std_logic_vector(to_unsigned(62500000, 32));
-
       signal txoutclk : std_logic_vector(1 downto 0);
 
       signal sdm_toggle_shift_h : std_logic_vector(31 downto 0) := (others => '0');
@@ -796,7 +793,7 @@ begin  -- architecture rtl
         I => clk_125m_pllref_i,
         CLR => '0',
         CE => '1',
-        O => clk_freerun);
+        O => clk_sys);
 
       cmp_clk_dmtd_bufg_gt_o : BUFG_GT
         port map (
@@ -807,16 +804,6 @@ begin  -- architecture rtl
           DIV => "000",
           O => clk_62m5_dmtd_o,
           I => txoutclk(0));
-
-      cmp_clk_sys_bufg_gt_o : BUFG_GT
-        port map (
-          CE => '1',
-          CEMASK => '0',
-          CLR => '0',
-          CLRMASK => '0',
-          DIV => "000",
-          O => clk_sys,
-          I => txoutclk(1));
 
       gtwizard_main_inst : gtwizard_v1_7_gthe4_sdm_main
         port map (
@@ -830,7 +817,7 @@ begin  -- architecture rtl
           gtwiz_userclk_rx_usrclk_out => open,
           gtwiz_userclk_rx_usrclk2_out => open,
           gtwiz_userclk_rx_active_out => open,
-          gtwiz_reset_clk_freerun_in => (0 => clk_freerun),
+          gtwiz_reset_clk_freerun_in => (0 => clk_sys),
           gtwiz_reset_all_in => "0",
           gtwiz_reset_tx_pll_and_datapath_in => "0",
           gtwiz_reset_tx_datapath_in => "0",
@@ -848,7 +835,7 @@ begin  -- architecture rtl
           sdm1toggle_in => (0 => sdm_toggle_h),
           qpll0outclk_out => open,
           qpll0outrefclk_out => open,
-          drpclk_in => (0 => clk_freerun, 1 => clk_freerun),
+          drpclk_in => (0 => clk_sys, 1 => clk_sys),
           gthrxn_in => dummy_gthrxn_i(3 downto 2),
           gthrxp_in => dummy_gthrxp_i(3 downto 2),
           gtrefclk0_in => (0 => clk_125m_dmtd_i, 1 => clk_125m_dmtd_i),
@@ -893,7 +880,7 @@ begin  -- architecture rtl
           gtwiz_userclk_rx_usrclk_out => open,
           gtwiz_userclk_rx_usrclk2_out => open,
           gtwiz_userclk_rx_active_out => open,
-          gtwiz_reset_clk_freerun_in => (0 => clk_freerun),
+          gtwiz_reset_clk_freerun_in => (0 => clk_sys),
           gtwiz_reset_all_in => "0",
           gtwiz_reset_tx_pll_and_datapath_in => "0",
           gtwiz_reset_tx_datapath_in => "0",
@@ -911,7 +898,7 @@ begin  -- architecture rtl
           sdm1toggle_in => (0 => sdm_toggle_d),
           qpll0outclk_out => open,
           qpll0outrefclk_out => open,
-          drpclk_in => (0 => clk_freerun, 1 => clk_freerun),
+          drpclk_in => (0 => clk_sys, 1 => clk_sys),
           gthrxn_in => dummy_gthrxn_i(1 downto 0),
           gthrxp_in => dummy_gthrxp_i(1 downto 0),
           gtrefclk0_in => (0 => clk_125m_dmtd_i, 1 => clk_125m_dmtd_i),
@@ -945,6 +932,7 @@ begin  -- architecture rtl
           txprgdivresetdone_out => open);
 
           pll_locked_o <= '1'; -- txprgdivresetdone(0) and txprgdivresetdone(1);
+          clk_62m5_sys_o <= clk_sys;
 
           tm_dac_h_to_sdm : process(clk_sys)
           begin
@@ -1264,7 +1252,7 @@ begin  -- architecture rtl
         g_use_gclk_as_refclk => false)
       port map (
         clk_gth_i      => clk_125m_gth_buf,
-        clk_freerun_i  => clk_freerun,
+        clk_freerun_i  => clk_sys,
         tx_out_clk_o   => clk_ref,
         tx_locked_o    => open,
         tx_sdm_data_i  => sdm_data_d,
@@ -1288,7 +1276,6 @@ begin  -- architecture rtl
         pad_rxp_i      => sfp_rxp_i,
         rdy_o          => phy16_o.rdy);
 
-    clk_62m5_sys_o       <= clk_sys;
     clk_125m_ref_o       <= clk_ref;
     clk_ref_locked_o     <= '1';
     phy16_o.ref_clk      <= clk_ref;
