@@ -1,5 +1,5 @@
 if (syn_device[0:4].upper()=="XC7A" or syn_device[0:4].upper()=="XC7K" or
-        syn_device[0:4].upper()=="XCZU"):
+        syn_device[0:4].upper()=="XCZU" or syn_device[0:5].upper()=="XCK26"):
 	files = [ "wr_xilinx_pkg.vhd", "xwrc_platform_vivado.vhd", "wrc_dpram/wrc_platform_dpram_ultrascale.vhd" ]
 else:
 	files = [ "wr_xilinx_pkg.vhd", "xwrc_platform_xilinx.vhd" ]
