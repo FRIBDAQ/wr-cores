@@ -31,6 +31,7 @@ use work.endpoint_pkg.all;
 use work.streamers_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
+use work.si570_wbgen2_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -41,14 +42,6 @@ entity xwrc_board_zcu102 is
     g_simulation                : integer              := 0;
     -- Number of aux clocks syntonized by WRPC to WR timebase
     g_aux_clks                  : integer              := 0;
-    -- plain     = expose WRC fabric interface
-    -- streamers = attach WRC streamers to fabric interface
-    -- etherbone = attach Etherbone slave to fabric interface
-    g_fabric_iface              : t_board_fabric_iface := plain;
-    -- parameters configuration when g_fabric_iface = "streamers" (otherwise ignored)
-    g_streamers_op_mode         : t_streamers_op_mode  := TX_AND_RX;
-    g_tx_streamer_params        : t_tx_streamer_params := c_tx_streamer_params_defaut;
-    g_rx_streamer_params        : t_rx_streamer_params := c_rx_streamer_params_defaut;
     -- memory initialisation file for embedded CPU
     g_dpram_initf               : string               := "default_xilinx";
     -- identification (id and ver) of the layout of words in the generic diag interface
@@ -57,7 +50,6 @@ entity xwrc_board_zcu102 is
     -- size the generic diag interface
     g_diag_ro_size              : integer              := 0;
     g_diag_rw_size              : integer              := 0;
-    g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
     g_dac_bits                  : integer              := 16
     );
   port (
@@ -128,6 +120,14 @@ entity xwrc_board_zcu102 is
     eeprom_scl_i : in  std_logic;
     eeprom_scl_o : out std_logic;
 
+    -----------------------------------------
+    -- Si570 I2C interface
+    -----------------------------------------
+    si570_scl_oen_o  : out std_logic;
+    si570_scl_i      : in  std_logic := '1';
+    si570_sda_oen_o  : out std_logic;
+    si570_sda_i      : in  std_logic := '1';
+
     ---------------------------------------------------------------------------
     -- UART
     ---------------------------------------------------------------------------
@@ -140,9 +140,6 @@ entity xwrc_board_zcu102 is
     wb_slave_o : out t_wishbone_slave_out;
     wb_slave_i : in  t_wishbone_slave_in := cc_dummy_slave_in;
 
-    aux_master_o : out t_wishbone_master_out;
-    aux_master_i : in  t_wishbone_master_in := cc_dummy_master_in;
-
     ---------------------------------------------------------------------------
     -- WR fabric interface (when g_fabric_iface = "plainfbrc")
     ---------------------------------------------------------------------------
@@ -150,27 +147,6 @@ entity xwrc_board_zcu102 is
     wrf_src_i : in  t_wrf_source_in := c_dummy_src_in;
     wrf_snk_o : out t_wrf_sink_out;
     wrf_snk_i : in  t_wrf_sink_in   := c_dummy_snk_in;
-
-    ---------------------------------------------------------------------------
-    -- WR streamers (when g_fabric_iface = "streamers")
-    ---------------------------------------------------------------------------
-    wrs_tx_data_i  : in  std_logic_vector(g_tx_streamer_params.data_width-1 downto 0) := (others => '0');
-    wrs_tx_valid_i : in  std_logic                                        := '0';
-    wrs_tx_dreq_o  : out std_logic;
-    wrs_tx_last_i  : in  std_logic                                        := '1';
-    wrs_tx_flush_i : in  std_logic                                        := '0';
-    wrs_tx_cfg_i   : in  t_tx_streamer_cfg                                := c_tx_streamer_cfg_default;
-    wrs_rx_first_o : out std_logic;
-    wrs_rx_last_o  : out std_logic;
-    wrs_rx_data_o  : out std_logic_vector(g_rx_streamer_params.data_width-1 downto 0);
-    wrs_rx_valid_o : out std_logic;
-    wrs_rx_dreq_i  : in  std_logic                                        := '0';
-    wrs_rx_cfg_i   : in t_rx_streamer_cfg                                 := c_rx_streamer_cfg_default;
-    ---------------------------------------------------------------------------
-    -- Etherbone WB master interface (when g_fabric_iface = "etherbone")
-    ---------------------------------------------------------------------------
-    wb_eth_master_o : out t_wishbone_master_out;
-    wb_eth_master_i : in  t_wishbone_master_in := cc_dummy_master_in;
 
     ---------------------------------------------------------------------------
     -- Generic diagnostics interface (access from WRPC via SNMP or uart console
@@ -251,6 +227,42 @@ architecture struct of xwrc_board_zcu102 is
   signal phy16_from_wrc : t_phy_16bits_from_wrc;
 
   signal sfp_tx_disable_n : std_logic;
+
+  -- Si570
+  signal si570_wb_in  : t_wishbone_slave_in;
+  signal si570_wb_out : t_wishbone_slave_out;
+
+  constant c_xwb_si5xx_sdb : t_sdb_device := (
+    abi_class     => x"0000",              -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7",
+    sdb_component => (
+    addr_first  => x"0000000000000000",
+    addr_last   => x"00000000000000ff",
+    product     => (
+    vendor_id => x"000000000000CE42",  -- CERN TODO
+    device_id => x"deadbee0",          -- TODO
+    version   => x"00000001",
+    date      => x"20240604",
+    name      => "Si5xx              ")));
+
+  -- Tertiary crossbar for board peripherals
+  signal aux_master_out : t_wishbone_master_out;
+  signal aux_master_in : t_wishbone_master_in := cc_dummy_master_in;
+
+  signal tertbar_master_i : t_wishbone_master_in_array(0 downto 0);
+  signal tertbar_master_o : t_wishbone_master_out_array(0 downto 0);
+
+  constant c_tertbar_layout : t_sdb_record_array(0 downto 0) :=
+    (0  => f_sdb_embed_device(c_xwb_si5xx_sdb, x"00000000")
+     --                     tertbar sdb            x"00000100"
+   );
+
+  constant c_tertbar_sdb_address : t_wishbone_address := x"00000100";
+  constant c_tertbar_bridge_sdb  : t_sdb_bridge       :=
+    f_xwb_bridge_layout_sdb(true, c_tertbar_layout, c_tertbar_sdb_address);
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -381,7 +393,7 @@ begin  -- architecture struct
       g_dpram_size                => 262144/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
-      g_aux_sdb                   => g_aux_sdb,
+      g_aux_sdb                   => c_wrc_periph3_sdb,
       g_softpll_enable_debugger   => FALSE,
       g_vuart_fifo_size           => 1024,
       g_pcs_16bit                 => TRUE,
@@ -389,10 +401,7 @@ begin  -- architecture struct
       g_diag_ver                  => g_diag_ver,
       g_diag_ro_size              => g_diag_ro_size,
       g_diag_rw_size              => g_diag_rw_size,
-      g_streamers_op_mode         => g_streamers_op_mode,
-      g_tx_streamer_params        => g_tx_streamer_params,
-      g_rx_streamer_params        => g_rx_streamer_params,
-      g_fabric_iface              => g_fabric_iface,
+      g_fabric_iface              => plain,
       g_dac_bits                  => g_dac_bits)
     port map (
       clk_sys_i            => clk_pll_62m5,
@@ -418,28 +427,12 @@ begin  -- architecture struct
       uart_txd_o           => uart_txd_o,
       wb_slave_i           => wb_slave_i,
       wb_slave_o           => wb_slave_o,
-      aux_master_o         => aux_master_o,
-      aux_master_i         => aux_master_i,
+      aux_master_o         => aux_master_out,
+      aux_master_i         => aux_master_in,
       wrf_src_o            => wrf_src_o,
       wrf_src_i            => wrf_src_i,
       wrf_snk_o            => wrf_snk_o,
       wrf_snk_i            => wrf_snk_i,
-      -- Streamers
-      wrs_tx_data_i        => wrs_tx_data_i,
-      wrs_tx_valid_i       => wrs_tx_valid_i,
-      wrs_tx_dreq_o        => wrs_tx_dreq_o,
-      wrs_tx_last_i        => wrs_tx_last_i,
-      wrs_tx_flush_i       => wrs_tx_flush_i,
-      wrs_tx_cfg_i         => wrs_tx_cfg_i,
-      wrs_rx_first_o       => wrs_rx_first_o,
-      wrs_rx_last_o        => wrs_rx_last_o,
-      wrs_rx_data_o        => wrs_rx_data_o,
-      wrs_rx_valid_o       => wrs_rx_valid_o,
-      wrs_rx_dreq_i        => wrs_rx_dreq_i,
-      wrs_rx_cfg_i         => wrs_rx_cfg_i,
-      -- Etherbone WB master
-      wb_eth_master_o      => wb_eth_master_o,
-      wb_eth_master_i      => wb_eth_master_i,
       -- Generic diagnostics i/f
       aux_diag_i           => aux_diag_i,
       aux_diag_o           => aux_diag_o,
@@ -464,6 +457,49 @@ begin  -- architecture struct
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
       link_ok_o            => link_ok_o);
+
+  cmp_board_crossbar : xwb_sdb_crossbar
+    generic map(
+      g_verbose     => TRUE,
+      g_num_masters => 1,
+      g_num_slaves  => 1,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_tertbar_layout,
+      g_sdb_addr    => c_tertbar_sdb_address
+      )
+    port map(
+      clk_sys_i  => clk_pll_62m5,
+      rst_n_i    => rst_62m5_n,
+      -- Master connections (INTERCON is a slave)
+      slave_i(0) => aux_master_out,
+      slave_o(0) => aux_master_in,
+      -- Slave connections (INTERCON is a master)
+      master_i   => tertbar_master_i,
+      master_o   => tertbar_master_o
+      );
+
+  tertbar_master_i(0) <= si570_wb_out;
+  si570_wb_in         <= tertbar_master_o(0);
+
+  -----------------------------------------------------------------------------
+  -- Si570
+  -----------------------------------------------------------------------------
+  cmp_board_si570: entity work.xwr_si57x_interface
+    generic map(
+      g_simulation      => g_simulation)
+    port map(
+      clk_sys_i         => clk_pll_62m5,
+      rst_n_i           => rst_62m5_n,
+
+      scl_pad_oen_o     => si570_scl_oen_o,
+      sda_pad_oen_o     => si570_sda_oen_o,
+      scl_pad_i         => si570_scl_i,
+      sda_pad_i         => si570_sda_i,
+
+      slave_i           => si570_wb_in,
+      slave_o           => si570_wb_out
+    );
 
   sfp_rate_select_o <= '1';
 

@@ -117,6 +117,7 @@ architecture top of zcu102_ref_top is
   signal clkfbout_clk_wiz_0 : std_logic;
   signal clkfbout_buf_clk_wiz_0 : std_logic;
   signal clk_sys_62m5 : std_logic;
+  signal clk_ref_125m : std_logic;
   signal clk_10m : std_logic;
   signal clk_xm105_sma : std_logic;
   signal pps_p : std_logic;
@@ -125,7 +126,8 @@ architecture top of zcu102_ref_top is
   signal sfp_sda_out, sfp_sda_in : std_logic;
   signal eeprom_scl_out, eeprom_scl_in : std_logic;
   signal eeprom_sda_out, eeprom_sda_in : std_logic;
-
+  signal si570_scl_oen, si570_scl_in : std_logic;
+  signal si570_sda_oen, si570_sda_in : std_logic;
 begin
 
   -- do not use PS_POR for now
@@ -144,7 +146,7 @@ begin
       wr_clk_sfp_125m_p_i    => wr_clk_sfp_125m_p_i, 
       wr_clk_sfp_125m_n_i    => wr_clk_sfp_125m_n_i, 
       clk_sys_62m5_o         => clk_sys_62m5,
-      clk_ref_125m_o         => clk_ref_125m_o,
+      clk_ref_125m_o         => clk_ref_125m,
   
       dummy_gthtxp_o        => dummy_gthtxp_o,
       dummy_gthtxn_o        => dummy_gthtxn_o,
@@ -169,7 +171,11 @@ begin
       eeprom_scl_o => eeprom_scl_out, 
       uart_rxd_i   => uart_rxd_i, 
       uart_txd_o   => uart_txd_o, 
-  
+      si570_scl_oen_o => si570_scl_oen,
+      si570_scl_i  => si570_scl_in,
+      si570_sda_oen_o => si570_sda_oen,
+      si570_sda_i  => si570_sda_in,
+
       led_act_o  => user_led_o(1),
       led_link_o => user_led_o(0),
       pps_valid_o => user_led_o(2),
@@ -206,7 +212,7 @@ begin
       CLKOUT5              => open,
       CLKOUT6              => open,
       CLKFBIN              => clkfbout_buf_clk_wiz_0,
-      CLKIN1               => clk_sys_62m5,
+      CLKIN1               => clk_ref_125m,
       CLKIN2               => '0',
       CLKINSEL             => '1',
       DADDR                => "0000000",
@@ -249,12 +255,15 @@ begin
       SR => '0');
 
   clk_sys_62m5_o <= (clk_sys_62m5_o'range => clk_sys_62m5);
+  clk_ref_125m_o <= clk_ref_125m;
   pps_p_o <= (pps_p_o'range => pps_p);
 
-  sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
-  sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
+  sfp_scl_b <= '0' when (sfp_scl_out = '0' or si570_scl_oen = '0') else 'Z';
+  sfp_sda_b <= '0' when (sfp_sda_out = '0' or si570_sda_oen = '0') else 'Z';
   sfp_scl_in <= sfp_scl_b;
   sfp_sda_in <= sfp_sda_b;
+  si570_scl_in <= sfp_scl_b;
+  si570_sda_in <= sfp_sda_b;
 
   eeprom_scl_b <= '0' when eeprom_scl_out = '0' else 'Z';
   eeprom_sda_b <= '0' when eeprom_sda_out = '0' else 'Z';
