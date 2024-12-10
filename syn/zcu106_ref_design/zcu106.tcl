@@ -5,7 +5,7 @@ get_param general.maxThreads
 
 # Xilinx speed grades: 1,2,3: 1 = slowest, 3 = fastest
 set speed   2
-set fpga xczu9eg-ffvb1156-${speed}-e
+set fpga xczu7ev-ffvc1156-${speed}-e
 set device  ${fpga}
 
 set top     zcu10x_ref_top
@@ -19,11 +19,11 @@ if {![file exists files.tcl]} {
 source files.tcl
 
 # constraint files
-read_xdc $projDir/zcu102_ref_design.xdc
+read_xdc $projDir/zcu106_ref_design.xdc
 
 set start_time [clock seconds]
 
-synth_design -top ${top} -part ${device} -generic g_BOARD_NAME="X102" > ${top}_synth.log
+synth_design -top ${top} -part ${device} -generic g_BOARD_NAME="X106" > ${top}_synth.log
 write_checkpoint -force ${top}_synth
 
 opt_design -directive Explore -verbose > ${top}_opt.log

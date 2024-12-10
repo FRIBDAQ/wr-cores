@@ -1,5 +1,5 @@
 files = [
-    "xwrc_board_zcu102.vhd",
+    "xwrc_board_zcu10x.vhd",
 ]
 
 modules = {

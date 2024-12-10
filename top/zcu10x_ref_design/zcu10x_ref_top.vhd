@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------
--- Title      : WRPC reference design for ZCU102 board
+-- Title      : WRPC reference design for ZCU102 and ZCU106 board
 -- Project    : WR PTP Core
 -- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
 -------------------------------------------------------------------------------
--- File       : zcu102_ref_top.vhd
+-- File       : zcu10x_ref_top.vhd
 -- Author(s)  : David Epping <david.epping@missinglinkelectronics.com> (based
 --              on work by Greg Daniluk <grzegorz.daniluk@cern.ch>)
 -- Company    : Missing Link Electronics
@@ -11,11 +11,11 @@
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
 -- Description: Top-level file for the WRPC reference design on the ZCU102
--- board.
+-- and ZCU106 board.
 -- An optional XM105 can be added on FMC HPC0 for SMA clock and PPS output.
 --
 -- This is a reference top HDL that instanciates the WR PTP Core together with
--- its peripherals to be run on a ZCU102 board.
+-- its peripherals to be run on a ZCU102 and ZCU106 board.
 --
 -- There are two main usecases for this HDL file:
 -- * let new users easily synthesize a WR PTP Core bitstream that can be run on
@@ -24,6 +24,7 @@
 --   in HDL projects.
 --
 -- ZCU102: https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html
+-- ZCU106: https://www.xilinx.com/products/boards-and-kits/zcu106.html
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2023 Missing Link Electronics
@@ -44,12 +45,15 @@ use ieee.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity zcu102_ref_top is
+entity zcu10x_ref_top is
   generic (
     -- Simulation-mode enable parameter. Set by default (synthesis) to 0, and
     -- changed to non-zero in the instantiation of the top level DUT in the testbench.
     -- Its purpose is to reduce some internal counters/timeouts to speed up simulations.
-    g_SIMULATION: integer := 0);
+    g_SIMULATION: integer := 0;
+    -- Both ZCU102 and ZCU106 are currently supported
+    g_BOARD_NAME               : string                := "X10x"
+    );
   port (
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -107,9 +111,9 @@ entity zcu102_ref_top is
     user_led_o    : out std_logic_vector(3 downto 0);
     pps_p_o    : out std_logic_vector(1 downto 0)
   );
-end entity zcu102_ref_top;
+end entity zcu10x_ref_top;
 
-architecture top of zcu102_ref_top is
+architecture top of zcu10x_ref_top is
 
   signal rst_n : std_logic;
 
@@ -132,9 +136,10 @@ begin
   -- do not use PS_POR for now
   rst_n <= '1'; --not ps_por_i;
 
-  cmp_xwrc_board_zcu102 : entity work.xwrc_board_zcu102
+  cmp_xwrc_board_zcu10x : entity work.xwrc_board_zcu10x
     generic map (
       g_simulation   => g_SIMULATION,
+      g_board_name   => g_BOARD_NAME,
       g_dpram_initf  => "../../bin/wrpc/wrc_amd_devboard.bram")
     port map (
       areset_n_i             => rst_n,

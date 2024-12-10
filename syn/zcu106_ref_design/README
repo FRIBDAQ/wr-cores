@@ -1,0 +1,11 @@
+This is a proof-of-concept setup of White Rabbit which utilizes the Fractional PLLs on an AMD Ultrascale+ FPGA
+according to XAPP1276. Only a commonly available ZCU106 board is needed, without any external PLLs. SFP0 is being used
+for 1G ethernet IO and upstream connectivity. For more information, please have a look at the following slides:
+https://indico.cern.ch/event/1379641/contributions/5863216/attachments/2824424/4933446/12_Light%20Rabbit.pdf
+("Light Rabbit" at the 13th WR workshop and WR Collaboration Launch, Geneva (Switzerland), 2024)
+
+To build a Vivado project and synthesize the bitstream follow these steps:
+
+$ hdlmake # make sure to use a recent version of hdlmake, preferably straight from the repo and not pip
+$ make files.tcl
+$ vivado -mode tcl -source zcu106.tcl

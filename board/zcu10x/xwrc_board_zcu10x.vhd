@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------
--- Title      : WRPC Wrapper for ZCU102 board
+-- Title      : WRPC Wrapper for ZCU102 and ZCU106 board
 -- Project    : WR PTP Core
 -- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
 -------------------------------------------------------------------------------
--- File       : xwrc_board_zcu102.vhd
+-- File       : xwrc_board_zcu10x.vhd
 -- Author(s)  : David Epping <david.epping@missinglinkelectronics.com> (based
 --              on work by Greg Daniluk <grzegorz.daniluk@cern.ch>)
 -- Company    : Missing Link Electronics
@@ -11,8 +11,9 @@
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
--- needed to operate the core on the Xilinx ZCU102 board.
+-- needed to operate the core on the Xilinx ZCU102 and ZCU106 board.
 -- ZCU102: https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html
+-- ZCU106: https://www.xilinx.com/products/boards-and-kits/zcu106.html
 -------------------------------------------------------------------------------
 -- Copyright (c) 2023 Missing Link Electronics
 --
@@ -36,7 +37,7 @@ use work.si570_wbgen2_pkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity xwrc_board_zcu102 is
+entity xwrc_board_zcu10x is
   generic(
     -- set to 1 to speed up some initialization processes during simulation
     g_simulation                : integer              := 0;
@@ -50,7 +51,9 @@ entity xwrc_board_zcu102 is
     -- size the generic diag interface
     g_diag_ro_size              : integer              := 0;
     g_diag_rw_size              : integer              := 0;
-    g_dac_bits                  : integer              := 16
+    g_dac_bits                  : integer              := 16;
+    -- Both ZCU102 and ZCU106 are currently supported
+    g_board_name               : string                := "X10x"
     );
   port (
     ---------------------------------------------------------------------------
@@ -195,10 +198,10 @@ entity xwrc_board_zcu102 is
     link_ok_o   : out std_logic
     );
 
-end entity xwrc_board_zcu102;
+end entity xwrc_board_zcu10x;
 
 
-architecture struct of xwrc_board_zcu102 is
+architecture struct of xwrc_board_zcu10x is
 
   -- PLLs, clocks
   signal wr_clk_main_125m_buf : std_logic;
@@ -383,7 +386,7 @@ begin  -- architecture struct
       g_simulation                => g_simulation,
       g_verbose                   => TRUE,
       g_with_external_clock_input => FALSE,
-      g_board_name                => "X102",
+      g_board_name                => g_board_name,
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
       g_aux_clks                  => g_aux_clks,

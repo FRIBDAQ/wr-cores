@@ -1,6 +1,6 @@
 fetchto = "../../ip_cores"
 
-files = [ "zcu102_ref_top.vhd", ]
+files = [ "zcu10x_ref_top.vhd", ]
 
 modules = {
     "local" : [
