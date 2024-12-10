@@ -62,7 +62,7 @@ entity zcu102_ref_top is
     wr_clk_sfp_125m_p_i    : in  std_logic;
     wr_clk_sfp_125m_n_i    : in  std_logic;
 
-    clk_sys_62m5_o : out std_logic_vector(0 downto 0);
+    clk_sys_62m5_o : out std_logic;
     clk_ref_125m_o : out std_logic;
     clk_xm105_sma_o : out std_logic;
 
@@ -84,7 +84,6 @@ entity zcu102_ref_top is
     sfp_sda_b         : inout std_logic;
     sfp_scl_b         : inout std_logic;
     sfp_tx_disable_o  : out std_logic;
-    sfp_los_i         : in  std_logic;
 
     ---------------------------------------------------------------------------
     -- EEPROM I2C interface for storing configuration and accessing unique ID
@@ -163,7 +162,7 @@ begin
       sfp_scl_i       => sfp_scl_in,
       sfp_scl_o       => sfp_scl_out,
       sfp_tx_disable_o => sfp_tx_disable_o,
-      sfp_los_i        => sfp_los_i,
+      sfp_los_i        => '0', -- Normal operation
   
       eeprom_sda_i => eeprom_sda_in, 
       eeprom_sda_o => eeprom_sda_out, 
@@ -254,7 +253,7 @@ begin
       D2 => '0',
       SR => '0');
 
-  clk_sys_62m5_o <= (clk_sys_62m5_o'range => clk_sys_62m5);
+  clk_sys_62m5_o <= clk_sys_62m5;
   clk_ref_125m_o <= clk_ref_125m;
   pps_p_o <= (pps_p_o'range => pps_p);
 
