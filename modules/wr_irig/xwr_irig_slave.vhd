@@ -65,28 +65,6 @@ end entity xwr_irig_slave;
 
 architecture wrapper of xwr_irig_slave is
 
-  component wr_irig_slave
-    generic (
-      g_clks_per_ms : integer := 62500
-    );
-    port (
-      clk_sys_i     : in std_logic;  --sys clock
-      rst_sys_n_i   : in std_logic;  --sys rst
-      irig_i        : in std_logic;  --irig data in
-
-      secs_o        : out std_logic_vector(7 downto 0);  --seconds out, 0-59
-      mins_o        : out std_logic_vector(8 downto 0);  --minutes out, 0-59
-      hrs_o         : out std_logic_vector(8 downto 0);  --hours out, 0-23
-      days_o        : out std_logic_vector(10 downto 0); --day of year, 1-366
-      year_o        : out std_logic_vector(8 downto 0);  --year, 0-99
-      ctrl0_o       : out std_logic_vector(8 downto 0);  --control function 0
-      ctrl1_o       : out std_logic_vector(8 downto 0);  --contorl function 1
-      sbs_o         : out std_logic_vector(17 downto 0); --straight binary seconds
-      valid_o       : out std_logic;                     --output valid
-      pps_o         : out std_logic  --pps out, generated from start of irig frame
-    );
-  end component;
-
   signal wb_in : t_wishbone_slave_in;
   signal wb_out : t_wishbone_slave_out;
   signal irig_regs_in : t_irig_regs_master_in;
@@ -96,7 +74,6 @@ architecture wrapper of xwr_irig_slave is
   signal mins : std_logic_vector(8 downto 0);
   signal hrs  : std_logic_vector(8 downto 0);
   signal days : std_logic_vector(10 downto 0);
-  signal tos  : std_logic_vector(3 downto 0);
   signal yrs  : std_logic_vector(8 downto 0);
   signal ctrl0 : std_logic_vector(8 downto 0);
   signal ctrl1 : std_logic_vector(8 downto 0);
@@ -141,10 +118,11 @@ begin
     wb_rty_o  => wb_out.rty,
     wb_stall_o   => wb_out.stall,
     wb_dat_o     => wb_out.dat,
-    irig_regs_i => irig_regs_in
+    irig_regs_i => irig_regs_in,
+    irig_regs_o => irig_regs_out
   );
 
-  U_irig_slave: wr_irig_slave
+  U_irig_slave: entity work.wr_irig_slave
   generic map
   (
     g_clks_per_ms => g_clks_per_ms

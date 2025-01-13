@@ -143,7 +143,8 @@ entity xwr_core is
     rst_n_i : in std_logic;
 
     -----------------------------------------
-    --Timing system
+    -- Timing system
+    -- Set helper pll and main pll DAC values
     -----------------------------------------
     dac_hpll_load_p1_o : out std_logic;
     dac_hpll_data_o    : out std_logic_vector(g_dac_bits-1 downto 0);
@@ -223,7 +224,10 @@ entity xwr_core is
     owr_i       : in  std_logic_vector(1 downto 0) := (others => '1');
 
     -----------------------------------------
-    --External WB interface
+    -- External WB interface (use clk_sys)
+    -- The slave port allows an external master to access WR-core registers
+    -- The aux_master port allows adding peripherals to the WR-core. You will
+    --  need to also modify the software to handle them.
     -----------------------------------------
     slave_i : in  t_wishbone_slave_in := cc_dummy_slave_in;
     slave_o : out t_wishbone_slave_out;
@@ -232,7 +236,7 @@ entity xwr_core is
     aux_master_i : in  t_wishbone_master_in := cc_dummy_master_in;
 
     -----------------------------------------
-    -- External Fabric I/F
+    -- External Fabric I/F (use clk_sys)
     -----------------------------------------
     wrf_src_o : out t_wrf_source_out;
     wrf_src_i : in  t_wrf_source_in := c_dummy_src_in;
@@ -259,32 +263,35 @@ entity xwr_core is
     fc_tx_pause_ready_o : out std_logic;
 
     -----------------------------------------
-    -- Timecode/Servo Control
+    -- Timecode/Servo Control (clk_sys)
     -----------------------------------------
-
     tm_link_up_o         : out std_logic;
-    -- DAC Control
+    -- DAC Control (for auxilliary clocks)
     tm_dac_value_o       : out std_logic_vector(31 downto 0);
     tm_dac_wr_o          : out std_logic_vector(g_aux_clks-1 downto 0);
     -- Aux clock lock enable
     tm_clk_aux_lock_en_i : in  std_logic_vector(g_aux_clks-1 downto 0) := (others => '0');
     -- Aux clock locked flag
     tm_clk_aux_locked_o  : out std_logic_vector(g_aux_clks-1 downto 0);
-    -- Timecode output
+
+    -- Timecode output (clk_ref)
     tm_time_valid_o      : out std_logic;
     tm_tai_o             : out std_logic_vector(39 downto 0);
     tm_cycles_o          : out std_logic_vector(27 downto 0);
-    -- 1PPS output
+
+    -- 1PPS output (clk_ref)
     pps_csync_o          : out std_logic;
     pps_valid_o          : out std_logic;
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
+    --  Resynchronized reset (clk_sys)
+    rst_aux_n_o : out std_logic;
+
     auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
     pll_serdes_locked_i  : in std_logic := '0';
 
-    rst_aux_n_o : out std_logic;
-
+    --  Auxillary diagnostics (used by snmp, clk_sys)
     aux_diag_i    : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others =>(others=>'0'));
     aux_diag_o    : out t_generic_word_array(g_diag_rw_size-1 downto 0);
 
