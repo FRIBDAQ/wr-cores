@@ -1,0 +1,243 @@
+##############################################################################;
+## Title      : Timecode Register Block
+## Project    : White Rabbit
+##############################################################################;
+## File       : timecode_regs.cheby
+## Author     : Harvey Leicester
+## Company    : CERN BE-CEM-EDL
+## Created    : 2024-11-14
+## Last update: 2024-11-14
+##############################################################################
+## Description: register interface for timecode module
+##############################################################################
+##
+## Copyright (c) 2024 CERN / BE-CEM-EDL
+##
+## This source file is free software; you can redistribute it
+## and/or modify it under the terms of the GNU Lesser General
+## Public License as published by the Free Software Foundation;
+## either version 2.1 of the License, or (at your option) any
+## later version.
+##
+## This source is distributed in the hope that it will be
+## useful, but WITHOUT ANY WARRANTY; without even the implied
+## warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+## PURPOSE.  See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General
+## Public License along with this source; if not, download it
+## from http://www.gnu.org/licenses/lgpl-2.1l.html
+##
+##############################################################################-
+
+memory-map:
+  name: timecode
+  description: register block for timecodes
+  bus: wb-32-be
+  x-hdl:
+    iogroup: timecode_regs
+    name-suffix: _regs
+  schema-version:
+    core: 2.0.0
+    x-conversions: 1.0.0
+    x-hdl: 1.0.0
+    x-map-info: 1.0.0
+    x-wbgen: 1.0.0
+  children:
+  - reg:
+      name: CR
+      description: Control Register
+      width: 32
+      access: rw
+      children:
+      - field:
+          name: valid
+          description: valid flag
+          range: 0
+      - field:
+          name: serdes_ip_sel
+          description: input select to serdes in top level, 0=auxclk, 1=irig, 2=nmea
+          range: 2-1
+  - reg:
+      name: SR
+      description: Status Register
+      width: 32
+      access: ro
+      children:
+      - field:
+          name: valid
+          description: valid flag
+          range: 0
+      - field:
+          name: auxclk_enabled
+          description: set when auxclk interface has been synthesised
+          range: 1
+      - field:
+          name: irig_enabled
+          description: set when irig interface has been synthesised
+          range: 2
+      - field:
+          name: nmea_enabled
+          description: set when nmea interface has been synthesised
+          range: 3
+  - block:
+      name: NEXT
+      description: block for rw, next second registers
+      children:
+      - reg:
+          name: UTC_MDHMS
+          description: Next UTC month/day/hour/minute/second
+          width: 32
+          access: rw
+          children:
+          - field:
+              name: second
+              description: utc second
+              range: 5-0
+          - field:
+              name: minute
+              description: utc minute
+              range: 11-6
+          - field:
+              name: utc_hr
+              description: utc hour
+              range: 17-12
+          - field:
+              name: utc_day
+              description: utc day
+              range: 22-18
+          - field:
+              name: utc_mon
+              description: utc month
+              range: 26-23
+      - reg:
+          name: UTC_Y
+          description: Next UTC year
+          width: 32
+          access: rw
+          children:
+          - field:
+              name: utc_year
+              description: utc year
+              range: 11-0
+          - field:
+              name: utc_diy
+              description: utc day in year
+              range: 20-12
+      - reg:
+          name: UTC_SBS
+          description: Next UTC sbs
+          width: 32
+          access: rw
+          children:
+          - field:
+              name: utc_sbs
+              description: utc straight binary second
+              range: 16-0
+      - reg:
+          name: LEAP_SEC
+          description: Next leap second
+          width: 32
+          access: rw
+          children:
+          - field:
+              name: ls_value
+              description: leap second value
+              range: 7-0
+          - field:
+              name: ls_flag59
+              description: leap second flag
+              range: 8
+          - field:
+              name: ls_flag61
+              description: leap second flag
+              range: 9
+          - field:
+              name: ls_valid
+              description: valid flag
+              range: 10
+  - block:
+      name: CURR
+      description: block for ro, current second registers
+      children:
+      - reg:
+          name: UTC_MDHMS
+          description: Current UTC month/day/hour/minute/second
+          width: 32
+          access: ro
+          children:
+          - field:
+              name: second
+              description: utc second
+              range: 5-0
+          - field:
+              name: minute
+              description: utc minute
+              range: 11-6
+          - field:
+              name: utc_hr
+              description: utc hour
+              range: 17-12
+          - field:
+              name: utc_day
+              description: utc day
+              range: 22-18
+          - field:
+              name: utc_mon
+              description: utc month
+              range: 26-23
+      - reg:
+          name: UTC_Y
+          description: Current UTC year
+          width: 32
+          access: ro
+          children:
+          - field:
+              name: utc_year
+              description: utc year
+              range: 11-0
+          - field:
+              name: utc_diy
+              description: utc day in year
+              range: 20-12
+      - reg:
+          name: UTC_SBS
+          description: Current UTC sbs/diy
+          width: 32
+          access: ro
+          children:
+          - field:
+              name: utc_sbs
+              description: utc straight binary second
+              range: 16-0
+      - reg:
+          name: LEAP_SEC
+          description: Current leap second
+          width: 32
+          access: ro
+          children:
+          - field:
+              name: ls_value
+              description: leap second value
+              range: 7-0
+          - field:
+              name: ls_flag59
+              description: leap second flag
+              range: 8
+          - field:
+              name: ls_flag61
+              description: leap second flag
+              range: 9
+          - field:
+              name: ls_valid
+              description: valid flag
+              range: 10
+  - submap:
+      name: auxclk
+      description: auxclk generator interface submap
+      filename: ../wr_auxclk_gen/auxclk_regs.cheby
+  - submap:
+      name: nmea
+      description: nmea master interface submap
+      filename: ../wr_nmea/nmea_regs.cheby
