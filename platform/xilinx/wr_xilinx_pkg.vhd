@@ -61,7 +61,7 @@ package wr_xilinx_pkg is
       g_gtp_enable_ch1            : integer := 1;
       g_gtp_mux_enable            : boolean := FALSE;
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
-      g_with_auxclk_gen           : boolean := FALSE;
+      g_with_serdes               : boolean := FALSE;
       g_simulation                : integer := 0
       );
     port (
@@ -114,9 +114,9 @@ package wr_xilinx_pkg is
       ext_ref_mul_locked_o  : out std_logic;
       ext_ref_mul_stopped_o : out std_logic;
       ext_ref_rst_i         : in  std_logic             := '0';
-      auxclk_sd_data_i      : in std_logic_vector(7 downto 0) := (others => '0');
+      serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
       pll_serdes_locked_o   : out std_logic;
-      clk_aux_o             : out std_logic);
+      serdes_o              : out std_logic);
   end component xwrc_platform_xilinx;
 
   component wr_gtp_phy_spartan6
@@ -368,21 +368,21 @@ package wr_xilinx_pkg is
     );
   end component;
 
-  component oserdes_8_to_1_spartan6 is
+  component oserdes_4_to_1_spartan6 is
   generic (
     SYS_W       : integer := 1;
-    DEV_W       : integer := 8);
+    DEV_W       : integer := 4);
   port (
     -- From the device out to the system
-    DATA_OUT_FROM_DEVICE    : in    std_logic_vector(DEV_W-1 downto 0);
+    DATA_OUT_FROM_DEVICE    : in  std_logic_vector(DEV_W-1 downto 0);
     DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
     -- Clock and reset signals
     CLK_IN                  : in    std_logic;                    -- Single ended Fast clock from PLL
     PLL_LOCKED_IN           : in    std_logic;                    -- CLK_IN PLL locked
     CLK_DIV_IN              : in    std_logic;                    -- divided clock in (must come from from BUFG)
-    IO_RESET                : in    std_logic                   -- Reset signal for IO circuit
+    IO_RESET                : in    std_logic                     -- Reset signal for IO circuit
     );
-  end component oserdes_8_to_1_spartan6;
+  end component oserdes_4_to_1_spartan6;
 
   component oserdes_8_to_1_7series is
   generic (
