@@ -46,6 +46,7 @@ use work.endpoint_pkg.all;
 use work.streamers_pkg.all;
 use work.wr_board_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 entity xwrc_board_common is
   generic(
@@ -83,7 +84,7 @@ entity xwrc_board_common is
     g_sfp_i2c_mux_enable        : boolean                        := FALSE;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_fabric_iface              : t_board_fabric_iface           := PLAIN;
-    g_with_auxclk_gen           : boolean                        := FALSE);
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG);
   port(
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -274,9 +275,10 @@ entity xwrc_board_common is
     -- Link ok indication
     link_ok_o : out std_logic;
 
-    -- Aux clock generator output
-    auxclk_sd_data_o : out std_logic_vector(7 downto 0);
-    pll_serdes_locked_i : in std_logic := '0'
+    pll_serdes_locked_i : in std_logic := '0';
+    -- Timecode output
+    utc_o        : out t_utc_out;
+    aux_timing_o : out t_aux_timing_out
     );
 
 end entity xwrc_board_common;
@@ -412,7 +414,8 @@ begin  -- architecture struct
       g_diag_rw_size              => c_diag_rw_size,
       g_dac_bits                  => g_dac_bits,
       g_softpll_aux_channel_config => g_softpll_aux_channel_config,
-      g_with_auxclk_gen            => g_with_auxclk_gen)
+      g_aux_timing_config          => g_aux_timing_config
+    )
     port map (
       clk_sys_i            => clk_sys_i,
       clk_dmtd_i           => clk_dmtd_i,
@@ -504,8 +507,9 @@ begin  -- architecture struct
       pps_valid_o          => pps_valid,
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
-      auxclk_sd_data_o     => auxclk_sd_data_o,
       pll_serdes_locked_i  => pll_serdes_locked_i,
+      utc_o                => utc_o,
+      aux_timing_o         => aux_timing_o,
       rst_aux_n_o          => aux_rst_n,
       aux_diag_i           => aux_diag_in,
       aux_diag_o           => aux_diag_out,
