@@ -47,9 +47,6 @@ use work.wishbone_pkg.all;
 use work.auxclk_gen_regs_pkg.all;
 use work.gencores_pkg.all;
 
-library UNISIM;
-use UNISIM.vcomponents.all;
-
 entity xwr_auxclk_gen is
   generic (
     g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
@@ -57,8 +54,11 @@ entity xwr_auxclk_gen is
     g_data_width          : natural := 8
   );
   port (
-    rst_n_i     : in std_logic;
-    clk_i       : in std_logic;
+    rst_sys_n_i     : in std_logic;
+    clk_sys_i       : in std_logic;
+    rst_ref_n_i     : in std_logic;
+    clk_ref_i       : in std_logic;
+
     pps_i       : in std_logic;
     pps_valid_i : in std_logic;
     pll_locked_i : in std_logic;
@@ -78,9 +78,16 @@ architecture behav of xwr_auxclk_gen is
 
   signal wb_in  : t_wishbone_slave_in;
   signal wb_out : t_wishbone_slave_out;
+
+  signal aux_half_high_sys: std_logic_vector(15 downto 0);
+  signal aux_half_low_sys : std_logic_vector(15 downto 0);
+  signal aux_half_high_ref: std_logic_vector(15 downto 0);
+  signal aux_half_low_ref : std_logic_vector(15 downto 0);
+
+  signal new_freq_sys     : std_logic;
+
   signal aux_half_high: unsigned(15 downto 0);
   signal aux_half_low : unsigned(15 downto 0);
-  signal aux_shift    : unsigned(15 downto 0);
   signal pps_valid_d  : std_logic;
   signal clk_realign  : std_logic;
   signal new_freq     : std_logic;
@@ -97,8 +104,8 @@ begin
       g_slave_mode         => g_interface_mode,
       g_slave_granularity  => g_address_granularity)
     port map (
-      clk_sys_i => clk_i,
-      rst_n_i   => rst_n_i,
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_sys_n_i,
       slave_i   => slave_i,
       slave_o   => slave_o,
       master_i  => wb_out,
@@ -106,8 +113,8 @@ begin
 
   U_WB_IF: entity work.auxclk_gen_regs
   port map (
-    rst_n_i => rst_n_i,
-    clk_i   => clk_i,
+    rst_n_i => rst_sys_n_i,
+    clk_i   => clk_sys_i,
     wb_cyc_i  => wb_in.cyc,
     wb_stb_i  => wb_in.stb,
     wb_adr_i  => wb_in.adr(0 downto 0),
@@ -123,31 +130,64 @@ begin
     auxclk_regs_o => auxclk_regs_out
   );
 
-  p_pw_settings: process(clk_i)
+  p_pw_settings: process(clk_sys_i)
   begin
-    if rising_edge(clk_i) then
-      if (rst_n_i = '0') then
-        aux_half_high <= to_unsigned(c_HALF, aux_half_high'length);
-        aux_half_low  <= to_unsigned(c_HALF, aux_half_low'length);
-        aux_shift     <= (others=>'0');
-        new_freq      <= '0';
+    if rising_edge(clk_sys_i) then
+      if (rst_sys_n_i = '0') then
+        aux_half_high_sys <= std_logic_vector(to_unsigned(c_HALF, aux_half_high_sys'length));
+        aux_half_low_sys  <= std_logic_vector(to_unsigned(c_HALF, aux_half_low_sys'length));
+        new_freq_sys      <= '0';
       elsif auxclk_regs_out.PR_wr = '1' then
-        aux_half_high <= unsigned(auxclk_regs_out.PR_hp_width);
-        aux_half_low  <= unsigned(auxclk_regs_out.PR_hp_width);
-        new_freq      <= '1';
+        aux_half_high_sys <= auxclk_regs_out.PR_hp_width;
+        aux_half_low_sys  <= auxclk_regs_out.PR_hp_width;
+        new_freq_sys      <= '1';
       elsif auxclk_regs_out.DCR_wr = '1' then
-        aux_half_low  <= unsigned(auxclk_regs_out.DCR_low_width);
-        new_freq      <= '1';
+        aux_half_low_sys  <= auxclk_regs_out.DCR_low_width;
+        new_freq_sys      <= '1';
       else
-        new_freq <= '0';
+        new_freq_sys <= '0';
       end if;
     end if;
   end process;
 
-  p_pps_align: process(clk_i)
+
+  U_sync_aux_half_low: gc_sync_register
+    generic map (
+      g_width => aux_half_low_sys'length
+    )
+    port map (
+      clk_i     => clk_ref_i,
+      rst_n_a_i => rst_ref_n_i,
+      d_i       => aux_half_low_sys,
+      q_o       => aux_half_low_ref
+    );
+
+  U_sync_aux_half_high: gc_sync_register
+    generic map (
+      g_width => aux_half_high_sys'length
+    )
+    port map (
+      clk_i     => clk_ref_i,
+      rst_n_a_i => rst_ref_n_i,
+      d_i       => aux_half_high_sys,
+      q_o       => aux_half_high_ref
+    );
+
+  U_sync_new_freq: gc_sync
+    port map (
+      clk_i     => clk_ref_i,
+      rst_n_a_i => rst_ref_n_i,
+      d_i       => new_freq_sys,
+      q_o       => new_freq
+    );
+
+  aux_half_low  <= unsigned(aux_half_low_ref);
+  aux_half_high <= unsigned(aux_half_high_ref);
+
+  p_pps_align: process(clk_ref_i)
   begin
-    if rising_edge(clk_i) then
-      if(rst_n_i = '0' or new_freq = '1' or pll_locked_i = '0') then  -- if new_freq or pll lost lock,
+    if rising_edge(clk_ref_i) then
+      if(rst_ref_n_i = '0' or new_freq = '1' or pll_locked_i = '0') then  -- if new_freq or pll lost lock,
                                                 -- force alignment to next PPS
         pps_valid_d <= '0';
       elsif(pps_i = '1') then
@@ -158,19 +198,14 @@ begin
 
   clk_realign <= (not pps_valid_d) and pps_valid_i and pps_i;
 
-  p_word_gen: process(clk_i)
+  p_word_gen: process(clk_ref_i)
     variable rest  : integer range 0 to 65535;
     variable v_bit : std_logic;
   begin
-    if rising_edge(clk_i) then
-      if (rst_n_i = '0' or pll_locked_i = '0' or clk_realign = '1') then
-        if(aux_shift <= aux_half_high) then
-          rest := to_integer(aux_half_high - aux_shift);
+    if rising_edge(clk_ref_i) then
+      if (rst_ref_n_i = '0' or pll_locked_i = '0' or clk_realign = '1') then
+          rest := to_integer(aux_half_high);
           v_bit := '1';
-        else
-          rest := to_integer(aux_half_low + aux_half_high - aux_shift);
-          v_bit := '0';
-        end if;
       else
         for i in 0 to c_DATA_W-1 loop
           if(rest /= 0) then
