@@ -65,7 +65,7 @@ use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
-
+use work.wr_timecode_pkg.all;
 
 entity xwr_core is
   generic(
@@ -109,7 +109,7 @@ entity xwr_core is
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
-    g_with_auxclk_gen           : boolean                        := false
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG
     );
   port(
     ---------------------------------------------------------------------------
@@ -288,8 +288,10 @@ entity xwr_core is
     --  Resynchronized reset (clk_sys)
     rst_aux_n_o : out std_logic;
 
-    auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
+    -- Auxiliary Timing (clk_ref)
     pll_serdes_locked_i  : in std_logic := '0';
+    utc_o                : out t_utc_out;
+    aux_timing_o         : out t_aux_timing_out;
 
     --  Auxillary diagnostics (used by snmp, clk_sys)
     aux_diag_i    : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others =>(others=>'0'));
@@ -339,7 +341,7 @@ begin
       g_softpll_aux_channel_config => g_softpll_aux_channel_config,
       g_with_clock_freq_monitor   => g_with_clock_freq_monitor,
       g_hwbld_date                => g_hwbld_date,
-      g_with_auxclk_gen           => g_with_auxclk_gen
+      g_aux_timing_config         => g_aux_timing_config
       )
     port map(
       clk_sys_i     => clk_sys_i,
@@ -488,8 +490,10 @@ begin
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
 
-      auxclk_sd_data_o     => auxclk_sd_data_o,
       pll_serdes_locked_i  => pll_serdes_locked_i,
+
+      utc_o                => utc_o,
+      aux_timing_o         => aux_timing_o,
 
       rst_aux_n_o => rst_aux_n_o,
 

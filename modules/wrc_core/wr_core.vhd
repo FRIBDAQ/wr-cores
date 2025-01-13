@@ -69,6 +69,7 @@ use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 entity wr_core is
   generic(
@@ -110,7 +111,7 @@ entity wr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
-    g_with_auxclk_gen           : boolean                        := false;
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
     );
   port(
@@ -327,9 +328,11 @@ entity wr_core is
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
-    --auxclk generator word to serdes
-    auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
     pll_serdes_locked_i  : in std_logic := '0';
+
+    --timing outputs
+    utc_o                : out t_utc_out;
+    aux_timing_o         : out t_aux_timing_out;
 
     rst_aux_n_o : out std_logic;
 
@@ -384,16 +387,16 @@ architecture struct of wr_core is
   signal s_pps_csync : std_logic;
   signal pps_valid   : std_logic;
   signal ppsg_link_ok: std_logic;
+  signal pps_pre     : std_logic;
 
   signal ppsg_wb_in  : t_wishbone_slave_in;
   signal ppsg_wb_out : t_wishbone_slave_out;
 
   -----------------------------------------------------------------------------
-  --Aux Clock generator
+  --Timecode generator
   -----------------------------------------------------------------------------
-  signal auxclk_data    : std_logic_vector(7 downto 0);
-  signal auxclk_wb_in  : t_wishbone_slave_in;
-  signal auxclk_wb_out : t_wishbone_slave_out;
+  signal timecode_wb_in : t_wishbone_slave_in;
+  signal timecode_wb_out : t_wishbone_slave_out;
 
   -----------------------------------------------------------------------------
   --Timing system
@@ -448,7 +451,7 @@ architecture struct of wr_core is
      8  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
      9  => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
      10 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
-     11 => f_sdb_embed_device(c_wrc_auxclk_sdb,     x"00000c00"),  -- aux clk gen
+     11 => f_sdb_embed_device(c_wrc_tc_sdb,         x"00000c00"),  -- timing outputs
      12 => f_sdb_embed_device(g_aux_sdb,            x"00008000")   -- aux WB bus
    );
 
@@ -637,6 +640,7 @@ begin
       pps_csync_o => s_pps_csync,
       pps_out_o   => pps_p_o,
       pps_led_o   => pps_led_o,
+      pps_pre_o   => pps_pre,
       pps_valid_o => pps_valid,
 
       tm_utc_o        => tm_tai_o,
@@ -648,39 +652,49 @@ begin
   pps_csync_o  <= s_pps_csync;
   pps_valid_o  <= pps_valid;
 
-
   --------------------------------------
-  -- Aux Clock generator
+  -- Timecode generator
   --------------------------------------
-  gen_auxclk: if g_with_auxclk_gen generate
+  gen_aux_timing: if g_aux_timing_config(0) or g_aux_timing_config(1) or g_aux_timing_config(2) generate
 
-    AUXCLK_GEN: xwr_auxclk_gen
-    generic map (
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE
-    )
-    port map(
-      rst_n_i       => rst_n_i,
-      clk_i         => clk_sys_i,
-      pps_i         => s_pps_csync,
-      pps_valid_i   => pps_valid,
-      pll_locked_i  => pll_serdes_locked_i,
-      sd_data_o     => auxclk_data,
-      slave_i       => auxclk_wb_in,
-      slave_o       => auxclk_wb_out
-    );
+    TIMECODE_GEN: wr_timecodes
+      generic map (
+        g_interface_mode        => PIPELINED,
+        g_address_granularity   => BYTE,
+        g_ref_clock_rate        => f_refclk_rate(g_pcs_16bit),
+        g_serdes_data_width     => f_pcs_data_width(g_pcs_16bit)/2,
+        g_timecode_config       => g_aux_timing_config
+      )
+      port map (
 
-    auxclk_sd_data_o <= auxclk_data;
+        clk_sys_i   => clk_sys_i,
+        clk_ref_i   => clk_ref_i,
+        rst_sys_n_i => rst_net_n,
+        rst_ref_n_i => rst_net_resync_ref_n,
 
-  end generate gen_auxclk;
+        wb_i        => timecode_wb_in,
+        wb_o        => timecode_wb_out,
 
-  gen_without_auxclk : if not g_with_auxclk_gen generate
-    auxclk_wb_out <= (dat => (others => '0'),
-                           stall => '0',
-                           err => '0',
-                           rty => '0',
-                           ack => '1');
-  end generate gen_without_auxclk;
+        pps_valid_i => pps_valid,
+        pps_pre_i   => pps_pre,
+        pps_i       => s_pps_csync,
+        pll_serdes_locked_i => pll_serdes_locked_i,
+
+        utc_o        => utc_o,
+        aux_timing_o => aux_timing_o
+      );
+
+  end generate gen_aux_timing;
+
+  gen_without_aux_timing: if not g_aux_timing_config(0) and not g_aux_timing_config(1) and not g_aux_timing_config(2) generate
+
+    timecode_wb_out <= (dat => (others => '0'),
+                        stall => '0',
+                        err => '0',
+                        rty => '0',
+                        ack => '1');
+
+  end generate gen_without_aux_timing;
 
   -----------------------------------------------------------------------------
   -- Software PLL
@@ -1061,8 +1075,8 @@ begin
   cpu_csr_wb_in <= secbar_master_o(10);
   secbar_master_i(10) <= cpu_csr_wb_out;
 
-  secbar_master_i(11) <= auxclk_wb_out;
-  auxclk_wb_in       <= secbar_master_o(11);
+  secbar_master_i(11) <= timecode_wb_out;
+  timecode_wb_in      <= secbar_master_o(11);
 
   aux_adr_o <= secbar_master_o(12).adr;
   aux_dat_o <= secbar_master_o(12).dat;

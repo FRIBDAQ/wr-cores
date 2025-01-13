@@ -40,6 +40,7 @@ use work.sysc_wbgen2_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 package wrcore_pkg is
 
@@ -89,6 +90,7 @@ package wrcore_pkg is
       pps_out_o       : out std_logic;
       pps_led_o       : out std_logic;
       pps_valid_o     : out std_logic;
+      pps_pre_o       : out std_logic;
       tm_utc_o        : out std_logic_vector(39 downto 0);
       tm_cycles_o     : out std_logic_vector(27 downto 0);
       tm_time_valid_o : out std_logic
@@ -130,6 +132,53 @@ package wrcore_pkg is
       slave_i     : in  t_wishbone_slave_in;
       slave_o     : out t_wishbone_slave_out
       );
+  end component;
+
+  ---------------------------------------------------------------------------
+  --Timecode generator
+  ---------------------------------------------------------------------------
+  constant c_wrc_tc_sdb : t_sdb_device := (
+    abi_class     => x"0000",              -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7",                 -- 8/16/32-bit port granularity
+    sdb_component => (
+      addr_first  => x"0000000000000000",
+      addr_last   => x"00000000000000ff",
+      product     => (
+        vendor_id => x"000000000000CE42",  -- CERN
+        device_id => x"de0d8ced",
+        version   => x"00000001",
+        date      => x"20241030",
+        name      => "WR-Timecode-Master ")));
+
+  component wr_timecodes is
+    generic (
+      g_interface_mode        : t_wishbone_interface_mode      := PIPELINED;
+      g_address_granularity   : t_wishbone_address_granularity := BYTE;
+      g_ref_clock_rate        : integer := 62500000;
+      g_serdes_data_width     : integer := 8;
+      g_timecode_config      : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG
+    );
+    port (
+
+      clk_sys_i   : in std_logic;
+      clk_ref_i   : in std_logic;
+      rst_sys_n_i : in std_logic;
+      rst_ref_n_i : in std_logic;
+
+      wb_i  : in t_wishbone_slave_in;
+      wb_o  : out t_wishbone_slave_out;
+
+      pps_valid_i         : in std_logic;
+      pps_pre_i           : in std_logic;
+      pps_i               : in std_logic;
+      pll_serdes_locked_i : in std_logic;
+
+      utc_o               : out t_utc_out;
+      aux_timing_o        : out t_aux_timing_out
+    );
   end component;
 
   -----------------------------------------------------------------------------
@@ -468,7 +517,7 @@ package wrcore_pkg is
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
       g_with_clock_freq_monitor   : boolean                        := true;
-      g_with_auxclk_gen           : boolean                        := false);
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG);
     port(
       clk_sys_i            : in std_logic;
       clk_dmtd_i           : in std_logic := '0';
@@ -579,7 +628,8 @@ package wrcore_pkg is
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
 
-      auxclk_sd_data_o     : out std_logic_vector(7 downto 0);
+      utc_o                : out t_utc_out;
+      aux_timing_o         : out t_aux_timing_out;
       pll_serdes_locked_i  : in std_logic := '0';
 
       rst_aux_n_o : out std_logic;
