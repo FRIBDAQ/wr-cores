@@ -80,7 +80,8 @@ entity wrc_board_spec is
     g_diag_ro_vector_width      : integer := 0;
     g_diag_rw_vector_width      : integer := 0;
     g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
-    g_with_auxclk_gen           : boolean := true
+    g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG;
+    g_with_serdes               : boolean := false
     );
   port (
     ---------------------------------------------------------------------------
@@ -303,12 +304,13 @@ entity wrc_board_spec is
     btn1_i     : in  std_logic := '1';
     btn2_i     : in  std_logic := '1';
     -- 1PPS output
-    pps_p_o    : out std_logic;
+    pps_p_o     : out std_logic;
     pps_csync_o : out std_logic;
     pps_valid_o : out std_logic;
-    pps_led_o  : out std_logic;
-    --Auxclk output
-    clk_aux_o  : out std_logic;
+    pps_led_o   : out std_logic;
+    -- Timecode outputs
+    utc_o         : out t_utc_out;
+    aux_timing_o  : out t_aux_timing_out;
     -- Link ok indication
     link_ok_o  : out std_logic
     );
@@ -455,7 +457,8 @@ begin  -- architecture struct
       g_diag_ro_size              => c_diag_ro_size,
       g_diag_rw_size              => c_diag_rw_size,
       g_aux_sdb                   => g_aux_sdb,
-      g_with_auxclk_gen           => g_with_auxclk_gen)
+      g_aux_timing_config         => g_aux_timing_config,
+      g_with_serdes               => g_with_serdes)
     port map (
       areset_n_i           => areset_n_i,
       areset_edge_n_i      => areset_edge_n_i,
@@ -546,7 +549,8 @@ begin  -- architecture struct
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
-      clk_aux_o            => clk_aux_o,
+      utc_o                => utc_o,
+      aux_timing_o         => aux_timing_o,
       link_ok_o            => link_ok_o);
 
 end architecture std_wrapper;
