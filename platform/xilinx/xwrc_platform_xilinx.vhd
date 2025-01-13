@@ -75,8 +75,8 @@ entity xwrc_platform_xilinx is
       -- default value of 4 selects CLK10 / CLK11 (see UG386, Fig 2-3, page 41)
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
       g_gtp_mux_enable            : boolean := FALSE;
-      -- Set to TRUE to enable auxclk generator
-      g_with_auxclk_gen           : boolean := FALSE;
+      -- Set to TRUE to enable serdes for auxclk, irig or nmea
+      g_with_serdes               : boolean := FALSE;
       -- Set to TRUE will speed up some initialization processes
       g_simulation                : integer := 0);
   port (
@@ -176,9 +176,9 @@ entity xwrc_platform_xilinx is
     ext_ref_mul_stopped_o : out std_logic;
     ext_ref_rst_i         : in  std_logic             := '0';
     -- Aux clock generation
-    auxclk_sd_data_i      : in std_logic_vector(7 downto 0) := (others => '0');
+    serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
     pll_serdes_locked_o   : out std_logic;
-    clk_aux_o             : out std_logic
+    serdes_o              : out std_logic
     );
 
 end entity xwrc_platform_xilinx;
@@ -191,6 +191,7 @@ architecture rtl of xwrc_platform_xilinx is
 
   signal pll_arst            : std_logic := '0';
   signal clk_125m_pllref_buf : std_logic;
+  signal clk_ref             : std_logic;
   signal clk_sys             : std_logic;
   signal clk_sys_out         : std_logic;
 
@@ -235,12 +236,12 @@ begin  -- architecture rtl
       severity ERROR;
   end generate gen_dual_SFP_support;
 
-  gen_auxclk_support: if (g_with_auxclk_gen = TRUE and g_fpga_family /= "spartan6" and g_fpga_family /= "kintex7" and g_fpga_family /= "artix7")
+  gen_serdes_support: if (g_with_serdes = TRUE and g_fpga_family /= "spartan6" and g_fpga_family /= "kintex7" and g_fpga_family /= "artix7")
   generate
     assert FALSE
-      report "Auxclk output not supported on [" & g_fpga_family & "]"
+      report "Auxclk/IRIG-B/NMEA output not supported on [" & g_fpga_family & "]"
       severity ERROR;
-  end generate gen_auxclk_support;
+  end generate gen_serdes_support;
   -----------------------------------------------------------------------------
   -- Clock PLLs
   -----------------------------------------------------------------------------
@@ -1183,7 +1184,6 @@ begin  -- architecture rtl
 
   gen_phy_kintex7 : if (g_fpga_family = "kintex7") generate
 
-    signal clk_ref          : std_logic;
     signal clk_125m_gtx_buf : std_logic;
     signal clk_ref_locked   : std_logic;
 
@@ -1259,7 +1259,6 @@ begin  -- architecture rtl
 
   gen_phy_artix7 : if (g_fpga_family = "artix7") generate
 
-    signal clk_ref          : std_logic;
     signal clk_125m_gtp_buf : std_logic;
     signal clk_ref_locked   : std_logic;
 
@@ -1331,23 +1330,15 @@ begin  -- architecture rtl
   end generate gen_phy_artix7;
 
 
-  gen_auxclk_generator: if g_with_auxclk_gen = TRUE generate
+  gen_serdes: if g_with_serdes = TRUE generate
 
     signal serdes_div_clk : std_logic;
-    signal auxclk_out_vec : std_logic_vector(0 downto 0);
+    signal serdes_out_vec : std_logic_vector(0 downto 0);
     signal rst_serdes  : std_logic;
 
     begin
 
-      gen_use_pll_clks: if g_use_default_plls = TRUE generate
-        serdes_div_clk <= clk_sys_out;
-      end generate gen_use_pll_clks;
-
-      gen_use_ext_clks: if g_use_default_plls = FALSE generate
-        serdes_div_clk <= clk_62m5_sys_i;
-      end generate gen_use_ext_clks;
-
-      gen_spartan6_auxclk_serdes: if g_fpga_family = "spartan6" generate
+      gen_spartan6_serdes: if g_fpga_family = "spartan6" generate
 
         signal pll_serdes_fb     : std_logic;
         signal pll_serdes_out    : std_logic;
@@ -1355,19 +1346,27 @@ begin  -- architecture rtl
 
         begin
 
-          --62.5MHz - 500MHz for auxclk serdes
+          gen_use_pll_clks: if g_use_default_plls = TRUE generate
+            serdes_div_clk <= clk_125m_pllref_buf;
+          end generate gen_use_pll_clks;
+
+          gen_use_ext_clks: if g_use_default_plls = FALSE generate
+            serdes_div_clk <= clk_125m_pllref_i;
+          end generate gen_use_ext_clks;
+
+          --125MHz - 500MHz for auxclk/irig/nmea serdes
           cmp_serdes_pll : PLL_BASE
           generic map(
             BANDWIDTH            => "OPTIMIZED",
             CLK_FEEDBACK         => "CLKFBOUT",
             COMPENSATION         => "INTERNAL",
             DIVCLK_DIVIDE        => 1,
-            CLKFBOUT_MULT        => 8,
+            CLKFBOUT_MULT        => 4,
             CLKFBOUT_PHASE       => 0.000,
             CLKOUT0_DIVIDE       => 1,
             CLKOUT0_PHASE        => 0.000,
             CLKOUT0_DUTY_CYCLE   => 0.500,
-            CLKIN_PERIOD         => 16.000,
+            CLKIN_PERIOD         => 8.000,
             REF_JITTER           => 0.010)
           port map
             -- Output clocks
@@ -1387,26 +1386,26 @@ begin  -- architecture rtl
 
           rst_serdes  <= not pll_serdes_locked;
 
-          cmp_auxclk_serdes: oserdes_8_to_1_spartan6
+          cmp_serdes: oserdes_4_to_1_spartan6
           generic map(
             SYS_W => 1,
-            DEV_W => 8
+            DEV_W => 4
           )
           port map(
-            DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
-            DATA_OUT_TO_PINS     => auxclk_out_vec,
+            DATA_OUT_FROM_DEVICE => serdes_i(3 downto 0),
+            DATA_OUT_TO_PINS     => serdes_out_vec,
             CLK_IN               => pll_serdes_out,
             PLL_LOCKED_IN        => pll_serdes_locked,
             CLK_DIV_IN           => serdes_div_clk,
             IO_RESET             => rst_serdes
           );
 
-         clk_aux_o   <= auxclk_out_vec(0);
+         serdes_o   <= serdes_out_vec(0);
          pll_serdes_locked_o <= pll_serdes_locked;
 
-    end generate gen_spartan6_auxclk_serdes;
+    end generate gen_spartan6_serdes;
 
-    gen_kintex7_artix7_auxclk_serdes: if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
+    gen_kintex7_artix7_serdes: if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
 
         signal pll_serdes_fb     : std_logic;
         signal pll_serdes_out    : std_logic;
@@ -1414,6 +1413,9 @@ begin  -- architecture rtl
 
     begin
 
+        serdes_div_clk <= clk_ref;
+
+        --62.5MHz to 500MHz
         cmp_serdes_pll: MMCME2_ADV
         generic map(
           BANDWIDTH            => "OPTIMIZED",
@@ -1474,25 +1476,25 @@ begin  -- architecture rtl
 
         rst_serdes  <= not pll_serdes_locked;
 
-        cmp_auxclk_serdes: oserdes_8_to_1_7series
+        cmp_serdes: oserdes_8_to_1_7series
         generic map(
           SYS_W => 1,
           DEV_W => 8
         )
         port map(
-          DATA_OUT_FROM_DEVICE => auxclk_sd_data_i,
-          DATA_OUT_TO_PINS     => auxclk_out_vec,
+          DATA_OUT_FROM_DEVICE => serdes_i,
+          DATA_OUT_TO_PINS     => serdes_out_vec,
           CLK_IN               => pll_serdes_out,
           CLK_DIV_IN           => serdes_div_clk,
           IO_RESET             => rst_serdes
         );
 
-       clk_aux_o   <= auxclk_out_vec(0);
+       serdes_o   <= serdes_out_vec(0);
        pll_serdes_locked_o <= pll_serdes_locked;
 
-    end generate gen_kintex7_artix7_auxclk_serdes;
+    end generate gen_kintex7_artix7_serdes;
 
-  end generate gen_auxclk_generator;
+  end generate gen_serdes;
 
   ---------------------------------------------------------------------------
 
