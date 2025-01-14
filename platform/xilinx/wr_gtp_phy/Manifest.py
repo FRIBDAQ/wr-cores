@@ -96,34 +96,6 @@ xilinx_ip_gthe4_common_lp = [
     "xilinx-ip/gthe4_lp/common/gtwizard_ultrascale_v1_7_reset_sync.v",
 ];
 
-xilinx_ip_gthe4_sdm_common = [
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_bit_sync.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gte4_drp_arb.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe3_cal_freqcnt.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe3_cpll_cal.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_cal_freqcnt.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_channel.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_common.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_cpll_cal_rx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_cpll_cal_tx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_cpll_cal.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_delay_powergood.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_rx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_tx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_reset.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_userclk_rx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_userclk_tx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_userdata_rx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtwiz_userdata_tx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtye4_cal_freqcnt.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtye4_cpll_cal_rx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtye4_cpll_cal_tx.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtye4_cpll_cal.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gtye4_delay_powergood.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_reset_inv_sync.v",
-    "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_reset_sync.v"
-];
-
 xilinx_ip_gthe4_sdm_main = [
     "xilinx-ip/gthe4_sdm_main/gtwizard_v1_7_gthe4_sdm_main_gthe4_channel_wrapper.v",
     "xilinx-ip/gthe4_sdm_main/gtwizard_v1_7_gthe4_sdm_main_gthe4_common_wrapper.v",
@@ -224,10 +196,10 @@ elif (syn_device[0:4].upper()=="XCZU" or  # Zynq Ultrascale GTH
       syn_device[0:5].upper()=="XCK26"):  # Kria K26
     files.extend([
         "family7-gthe4/wr_gthe4_phy_family7_xilinx_ip.vhd",
+        "xilinx-ip/gthe4_sdm_common/gtwizard_ultrascale_v1_7_gthe4_common.v"
         ]);
     files.extend( xilinx_ip_gthe4 );
     files.extend( xilinx_ip_common );
-    files.extend( xilinx_ip_gthe4_sdm_common );
     files.extend( xilinx_ip_gthe4_sdm_main );
     files.extend( xilinx_ip_gthe4_sdm_dmtd );
     files.extend( xilinx_ip_gthe4_sdm_eth );
