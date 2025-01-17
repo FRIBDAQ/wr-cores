@@ -132,9 +132,12 @@ entity xwr_core is
     -- External 10 MHz reference (cesium, GPSDO, etc.), used in Grandmaster mode
     clk_ext_i : in std_logic := '0';
 
+    --  External clocks (multipled to 125Mhz), only if g_with_external_clock_input
     clk_ext_mul_i : in std_logic := '0';
+    --  Status of the external clocks (for software, not used in HDL)
     clk_ext_mul_locked_i : in std_logic := '1';
     clk_ext_stopped_i    : in  std_logic := '0';
+    --  Reset external clock
     clk_ext_rst_o        : out std_logic;
 
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode

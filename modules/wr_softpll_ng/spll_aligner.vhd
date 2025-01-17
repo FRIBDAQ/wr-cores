@@ -8,23 +8,25 @@
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
+-- Description: mesure the phase of two clocks (and their associated pps)
+-------------------------------------------------------------------------------
 --
 -- Copyright (c) 2012-2017 CERN
 --
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
 --
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
 --
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
 -- from http://www.gnu.org/licenses/lgpl-2.1.html
 --
 -------------------------------------------------------------------------------
@@ -51,9 +53,15 @@ entity spll_aligner is
     rst_n_ref_i    : in  std_logic;
     rst_n_ext_i    : in  std_logic;
 
+    --  pps for clk_in_i
     pps_ext_a_i    : in std_logic;
+
+    --  pps pulse for clk_ref
     pps_csync_p1_i : in std_logic;
 
+    --  New samples of the counters are provided at g_sample_rate Hz
+    --  When a new sample is available the valid signal is set, which
+    --  must be reset/acknowledged by the ack.
     sample_cref_o  : out std_logic_vector(g_counter_width-1 downto 0);
     sample_cin_o   : out std_logic_vector(g_counter_width-1 downto 0);
     sample_valid_o : out std_logic;
@@ -66,7 +74,7 @@ architecture rtl of spll_aligner is
 
   constant c_div_ticks : integer := g_ref_clock_rate / g_sample_rate;
 
-  signal cnt_ref_bin, cnt_in_bin, cnt_in_bin_x      : unsigned(g_counter_width-1 downto 0);
+  signal cnt_ref_bin, cnt_in_bin   : unsigned(g_counter_width-1 downto 0);
   signal cnt_in_gray, cnt_in_gray_x, cnt_in_gray_xd : std_logic_vector(g_counter_width-1 downto 0);
 
   signal cnt_ref_div           : unsigned(g_counter_width-1 downto 0);
@@ -74,11 +82,12 @@ architecture rtl of spll_aligner is
   signal ref_div_p             : std_logic;
   signal sample_ready_p        : std_logic;
 begin
-
+  --  Count clk_ref ticks, aligned on pps
   p_ref_counter : process(clk_ref_i)
   begin
     if rising_edge(clk_ref_i) then
       if pps_csync_p1_i = '1' or rst_n_ref_i = '0' then
+        --  Align on pps
         cnt_ref_bin <= to_unsigned(0, g_counter_width);
       elsif(cnt_ref_bin = g_ref_clock_rate - 1) then
         cnt_ref_bin <= (others => '0');
@@ -88,6 +97,8 @@ begin
     end if;
   end process;
 
+  --  Divide clk_ref to get ref_div_p at g_sample_rate Hz.
+  --  Aligned on pps.
   p_samplerate_divider : process(clk_ref_i)
   begin
     if rising_edge(clk_ref_i) then
@@ -114,8 +125,10 @@ begin
     end if;
   end process;
 
+  --  Detect in pps pulse
   pps_ext_p <= not pps_ext_d0 and pps_ext_a_i;
 
+  --  Count clk_in ticks, aligned on its pps.
   p_in_counter : process(clk_in_i)
   begin
     if rising_edge(clk_in_i) then
@@ -129,6 +142,7 @@ begin
     end if;
   end process;
 
+  --  Use gray encoding for CDC between clk_in and clk_ref
   p_in_bin2gray : process (clk_in_i)
   begin
     if rising_edge(clk_in_i) then
@@ -136,6 +150,7 @@ begin
     end if;
   end process;
 
+  --  Sample in and ref counters
   p_sample_difference : process(clk_ref_i)
   begin
     if rising_edge(clk_ref_i) then
@@ -159,6 +174,7 @@ begin
       q_p_o       => sample_ready_p);
 
 
+  --  clk_ref to clk_sys valid bit
   p_gen_sample_valid : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
