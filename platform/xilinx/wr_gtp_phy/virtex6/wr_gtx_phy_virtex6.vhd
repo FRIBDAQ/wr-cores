@@ -201,8 +201,7 @@ architecture rtl of wr_gtx_phy_virtex6 is
   component gtp_bitslide
     generic (
       g_simulation : integer;
-      g_target     : string := "virtex6";
-      g_use_rx_byte_is_aligned : boolean := false);
+      g_target     : string := "virtex6");
     port (
       gtp_rst_i                : in  std_logic;
       gtp_rx_clk_i             : in  std_logic;
@@ -389,8 +388,7 @@ begin  -- rtl
   U_Bitslide : gtp_bitslide
     generic map (
       g_simulation => g_simulation,
-      g_target     => "virtex6",
-      g_use_rx_byte_is_aligned => true)
+      g_target     => "virtex6")
     port map (
       gtp_rst_i                => gtx_rst,
       gtp_rx_clk_i             => rx_rec_clk,
