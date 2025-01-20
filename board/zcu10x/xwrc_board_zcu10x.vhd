@@ -53,7 +53,8 @@ entity xwrc_board_zcu10x is
     g_diag_rw_size              : integer              := 0;
     g_dac_bits                  : integer              := 16;
     -- Both ZCU102 and ZCU106 are currently supported
-    g_board_name               : string                := "X10x"
+    g_board_name                : string               := "X10x";
+    g_num_fmc_enable            : integer              := 2
     );
   port (
     ---------------------------------------------------------------------------
@@ -130,6 +131,11 @@ entity xwrc_board_zcu10x is
     si570_scl_i      : in  std_logic := '1';
     si570_sda_oen_o  : out std_logic;
     si570_sda_i      : in  std_logic := '1';
+
+    -----------------------------------------
+    -- FMC SW enable interface
+    -----------------------------------------
+    fmc_enable_o : out std_logic_vector(g_num_fmc_enable-1 downto 0);
 
     ---------------------------------------------------------------------------
     -- UART
@@ -235,6 +241,10 @@ architecture struct of xwrc_board_zcu10x is
   signal si570_wb_in  : t_wishbone_slave_in;
   signal si570_wb_out : t_wishbone_slave_out;
 
+  -- GPIO for FMC enable
+  signal enfmc_wb_in  : t_wishbone_slave_in;
+  signal enfmc_wb_out : t_wishbone_slave_out;
+
   constant c_xwb_si5xx_sdb : t_sdb_device := (
     abi_class     => x"0000",              -- undocumented device
     abi_ver_major => x"01",
@@ -255,15 +265,16 @@ architecture struct of xwrc_board_zcu10x is
   signal aux_master_out : t_wishbone_master_out;
   signal aux_master_in : t_wishbone_master_in := cc_dummy_master_in;
 
-  signal tertbar_master_i : t_wishbone_master_in_array(0 downto 0);
-  signal tertbar_master_o : t_wishbone_master_out_array(0 downto 0);
+  signal tertbar_master_i : t_wishbone_master_in_array(1 downto 0);
+  signal tertbar_master_o : t_wishbone_master_out_array(1 downto 0);
 
-  constant c_tertbar_layout : t_sdb_record_array(0 downto 0) :=
-    (0  => f_sdb_embed_device(c_xwb_si5xx_sdb, x"00000000")
-     --                     tertbar sdb            x"00000100"
+  constant c_tertbar_layout : t_sdb_record_array(1 downto 0) :=
+    (0  => f_sdb_embed_device(c_xwb_gpio_port_sdb, x"00000000"),
+     1  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000100")
+     --                     tertbar sdb            x"00000200"
    );
 
-  constant c_tertbar_sdb_address : t_wishbone_address := x"00000100";
+  constant c_tertbar_sdb_address : t_wishbone_address := x"00000200";
   constant c_tertbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_tertbar_layout, c_tertbar_sdb_address);
 begin  -- architecture struct
@@ -465,7 +476,7 @@ begin  -- architecture struct
     generic map(
       g_verbose     => TRUE,
       g_num_masters => 1,
-      g_num_slaves  => 1,
+      g_num_slaves  => 2,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_tertbar_layout,
@@ -482,8 +493,32 @@ begin  -- architecture struct
       master_o   => tertbar_master_o
       );
 
-  tertbar_master_i(0) <= si570_wb_out;
-  si570_wb_in         <= tertbar_master_o(0);
+  tertbar_master_i(0) <= enfmc_wb_out;
+  enfmc_wb_in         <= tertbar_master_o(0);
+
+  tertbar_master_i(1) <= si570_wb_out;
+  si570_wb_in         <= tertbar_master_o(1);
+
+  -----------------------------------------------------------------------------
+  -- Enable FMC pins
+  -----------------------------------------------------------------------------
+  cmp_board_enfmc: entity work.xwb_gpio_port
+    generic map(
+      g_interface_mode         => PIPELINED,
+      g_address_granularity    => BYTE,
+      g_num_pins               => g_num_fmc_enable,
+      g_with_builtin_tristates => false)
+    port map(
+      clk_sys_i         => clk_pll_62m5,
+      rst_n_i           => rst_62m5_n,
+
+      gpio_out_o        => fmc_enable_o,
+      gpio_in_i         => (others => '0'),
+      gpio_b            => open,
+
+      slave_i           => enfmc_wb_in,
+      slave_o           => enfmc_wb_out
+    );
 
   -----------------------------------------------------------------------------
   -- Si570

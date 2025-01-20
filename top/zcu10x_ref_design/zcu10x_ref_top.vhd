@@ -66,9 +66,9 @@ entity zcu10x_ref_top is
     wr_clk_sfp_125m_p_i    : in  std_logic;
     wr_clk_sfp_125m_n_i    : in  std_logic;
 
-    clk_sys_62m5_o : out std_logic;
-    clk_ref_125m_o : out std_logic;
-    clk_xm105_sma_o : out std_logic;
+    clk_sys_62m5_o       : out std_logic;
+    clk_ref_125m_o       : out std_logic;
+    clk_hpc0_xm105_sma_o : out std_logic;
 
     ---------------------------------------------------------------------------
     -- Dummy GTH channel required for QPLL SDM
@@ -108,8 +108,9 @@ entity zcu10x_ref_top is
     ---------------------------------------------------------------------------
     -- LEDs
     ---------------------------------------------------------------------------
-    user_led_o    : out std_logic_vector(3 downto 0);
-    pps_p_o    : out std_logic_vector(1 downto 0)
+    user_led_o           : out std_logic_vector(3 downto 0);
+    pps_p_o              : out std_logic;
+    pps_hpc0_xm105_sma_o : out std_logic;
   );
 end entity zcu10x_ref_top;
 
@@ -124,6 +125,7 @@ architecture top of zcu10x_ref_top is
   signal clk_10m : std_logic;
   signal clk_xm105_sma : std_logic;
   signal pps_p : std_logic;
+  signal clk_xm105_sma_oddr : std_logic_vector(0 downto 0);
 
   signal sfp_scl_out, sfp_scl_in : std_logic;
   signal sfp_sda_out, sfp_sda_in : std_logic;
@@ -131,6 +133,8 @@ architecture top of zcu10x_ref_top is
   signal eeprom_sda_out, eeprom_sda_in : std_logic;
   signal si570_scl_oen, si570_scl_in : std_logic;
   signal si570_sda_oen, si570_sda_in : std_logic;
+
+  signal fmc_enable : std_logic_vector(1 downto 0);
 begin
 
   -- do not use PS_POR for now
@@ -138,9 +142,10 @@ begin
 
   cmp_xwrc_board_zcu10x : entity work.xwrc_board_zcu10x
     generic map (
-      g_simulation   => g_SIMULATION,
-      g_board_name   => g_BOARD_NAME,
-      g_dpram_initf  => "../../bin/wrpc/wrc_amd_devboard.bram")
+      g_simulation     => g_SIMULATION,
+      g_board_name     => g_BOARD_NAME,
+      g_num_fmc_enable => 2,
+      g_dpram_initf    => "../../bin/wrpc/wrc_amd_devboard.bram")
     port map (
       areset_n_i             => rst_n,
       wr_clk_helper_125m_p_i => wr_clk_helper_125m_p_i,
@@ -179,6 +184,7 @@ begin
       si570_scl_i  => si570_scl_in,
       si570_sda_oen_o => si570_sda_oen,
       si570_sda_i  => si570_sda_in,
+      fmc_enable_o => fmc_enable,
 
       led_act_o  => user_led_o(1),
       led_link_o => user_led_o(0),
@@ -250,17 +256,28 @@ begin
       I1 => clk_sys_62m5,
       S => gpio_dip_sw_i(0));
 
- oddr_clk_xm105_sma : ODDRE1
+ oddr_clk_xm105_sma0 : ODDRE1
     port map  (
-      Q => clk_xm105_sma_o,
+      Q => clk_xm105_sma_oddr(0),
       C => clk_xm105_sma,
       D1 => '1',
       D2 => '0',
       SR => '0');
 
+  oddr_clk_xm105_sma1 : ODDRE1
+    port map  (
+      Q => clk_xm105_sma_oddr(1),
+      C => clk_xm105_sma,
+      D1 => '1',
+      D2 => '0',
+      SR => '0');
+
+  clk_hpc0_xm105_sma_o <= clk_xm105_sma_oddr(0) when fmc_enable(0) = '1' else 'Z';
+  pps_hpc0_xm105_sma_o <= pps_p when fmc_enable(0) = '1' else 'Z';
+
   clk_sys_62m5_o <= clk_sys_62m5;
   clk_ref_125m_o <= clk_ref_125m;
-  pps_p_o <= (pps_p_o'range => pps_p);
+  pps_p_o <= pps_p;
 
   sfp_scl_b <= '0' when (sfp_scl_out = '0' or si570_scl_oen = '0') else 'Z';
   sfp_sda_b <= '0' when (sfp_sda_out = '0' or si570_sda_oen = '0') else 'Z';

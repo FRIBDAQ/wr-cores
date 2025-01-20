@@ -67,13 +67,13 @@ set_property PACKAGE_PIN D22 [get_ports clk_sys_62m5_o]
 # PMOD1_3
 set_property PACKAGE_PIN E22 [get_ports clk_ref_125m_o]
 # PMOD1_6
-set_property PACKAGE_PIN J20 [get_ports {pps_p_o[0]}]
+set_property PACKAGE_PIN J20 [get_ports {pps_p_o}]
 set_property IOSTANDARD LVCMOS33 [get_ports clk_sys_62m5_o]
 set_property IOSTANDARD LVCMOS33 [get_ports clk_ref_125m_o]
-set_property IOSTANDARD LVCMOS33 [get_ports pps_p_o[0]]
+set_property IOSTANDARD LVCMOS33 [get_ports pps_p_o]
 set_property OFFCHIP_TERM NONE [get_ports clk_sys_62m5_o]
 set_property OFFCHIP_TERM NONE [get_ports clk_ref_125m_o]
-set_property OFFCHIP_TERM NONE [get_ports pps_p_o[0]]
+set_property OFFCHIP_TERM NONE [get_ports pps_p_o]
 
 # DIP switch for XM105 SMA output clock selection
 set_property PACKAGE_PIN AN14 [get_ports gpio_dip_sw_i[0]]

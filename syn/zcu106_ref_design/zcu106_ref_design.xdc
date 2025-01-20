@@ -67,27 +67,27 @@ set_property PACKAGE_PIN AP11 [get_ports clk_sys_62m5_o]
 # PMOD1_3
 set_property PACKAGE_PIN AN11 [get_ports clk_ref_125m_o]
 # PMOD1_6
-set_property PACKAGE_PIN AP12 [get_ports {pps_p_o[0]}]
+set_property PACKAGE_PIN AP12 [get_ports {pps_p_o}]
 set_property IOSTANDARD LVCMOS12 [get_ports clk_sys_62m5_o]
 set_property IOSTANDARD LVCMOS12 [get_ports clk_ref_125m_o]
-set_property IOSTANDARD LVCMOS12 [get_ports pps_p_o[0]]
+set_property IOSTANDARD LVCMOS12 [get_ports pps_p_o]
 set_property OFFCHIP_TERM NONE [get_ports clk_sys_62m5_o]
 set_property OFFCHIP_TERM NONE [get_ports clk_ref_125m_o]
-set_property OFFCHIP_TERM NONE [get_ports pps_p_o[0]]
+set_property OFFCHIP_TERM NONE [get_ports pps_p_o]
 
 # DIP switch for XM105 SMA output clock selection
 set_property PACKAGE_PIN A17 [get_ports gpio_dip_sw_i[0]]
 set_property IOSTANDARD LVCMOS12 [get_ports gpio_dip_sw_i[0]]
 
 # SMA on XM105 on FMC HPC0
-set_property PACKAGE_PIN F10 [get_ports clk_xm105_sma_o]
-set_property PACKAGE_PIN G10 [get_ports pps_p_o[1]]
-set_property IOSTANDARD LVDCI_18 [get_ports clk_xm105_sma_o]
-set_property IOSTANDARD LVDCI_18 [get_ports pps_p_o[1]]
-set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports clk_xm105_sma_o]
-set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports pps_p_o[1]]
-#set_property OFFCHIP_TERM NONE [get_ports clk_xm105_sma_o]
-#set_property OFFCHIP_TERM NONE [get_ports pps_p_o[1]]
+set_property PACKAGE_PIN F10 [get_ports clk_hpc0_xm105_sma_o]
+set_property PACKAGE_PIN G10 [get_ports pps_hpc0_xm105_sma_o]
+set_property IOSTANDARD LVDCI_18 [get_ports clk_hpc0_xm105_sma_o]
+set_property IOSTANDARD LVDCI_18 [get_ports pps_hpc0_xm105_sma_o]
+set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports clk_hpc0_xm105_sma_o]
+set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports pps_hpc0_xm105_sma_o]
+#set_property OFFCHIP_TERM NONE [get_ports clk_hpc0_xm105_sma_o]
+#set_property OFFCHIP_TERM NONE [get_ports pps_hpc0_xm105_sma_o]
 set_property DCI_CASCADE {66 67} [get_iobanks 65]
 
 # Dummy GTH to overwrite the device-specific LOCs in the generated transceiver xdc files
