@@ -128,9 +128,9 @@ entity xwr_endpoint is
     
     -- 2nd option is to use record-based I/Os
     phy8_o            : out t_phy_8bits_from_wrc;
-    phy8_i            : in  t_phy_8bits_to_wrc;
+    phy8_i            : in  t_phy_8bits_to_wrc  := c_dummy_phy8_to_wrc;
     phy16_o           : out t_phy_16bits_from_wrc;
-    phy16_i           : in  t_phy_16bits_to_wrc;
+    phy16_i           : in  t_phy_16bits_to_wrc := c_dummy_phy16_to_wrc;
 
 -------------------------------------------------------------------------------
 -- GMII Interface (8-bit)
