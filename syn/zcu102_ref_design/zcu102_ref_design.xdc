@@ -8,11 +8,9 @@ create_clock -period 8.000 -name wr_clk_sfp_125m [get_ports {wr_clk_sfp_125m_p_i
 create_clock -period 16.000 -name gth_eth_txclk [get_pins cmp_xwrc_board_zcu102/cmp_xwrc_platform/gen_phy_zynqus_qplls.cmp_gth/gen_gtwizard_v1_7_gthe4_sdm_eth.U_gtwizard_gthe4/inst/gen_gtwizard_gthe4_top.gtwizard_v1_7_gthe4_sdm_eth_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[27].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK]
 create_clock -period 16.000 -name gth_eth_rxclk [get_pins cmp_xwrc_board_zcu102/cmp_xwrc_platform/gen_phy_zynqus_qplls.cmp_gth/gen_gtwizard_v1_7_gthe4_sdm_eth.U_gtwizard_gthe4/inst/gen_gtwizard_gthe4_top.gtwizard_v1_7_gthe4_sdm_eth_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[27].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/RXOUTCLK]
 
-create_clock -period 16.000 -name gth_main_txclk [get_pins cmp_xwrc_board_zcu102/cmp_xwrc_platform/gen_default_plls.gen_zynqus_sdm_qplls.gtwizard_main_inst/inst/gen_gtwizard_gthe4_top.gtwizard_v1_7_gthe4_sdm_main_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[2].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK]
-
 create_clock -period 16.000 -name gth_dmtd_txclk [get_pins cmp_xwrc_board_zcu102/cmp_xwrc_platform/gen_default_plls.gen_zynqus_sdm_qplls.gtwizard_dmtd_inst/inst/gen_gtwizard_gthe4_top.gtwizard_v1_7_gthe4_sdm_dmtd_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK]
 
-set_clock_groups -asynchronous -group {wr_clk_main_125m wr_clk_sfp_125m} -group {wr_clk_helper_125m} -group {gth_eth_txclk} -group {gth_eth_rxclk} -group {gth_main_txclk} -group {gth_dmtd_txclk}
+set_clock_groups -asynchronous -group {wr_clk_main_125m wr_clk_sfp_125m} -group {wr_clk_helper_125m} -group {gth_eth_txclk} -group {gth_eth_rxclk} -group {gth_dmtd_txclk}
 
 
 ##################
@@ -91,6 +89,10 @@ set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports pps_p_o[1]]
 #set_property OFFCHIP_TERM NONE [get_ports clk_xm105_sma_o]
 #set_property OFFCHIP_TERM NONE [get_ports pps_p_o[1]]
 set_property DCI_CASCADE {66 67} [get_iobanks 65]
+
+# Dummy GTH to overwrite the device-specific LOCs in the generated transceiver xdc files
+#set_property PACKAGE_PIN N31 [get_ports dummy_gthrxp_i[0]]
+#set_property PACKAGE_PIN M33 [get_ports dummy_gthrxp_i[1]]
 
 #revert back to original instance
 current_instance -quiet

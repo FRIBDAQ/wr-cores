@@ -82,10 +82,10 @@ entity xwrc_board_zcu102 is
     ---------------------------------------------------------------------------
     -- Dummy GTH channel required for QPLL SDM
     ---------------------------------------------------------------------------
-    dummy_gthtxp_o        : out std_logic_vector(3 downto 0);
-    dummy_gthtxn_o        : out std_logic_vector(3 downto 0);
-    dummy_gthrxp_i        : in  std_logic_vector(3 downto 0);
-    dummy_gthrxn_i        : in  std_logic_vector(3 downto 0);
+    dummy_gthtxp_o        : out std_logic_vector(1 downto 0);
+    dummy_gthtxn_o        : out std_logic_vector(1 downto 0);
+    dummy_gthrxp_i        : in  std_logic_vector(1 downto 0);
+    dummy_gthrxn_i        : in  std_logic_vector(1 downto 0);
 
     ---------------------------------------------------------------------------
     -- Shared SPI interface to DACs
