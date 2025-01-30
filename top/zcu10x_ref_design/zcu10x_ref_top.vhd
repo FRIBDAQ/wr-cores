@@ -69,6 +69,7 @@ entity zcu10x_ref_top is
     clk_sys_62m5_o       : out std_logic;
     clk_ref_125m_o       : out std_logic;
     clk_hpc0_xm105_sma_o : out std_logic;
+    clk_hpc1_xm105_sma_o : out std_logic;
 
     ---------------------------------------------------------------------------
     -- Dummy GTH channel required for QPLL SDM
@@ -111,6 +112,7 @@ entity zcu10x_ref_top is
     user_led_o           : out std_logic_vector(3 downto 0);
     pps_p_o              : out std_logic;
     pps_hpc0_xm105_sma_o : out std_logic;
+    pps_hpc1_xm105_sma_o : out std_logic
   );
 end entity zcu10x_ref_top;
 
@@ -125,7 +127,7 @@ architecture top of zcu10x_ref_top is
   signal clk_10m : std_logic;
   signal clk_xm105_sma : std_logic;
   signal pps_p : std_logic;
-  signal clk_xm105_sma_oddr : std_logic_vector(0 downto 0);
+  signal clk_xm105_sma_oddr : std_logic_vector(1 downto 0);
 
   signal sfp_scl_out, sfp_scl_in : std_logic;
   signal sfp_sda_out, sfp_sda_in : std_logic;
@@ -274,6 +276,8 @@ begin
 
   clk_hpc0_xm105_sma_o <= clk_xm105_sma_oddr(0) when fmc_enable(0) = '1' else 'Z';
   pps_hpc0_xm105_sma_o <= pps_p when fmc_enable(0) = '1' else 'Z';
+  clk_hpc1_xm105_sma_o <= clk_xm105_sma_oddr(1) when fmc_enable(1) = '1' else 'Z';
+  pps_hpc1_xm105_sma_o <= pps_p when fmc_enable(1) = '1' else 'Z';
 
   clk_sys_62m5_o <= clk_sys_62m5;
   clk_ref_125m_o <= clk_ref_125m;

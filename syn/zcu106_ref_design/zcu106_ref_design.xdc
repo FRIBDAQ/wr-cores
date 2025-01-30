@@ -90,6 +90,10 @@ set_property OUTPUT_IMPEDANCE RDRV_48_48 [get_ports pps_hpc0_xm105_sma_o]
 #set_property OFFCHIP_TERM NONE [get_ports pps_hpc0_xm105_sma_o]
 set_property DCI_CASCADE {66 67} [get_iobanks 65]
 
+# SMA on XM105 on FMC HPC1 -- NOT SUPPORTED --> tie to PMOD1_6 instead
+set_property -dict {PACKAGE_PIN AP9 IOSTANDARD LVCMOS12 OFFCHIP_TERM NONE} [get_ports clk_hpc1_xm105_sma_o]
+set_property -dict {PACKAGE_PIN AP10 IOSTANDARD LVCMOS12 OFFCHIP_TERM NONE} [get_ports pps_hpc1_xm105_sma_o]
+
 # Dummy GTH to overwrite the device-specific LOCs in the generated transceiver xdc files
 set_property PACKAGE_PIN R2 [get_ports dummy_gthrxp_i[0]]
 set_property PACKAGE_PIN P4 [get_ports dummy_gthrxp_i[1]]
