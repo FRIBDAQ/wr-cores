@@ -11,7 +11,6 @@ modules = {
     ],
     "git" : [
         "https://ohwr.org/project/general-cores.git",
-        "https://ohwr.org/project/wr-cores.git",
         "https://ohwr.org/project/urv-core.git",
     ],
 }
