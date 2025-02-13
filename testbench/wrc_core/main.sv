@@ -479,7 +479,7 @@ module main;
         lm32_seqID_rx  = 'h0000FFFF & (pkt.payload[0] << 8 | pkt.payload[1]);
         stat = 'h0000FFFF & (pkt.payload[2] << 8 | pkt.payload[3]);
         ret  = 'h0000FFFF & (pkt.payload[4] << 8 | pkt.payload[5]);
-        $display("--> recv [size=%4d] LM32-generated fame seqID: exp=%4d | rx=%4d, stat=%s [0x%4x], ret=%2d",pkt.size, lm32_seqID_reg, lm32_seqID_rx, codes[stat], stat,ret);
+        $display("--> recv [size=%4d] LM32-generated frame seqID: exp=%4d | rx=%4d, stat=%s [0x%4x], ret=%2d",pkt.size, lm32_seqID_reg, lm32_seqID_rx, codes[stat], stat,ret);
         txPkt.get(1);//use semaphore to coordinate with the transmissin in function: send_frames()
         ep_src.send(pkt);
         txPkt.put(1);
