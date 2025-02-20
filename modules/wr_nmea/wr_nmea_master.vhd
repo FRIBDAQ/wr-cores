@@ -71,7 +71,8 @@ end entity wr_nmea_master;
 architecture rtl of wr_nmea_master is
 
   constant c_FRAME_LEN    : integer := 38;
-  constant c_CHECKSUM_IDX : integer := 35;
+  constant c_CHECKSUM_IDX0 : integer := 34;
+  constant c_CHECKSUM_IDX1 : integer := 35;
   constant c_DOLLAR       : std_logic_vector(7 downto 0) := X"24";
   constant c_G            : std_logic_vector(7 downto 0) := X"47";
   constant c_P            : std_logic_vector(7 downto 0) := X"50";
@@ -168,7 +169,7 @@ begin
     end if;
   end process;
 
-  nmea_b <= std_logic_vector(checksum_ascii) when byte_cnt = 34 or byte_cnt = 35 else nmea_s(to_integer(byte_cnt));
+  nmea_b <= std_logic_vector(checksum_ascii) when byte_cnt = c_CHECKSUM_IDX0 or byte_cnt = c_CHECKSUM_IDX1 else nmea_s(to_integer(byte_cnt));
 
   p_sm: process(clk_i) is
   begin
@@ -192,7 +193,7 @@ begin
 
           when S_TX_EN =>   uart_tx_en <= '1';
                             nmea_state <= S_WAIT_BUSY;
-                            if(byte_cnt < c_CHECKSUM_IDX) then
+                            if(byte_cnt < c_CHECKSUM_IDX0-1 and nmea_b /= c_DOLLAR) then
                               checksum <= checksum xor unsigned(nmea_b);
                             end if;
 
@@ -224,13 +225,13 @@ begin
         checksum_ascii <= (others => '0');
       else
         checksum_ascii <= (others => '0');
-        if(byte_cnt = 34) then
+        if(byte_cnt = c_CHECKSUM_IDX0) then
           if(checksum(7 downto 4) > 9) then
             checksum_ascii <= unsigned(c_CHAR_M9) + checksum(7 downto 4); --character
           else
             checksum_ascii <= unsigned(c_ZERO) + checksum(7 downto 4); --number
           end if;
-        elsif(byte_cnt = 35) then
+        elsif(byte_cnt = c_CHECKSUM_IDX1) then
           if(checksum(3 downto 0) > 9) then
             checksum_ascii <= unsigned(c_CHAR_M9) + checksum(3 downto 0); --character
           else
