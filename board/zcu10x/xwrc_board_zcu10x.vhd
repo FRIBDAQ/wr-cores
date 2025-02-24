@@ -289,8 +289,8 @@ architecture struct of xwrc_board_zcu10x is
 
   constant c_tertbar_layout : t_sdb_record_array(2 downto 0) :=
     (0  => f_sdb_embed_device(c_xwb_gpio_port_sdb, x"00000000"),
-     1  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000100"),
-     2  => f_sdb_embed_device(c_wrc_periph1_sdb,   x"00000200")
+     1  => f_sdb_embed_device(c_wrc_periph1_sdb,   x"00000100"),
+     2  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000200")
      --                     tertbar sdb            x"00000300"
    );
 
@@ -528,11 +528,11 @@ begin  -- architecture struct
   tertbar_master_i(0) <= enfmc_wb_out;
   enfmc_wb_in         <= tertbar_master_o(0);
 
-  tertbar_master_i(1) <= si570_wb_out;
-  si570_wb_in         <= tertbar_master_o(1);
+  tertbar_master_i(1) <= gps_uart_wb_out;
+  gps_uart_wb_in      <= tertbar_master_o(1);
 
-  tertbar_master_i(2) <= gps_uart_wb_out;
-  gps_uart_wb_in      <= tertbar_master_o(2);
+  tertbar_master_i(2) <= si570_wb_out;
+  si570_wb_in         <= tertbar_master_o(2);
 
   -----------------------------------------------------------------------------
   -- Enable FMC pins
