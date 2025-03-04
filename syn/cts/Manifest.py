@@ -21,6 +21,7 @@ syn_tool = "vivado"
 
 files = [
     "cts.xdc",
+    "gtwizard_ultrascale_0.xci",
 ]
 
 modules = {

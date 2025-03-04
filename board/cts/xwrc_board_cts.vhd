@@ -48,6 +48,7 @@ use work.streamers_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_cts_pkg.all;
+use work.si570_wbgen2_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -140,6 +141,14 @@ entity xwrc_board_cts is
     eeprom_scl_i : in  std_logic;
     eeprom_scl_o : out std_logic;
 
+    -----------------------------------------
+    -- Si570 I2C interface
+    -----------------------------------------
+    si570_scl_o      : out std_logic;
+    si570_scl_i      : in  std_logic := '1';
+    si570_sda_o      : out std_logic;
+    si570_sda_i      : in  std_logic := '1';
+
     ---------------------------------------------------------------------------
     -- UART
     ---------------------------------------------------------------------------
@@ -151,9 +160,6 @@ entity xwrc_board_cts is
     ---------------------------------------------------------------------------
     wb_slave_o : out t_wishbone_slave_out;
     wb_slave_i : in  t_wishbone_slave_in := cc_dummy_slave_in;
-
-    aux_master_o : out t_wishbone_master_out;
-    aux_master_i : in  t_wishbone_master_in := cc_dummy_master_in;
 
     ---------------------------------------------------------------------------
     -- WR fabric interface (when g_fabric_iface = "plainfbrc")
@@ -260,6 +266,41 @@ architecture struct of xwrc_board_cts is
   -- PHY
   signal phy16_to_wrc   : t_phy_16bits_to_wrc;
   signal phy16_from_wrc : t_phy_16bits_from_wrc;
+
+  -- Si570
+  signal si570_wb_in  : t_wishbone_slave_in;
+  signal si570_wb_out : t_wishbone_slave_out;
+
+  constant c_xwb_si5xx_sdb : t_sdb_device := (
+    abi_class     => x"0000",              -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7",
+    sdb_component => (
+    addr_first  => x"0000000000000000",
+    addr_last   => x"00000000000000ff",
+    product     => (
+    vendor_id => x"000000000000CE42",  -- CERN TODO
+    device_id => x"deadbee0",          -- TODO
+    version   => x"00000001",
+    date      => x"02192025",
+    name      => "Si5xx              ")));
+
+  -- Tertiary crossbar for board peripherals
+  signal aux_master_out : t_wishbone_master_out;
+  signal aux_master_in : t_wishbone_master_in := cc_dummy_master_in;
+
+  signal tertbar_master_i : t_wishbone_master_in_array(0 downto 0);
+  signal tertbar_master_o : t_wishbone_master_out_array(0 downto 0);
+
+  constant c_tertbar_layout : t_sdb_record_array(0 downto 0) :=
+    (0  => f_sdb_embed_device(c_xwb_si5xx_sdb, x"00000000")
+     --                     tertbar sdb            x"00000100"
+   );
+
+  constant c_tertbar_sdb_address : t_wishbone_address := x"00000100";
+  constant c_tertbar_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_tertbar_layout, c_tertbar_sdb_address);
 
 begin  -- architecture struct
 
@@ -381,14 +422,14 @@ begin  -- architecture struct
       g_simulation                => g_simulation,
       g_verbose                   => TRUE,
       g_with_external_clock_input => FALSE,
-      g_board_name                => "CTS",
+      g_board_name                => "CTS ",
       g_phys_uart                 => TRUE,
       g_virtual_uart              => TRUE,
       g_aux_clks                  => g_aux_clks,
       g_ep_rxbuf_size             => 1024,
       g_tx_runt_padding           => TRUE,
       g_dpram_initf               => g_dpram_initf,
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => 196608/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => g_aux_sdb,
@@ -427,8 +468,8 @@ begin  -- architecture struct
       uart_txd_o           => uart_txd_o,
       wb_slave_i           => wb_slave_i,
       wb_slave_o           => wb_slave_o,
-      aux_master_o         => aux_master_o,
-      aux_master_i         => aux_master_i,
+      aux_master_o         => aux_master_out,
+      aux_master_i         => aux_master_in,
       wrf_src_o            => wrf_src_o,
       wrf_src_i            => wrf_src_i,
       wrf_snk_o            => wrf_snk_o,
@@ -473,6 +514,49 @@ begin  -- architecture struct
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
       link_ok_o            => link_ok_o);
+
+  cmp_board_crossbar : xwb_sdb_crossbar
+    generic map(
+      g_verbose     => TRUE,
+      g_num_masters => 1,
+      g_num_slaves  => 1,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_tertbar_layout,
+      g_sdb_addr    => c_tertbar_sdb_address
+      )
+    port map(
+      clk_sys_i  => clk_pll_62m5,
+      rst_n_i    => rst_62m5_n,
+      -- Master connections (INTERCON is a slave)
+      slave_i(0) => aux_master_out,
+      slave_o(0) => aux_master_in,
+      -- Slave connections (INTERCON is a master)
+      master_i   => tertbar_master_i,
+      master_o   => tertbar_master_o
+      );
+
+  tertbar_master_i(0) <= si570_wb_out;
+  si570_wb_in         <= tertbar_master_o(0);
+
+  -----------------------------------------------------------------------------
+  -- Si570
+  -----------------------------------------------------------------------------
+  cmp_board_si570: entity work.xwr_si57x_interface
+    generic map(
+      g_simulation      => g_simulation)
+    port map(
+      clk_sys_i         => clk_pll_62m5,
+      rst_n_i           => rst_62m5_n,
+
+      scl_pad_oen_o     => si570_scl_o,
+      sda_pad_oen_o     => si570_sda_o,
+      scl_pad_i         => si570_scl_i,
+      sda_pad_i         => si570_sda_i,
+
+      slave_i           => si570_wb_in,
+      slave_o           => si570_wb_out
+    );
 
   sfp_rate_select_o <= '1';
 
