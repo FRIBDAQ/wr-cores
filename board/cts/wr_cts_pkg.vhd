@@ -96,12 +96,14 @@ package wr_cts_pkg is
       eeprom_sda_o        : out std_logic;
       eeprom_scl_i        : in  std_logic;
       eeprom_scl_o        : out std_logic;
+      si570_scl_o         : out std_logic;
+      si570_scl_i         : in  std_logic := '1';
+      si570_sda_o         : out std_logic;
+      si570_sda_i         : in  std_logic := '1';
       uart_rxd_i          : in  std_logic;
       uart_txd_o          : out std_logic;
       wb_slave_o          : out t_wishbone_slave_out;
       wb_slave_i          : in  t_wishbone_slave_in := cc_dummy_slave_in;
-      aux_master_o        : out t_wishbone_master_out;
-      aux_master_i        : in  t_wishbone_master_in := cc_dummy_master_in;
       wrf_src_o           : out t_wrf_source_out;
       wrf_src_i           : in  t_wrf_source_in := c_dummy_src_in;
       wrf_snk_o           : out t_wrf_sink_out;
