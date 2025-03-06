@@ -41,8 +41,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+library UNISIM;
+use UNISIM.VComponents.all;
 
 entity cts_top is
   generic (
@@ -74,8 +74,10 @@ entity cts_top is
     ---------------------------------------------------------------------------
     -- EEPROM I2C interface for storing configuration and accessing unique ID
     ---------------------------------------------------------------------------
-    eeprom_i2c_scl_b       : inout std_logic;
-    eeprom_i2c_sda_b       : inout std_logic;
+    eeprom_scl_in       : in  std_logic;
+    eeprom_scl_out      : out std_logic;
+    eeprom_sda_in       : in  std_logic;
+    eeprom_sda_out      : out std_logic;
 
     ---------------------------------------------------------------------------
     -- SFP I/Os for transceiver
@@ -97,22 +99,17 @@ entity cts_top is
     uart_txd_o             : out std_logic;
 
     ---------------------------------------------------------------------------
-    -- LEMO IN/OUT
-    ---------------------------------------------------------------------------
-    lemo0_i               : in  std_logic;
-    lemo1_i               : in  std_logic;
-    lemo2_i               : in  std_logic;
-    lemo3_i               : in  std_logic;
-    lemo0_o               : out std_logic;
-    lemo1_o               : out std_logic;
-    lemo2_o               : out std_logic;
-    lemo3_o               : out std_logic;
-
-    ---------------------------------------------------------------------------
     -- Helper clock I2C control
     ---------------------------------------------------------------------------
-    si570_i2c_sda_b       : inout std_logic;
-    si570_i2c_scl_b       : inout std_logic;
+    si570_sda_in       : in  std_logic;
+    si570_sda_out      : out std_logic;
+    si570_scl_in       : in  std_logic;
+    si570_scl_out      : out std_logic;
+
+    ---------------------------------------------------------------------------
+    -- Clock out
+    ---------------------------------------------------------------------------
+    clk_ref_10m_o       : out std_logic;
 
     ---------------------------------------------------------------------------
     -- LEDs
@@ -126,18 +123,15 @@ end cts_top;
 architecture Behavioral of cts_top is
     signal rst_n: std_logic;
     signal clk_sys_62m5 : std_logic;
+    signal clk_ref_125m : std_logic;
 
     signal sfp_scl_out, sfp_scl_in : std_logic;
     signal sfp_sda_out, sfp_sda_in : std_logic;
+    signal sfp_scl_t, sfp_sda_t : std_logic;
 
-    signal eeprom_i2c_scl_in, eeprom_i2c_scl_out: std_logic;
-    signal eeprom_i2c_sda_in, eeprom_i2c_sda_out: std_logic;
-
-    signal eeprom_scl_out, eeprom_scl_in : std_logic;
-    signal eeprom_sda_out, eeprom_sda_in : std_logic;
-
-    signal si570_i2c_scl_in, si570_i2c_scl_out: std_logic;
-    signal si570_i2c_sda_in, si570_i2c_sda_out: std_logic;
+    signal clk_10MHz_fb : std_logic;
+    signal clk_10MHz_locked : std_logic;
+    signal clk_10MHz : std_logic;
 
     signal led_act, led_link, pps_p: std_logic;
 begin
@@ -156,6 +150,7 @@ begin
       wr_clk_sfp_125m_p_i    => wr_clk_sfp_125m_p_i,
       wr_clk_sfp_125m_n_i    => wr_clk_sfp_125m_n_i,
       clk_sys_62m5_o         => clk_sys_62m5,
+      clk_ref_125m_o         => clk_ref_125m,
 
       plldac_sclk_o   => plldac_sclk_o,
       plldac_din_o    => plldac_din_o,
@@ -178,6 +173,12 @@ begin
       eeprom_sda_o => eeprom_sda_out,
       eeprom_scl_i => eeprom_scl_in,
       eeprom_scl_o => eeprom_scl_out,
+
+      si570_scl_o => si570_scl_out,
+      si570_scl_i => si570_scl_in,
+      si570_sda_o => si570_sda_out,
+      si570_sda_i => si570_sda_in,
+
       uart_rxd_i   => uart_rxd_i,
       uart_txd_o   => uart_txd_o,
 
@@ -186,16 +187,59 @@ begin
       pps_p_o    => pps_p
     );
 
-    eeprom_i2c_scl_b <= '0' when eeprom_i2c_scl_out = '0' else 'Z';
-    eeprom_i2c_scl_in <= eeprom_i2c_scl_b;
 
-    eeprom_i2c_sda_b <= '0' when eeprom_i2c_sda_out = '0' else 'Z';
-    eeprom_i2c_sda_in <= eeprom_i2c_sda_b;
+   clk_10m_mmcme4_inst : MMCME4_ADV
+   generic map (
+      BANDWIDTH => "OPTIMIZED",        -- Jitter programming
+      CLKFBOUT_MULT_F => 16.0,          -- Multiply value for all CLKOUT
+      CLKFBOUT_PHASE => 0.0,           -- Phase offset in degrees of CLKFB
+      CLKFBOUT_USE_FINE_PS => "FALSE", -- Fine phase shift enable (TRUE/FALSE)
+      CLKIN1_PERIOD => 16.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
+      CLKOUT0_DIVIDE_F => 100.0,         -- Divide amount for CLKOUT0
+      CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
+      CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
+      CLKOUT0_USE_FINE_PS => "FALSE",  -- Fine phase shift enable (TRUE/FALSE)
+      COMPENSATION => "AUTO",          -- Clock input compensation
+      DIVCLK_DIVIDE => 1,              -- Master division value
+      IS_RST_INVERTED => '1',
+      STARTUP_WAIT => "FALSE"          -- Delays DONE until MMCM is locked
+   )
+   port map (
+      CLKFBOUT => clk_10MHz_fb,         -- 1-bit output: Feedback clock
+      CLKOUT0 => clk_10MHz,           -- 1-bit output: CLKOUT0
+      LOCKED => clk_10MHz_locked,             -- 1-bit output: LOCK
+      PSDONE => open,             -- 1-bit output: Phase shift done
+      CDDCREQ => '0',           -- 1-bit input: Request to dynamic divide clock
+      CLKFBIN => clk_10MHz_fb,           -- 1-bit input: Feedback clock
+      CLKIN1 => clk_ref_125m,             -- 1-bit input: Primary clock
+      CLKIN2 => '0',             -- 1-bit input: Primary clock
+      CLKINSEL => '1',         -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
+      DADDR => (others => '0'),               -- 7-bit input: DRP address
+      DCLK => '0',                 -- 1-bit input: DRP clock
+      DEN => '0',                   -- 1-bit input: DRP enable
+      DI => (others => '0'),                     -- 16-bit input: DRP data input
+      DWE => '0',                   -- 1-bit input: DRP write enable
+      PSCLK => '0',               -- 1-bit input: Phase shift clock
+      PSEN => '0',                 -- 1-bit input: Phase shift enable
+      PSINCDEC => '0',         -- 1-bit input: Phase shift increment/decrement
+      PWRDWN => '0',             -- 1-bit input: Power-down
+      RST => rst_n                    -- 1-bit input: Reset
+   );
 
-    si570_i2c_scl_b <= '0' when si570_i2c_scl_out = '0' else 'Z';
-    si570_i2c_scl_in <= si570_i2c_scl_b;
+   sfp_scl_inst : IOBUF
+   port map(
+     IO => sfp_scl_b,
+     O => sfp_scl_in,
+     I => '0',
+     T => sfp_scl_t);
+   sfp_scl_t <= '0' when sfp_scl_out = '0' else '1';
 
-    si570_i2c_sda_b <= '0' when si570_i2c_sda_out = '0' else 'Z';
-    si570_i2c_sda_in <= si570_i2c_sda_b;
+   sfp_sda_inst : IOBUF
+   port map(
+     IO => sfp_sda_b,
+     O => sfp_sda_in,
+     I => '0',
+     T => sfp_sda_t);
+   sfp_sda_t <= '0' when sfp_sda_out = '0' else '1';
 
 end Behavioral;
