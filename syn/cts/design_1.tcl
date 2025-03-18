@@ -140,7 +140,6 @@ if { $bCheckIPs == 1 } {
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:util_ds_buf:2.2\
 xilinx.com:ip:util_vector_logic:2.0\
-xilinx.com:ip:proc_sys_reset:5.0\
 "
 
    set list_ips_missing ""
@@ -820,16 +819,11 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $util_vector_logic_1
 
 
-  # Create instance: rst_ps8_0_99M, and set properties
-  set rst_ps8_0_99M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_99M ]
-
   # Create port connections
   connect_bd_net -net CTSExtensionMux_0_A0_o [get_bd_pins CTSExtensionMux_0/A0_o] [get_bd_ports P2_HDIO1]
   connect_bd_net -net CTSExtensionMux_0_A1_o [get_bd_pins CTSExtensionMux_0/A1_o] [get_bd_ports P2_HDIO4]
   connect_bd_net -net CTSExtensionMux_0_eeprom_scl_o [get_bd_pins CTSExtensionMux_0/eeprom_scl_o] [get_bd_pins cts_top_0/eeprom_scl_in]
   connect_bd_net -net CTSExtensionMux_0_eeprom_sda_o [get_bd_pins CTSExtensionMux_0/eeprom_sda_o] [get_bd_pins cts_top_0/eeprom_sda_in]
-  connect_bd_net -net CTSExtensionMux_0_si570_scl_o [get_bd_pins CTSExtensionMux_0/si570_scl_o] [get_bd_pins cts_top_0/si570_scl_in]
-  connect_bd_net -net CTSExtensionMux_0_si570_sda_o [get_bd_pins CTSExtensionMux_0/si570_sda_o] [get_bd_pins cts_top_0/si570_sda_in]
   connect_bd_net -net GTH_REFCLK0_n_1 [get_bd_ports GTH_REFCLK0_n] [get_bd_pins cts_top_0/wr_clk_sfp_125m_n_i]
   connect_bd_net -net GTH_REFCLK0_p_1 [get_bd_ports GTH_REFCLK0_p] [get_bd_pins cts_top_0/wr_clk_sfp_125m_p_i]
   connect_bd_net -net GTH_SFP_RX0_n_1 [get_bd_ports GTH_SFP_RX0_n] [get_bd_pins cts_top_0/sfp_rxn_i]
@@ -866,8 +860,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net cts_top_0_sfp_tx_disable_o [get_bd_pins cts_top_0/sfp_tx_disable_o] [get_bd_ports SFP_DISABLE0]
   connect_bd_net -net cts_top_0_sfp_txn_o [get_bd_pins cts_top_0/sfp_txn_o] [get_bd_ports GTH_SFP_TX0_n]
   connect_bd_net -net cts_top_0_sfp_txp_o [get_bd_pins cts_top_0/sfp_txp_o] [get_bd_ports GTH_SFP_TX0_p]
-  connect_bd_net -net cts_top_0_si570_scl_out [get_bd_pins cts_top_0/si570_scl_out] [get_bd_pins CTSExtensionMux_0/si570_scl_i]
-  connect_bd_net -net cts_top_0_si570_sda_out [get_bd_pins cts_top_0/si570_sda_out] [get_bd_pins CTSExtensionMux_0/si570_sda_i]
   connect_bd_net -net cts_top_0_uart_txd_o [get_bd_pins cts_top_0/uart_txd_o] [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_rxd]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_N [get_bd_pins LEMO_OUT_0/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT0_n]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_P [get_bd_pins LEMO_OUT_0/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT0_p]
@@ -881,8 +873,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_vector_logic_1_Res [get_bd_pins util_vector_logic_1/Res] [get_bd_pins util_vector_logic_0/Op2]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_gpio_o [get_bd_pins zynq_ultra_ps_e_0/emio_gpio_o] [get_bd_pins util_vector_logic_0/Op1]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_uart0_txd [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_txd] [get_bd_pins cts_top_0/uart_rxd_i]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins rst_ps8_0_99M/slowest_sync_clk]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins util_vector_logic_1/Op1] [get_bd_pins rst_ps8_0_99M/ext_reset_in]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins util_vector_logic_1/Op1]
 
   # Create address segments
 
