@@ -42,8 +42,8 @@ set_property PACKAGE_PIN F12    [get_ports P2_HDIO1]         ;# Bank  45 VCCO - 
 #set_property PACKAGE_PIN E2     [get_ports HP_SI5344_in_n]    ;# Bank  66 VCCO - som240_1_d5 - IO_L3N_T0L_N5_AD15N_66
 #set_property PACKAGE_PIN E1     [get_ports HP_SI5344_2_in_p]  ;# Bank  66 VCCO - som240_1_d7 - IO_L2P_T0L_N2_66
 #set_property PACKAGE_PIN D1     [get_ports HP_SI5344_2_in_n]  ;# Bank  66 VCCO - som240_1_d8 - IO_L2N_T0L_N3_66
-#set_property PACKAGE_PIN F10    [get_ports LED_FPGA_DS0]     ;# Bank  45 VCCO - som240_1_d17 - IO_L5N_HDGC_45
-#set_property PACKAGE_PIN J11    [get_ports LED_FPGA_DS1]     ;# Bank  45 VCCO - som240_1_d18 - IO_L1P_AD15P_45
+set_property PACKAGE_PIN F10    [get_ports LED_FPGA_DS0]     ;# Bank  45 VCCO - som240_1_d17 - IO_L5N_HDGC_45
+set_property PACKAGE_PIN J11    [get_ports LED_FPGA_DS1]     ;# Bank  45 VCCO - som240_1_d18 - IO_L1P_AD15P_45
 #set_property PACKAGE_PIN E10    [get_ports I2C_SDA_OSC2_HD]  ;# Bank  45 VCCO - som240_1_d20 - IO_L7P_HDGC_45
 #set_property PACKAGE_PIN D10    [get_ports I2C_SCK_OSC2_HD]  ;# Bank  45 VCCO - som240_1_d21 - IO_L7N_HDGC_45
 #set_property PACKAGE_PIN C11    [get_ports UWIRE_READBACK]   ;# Bank  45 VCCO - som240_1_d22 - IO_L9P_AD11P_45
@@ -188,6 +188,9 @@ set_property SLEW FAST           [get_ports P2_HDIO4]
 set_property IOSTANDARD LVCMOS18 [get_ports SFP_DISABLE0]
 set_property IOSTANDARD LVCMOS18 [get_ports SFP_MOD_ABS0]
 set_property IOSTANDARD LVCMOS18 [get_ports SFP_RX_LOS0]
+
+set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS0]
+set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS1]
 
 create_clock -period  8.000 -name SFP_125MHz        -waveform {0.000  4.000} [get_ports {GTH_REFCLK0_p}]
 create_clock -period  8.000 -name WR_MAIN           -waveform {0.000  4.000} [get_ports {SI5344_HP_GC_p}]

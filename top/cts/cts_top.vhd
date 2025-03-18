@@ -133,7 +133,7 @@ architecture Behavioral of cts_top is
     signal clk_10MHz_locked : std_logic;
     signal clk_10MHz : std_logic;
 
-    signal led_act, led_link, pps_p: std_logic;
+    signal led_act_buf, led_link_buf, pps_p_buf: std_logic;
 begin
     rst_n <= not ps_por_i;
 
@@ -182,9 +182,9 @@ begin
       uart_rxd_i   => uart_rxd_i,
       uart_txd_o   => uart_txd_o,
 
-      led_act_o  => led_act,
-      led_link_o => led_link,
-      pps_p_o    => pps_p
+      led_act_o  => led_act_buf,
+      led_link_o => led_link_buf,
+      pps_p_o    => pps_p_buf
     );
 
 
@@ -226,6 +226,8 @@ begin
       RST => rst_n                    -- 1-bit input: Reset
    );
 
+   clk_ref_10m_o <= clk_10MHz;
+
    sfp_scl_inst : IOBUF
    port map(
      IO => sfp_scl_b,
@@ -241,5 +243,20 @@ begin
      I => '0',
      T => sfp_sda_t);
    sfp_sda_t <= '0' when sfp_sda_out = '0' else '1';
+
+   act_led_inst : OBUF
+   port map (
+     I => led_act_buf,
+     O => led_act_o);
+
+   link_led_inst : OBUF
+   port map (
+     I => led_link_buf,
+     O => led_link_o);
+
+   pps_p_inst : OBUF
+   port map(
+     I => pps_p_buf,
+     O => pps_p_o);
 
 end Behavioral;
