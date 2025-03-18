@@ -99,14 +99,6 @@ entity cts_top is
     uart_txd_o             : out std_logic;
 
     ---------------------------------------------------------------------------
-    -- Helper clock I2C control
-    ---------------------------------------------------------------------------
-    si570_sda_in       : in  std_logic;
-    si570_sda_out      : out std_logic;
-    si570_scl_in       : in  std_logic;
-    si570_scl_out      : out std_logic;
-
-    ---------------------------------------------------------------------------
     -- Clock out
     ---------------------------------------------------------------------------
     clk_ref_10m_o       : out std_logic;
@@ -140,7 +132,7 @@ begin
     cmp_xwrc_board_cts : xwrc_board_cts
     generic map (
       g_simulation   => g_SIMULATION,
-      g_dpram_initf  => "/home/geniejhang/work/wr-cores/syn/cts/wrc_kr260_si570.bram")
+      g_dpram_initf  => "/home/geniejhang/work/wr-cores/syn/cts/wrc_cts.bram")
     port map (
       areset_n_i             => rst_n,
       wr_clk_helper_125m_p_i => wr_clk_helper_125m_p_i,
@@ -173,11 +165,6 @@ begin
       eeprom_sda_o => eeprom_sda_out,
       eeprom_scl_i => eeprom_scl_in,
       eeprom_scl_o => eeprom_scl_out,
-
-      si570_scl_o => si570_scl_out,
-      si570_scl_i => si570_scl_in,
-      si570_sda_o => si570_sda_out,
-      si570_sda_i => si570_sda_in,
 
       uart_rxd_i   => uart_rxd_i,
       uart_txd_o   => uart_txd_o,

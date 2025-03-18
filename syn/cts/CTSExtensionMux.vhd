@@ -38,10 +38,6 @@ entity CTSExtensionMux is
            eeprom_scl_o   : out STD_LOGIC;
            eeprom_sda_i   : in  STD_LOGIC;
            eeprom_sda_o   : out STD_LOGIC;
-           si570_scl_i    : in  STD_LOGIC;
-           si570_scl_o    : out STD_LOGIC;
-           si570_sda_i    : in  STD_LOGIC;
-           si570_sda_o    : out STD_LOGIC;
            A0_o           : out   STD_LOGIC;
            A1_o           : out   STD_LOGIC;
            DA_b           : inout STD_LOGIC;
@@ -55,9 +51,6 @@ architecture RTL of CTSExtensionMux is
     signal eeprom_scl_out, eeprom_scl_in : std_logic;
     signal eeprom_sda_out, eeprom_sda_in : std_logic;
         
-    signal si570_scl_out, si570_scl_in : std_logic;
-    signal si570_sda_out, si570_sda_in : std_logic;
-
     signal dacpll_off     : std_logic;
     signal DA_out, DA_in  : std_logic;
     signal DB_out, DB_in  : std_logic;
@@ -76,9 +69,8 @@ begin
       O  => DA_in,
       I  => DA_out,
       T  => DA_t);
-    DA_t <= '0' when eeprom_sda_out = '0' or si570_sda_out = '0' or dacpll_off = '1' else '1';
+    DA_t <= '0' when eeprom_sda_out = '0' or dacpll_off = '1' else '1';
     eeprom_sda_in <= DA_in;
-    si570_sda_in  <= DA_in;
 
     mux_db_inst : IOBUF
     port map (
@@ -86,8 +78,7 @@ begin
       O  => DB_in,
       I  => DB_out,
       T  => DB_t);
-    DB_t <= '0' when eeprom_scl_out = '0' or si570_scl_out = '0' or dacpll_off = '1' else '1';
+    DB_t <= '0' when eeprom_scl_out = '0' or dacpll_off = '1' else '1';
     eeprom_scl_in <= DB_in;
-    si570_scl_in  <= DB_in;
 
 end RTL;
