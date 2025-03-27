@@ -4,8 +4,8 @@ set_property PACKAGE_PIN A2     [get_ports LEMO_HP_OUT0_p]   ;# Bank  66 VCCO - 
 set_property PACKAGE_PIN A1     [get_ports LEMO_HP_OUT0_n]   ;# Bank  66 VCCO - som240_1_a4 - IO_L8N_T1L_N3_AD5N_66
 set_property PACKAGE_PIN C3     [get_ports SI5344_HP_GC_p]    ;# Bank  66 VCCO - som240_1_a6 - IO_L12P_T1U_N10_GC_66
 set_property PACKAGE_PIN C2     [get_ports SI5344_HP_GC_n]    ;# Bank  66 VCCO - som240_1_a7 - IO_L12N_T1U_N11_GC_66
-#set_property PACKAGE_PIN G8     [get_ports SI5344_2_HP_p]     ;# Bank  66 VCCO - som240_1_a12 - IO_L16P_T2U_N6_QBC_AD3P_66
-#set_property PACKAGE_PIN F7     [get_ports SI5344_2_HP_n]     ;# Bank  66 VCCO - som240_1_a13 - IO_L16N_T2U_N7_QBC_AD3N_66
+set_property PACKAGE_PIN G8     [get_ports SI5344_2_HP_p]     ;# Bank  66 VCCO - som240_1_a12 - IO_L16P_T2U_N6_QBC_AD3P_66
+set_property PACKAGE_PIN F7     [get_ports SI5344_2_HP_n]     ;# Bank  66 VCCO - som240_1_a13 - IO_L16N_T2U_N7_QBC_AD3N_66
 #set_property PACKAGE_PIN F11    [get_ports EEPROM_SCK0]      ;# Bank  45 VCCO - som240_1_a15 - IO_L6N_HDGC_45
 #set_property PACKAGE_PIN J12    [get_ports EEPROM_CSN0]      ;# Bank  45 VCCO - som240_1_a16 - IO_L4P_AD12P_45
 #set_property PACKAGE_PIN H12    [get_ports EEPROM_SI0]       ;# Bank  45 VCCO - som240_1_a17 - IO_L4N_AD12N_45
@@ -154,6 +154,8 @@ set_property IOSTANDARD LVDS [get_ports SI5344_HP_GC_p]
 set_property DIFF_TERM true  [get_ports SI5344_HP_GC_p]
 
 # Helper clock
+set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_p]
+set_property DIFF_TERM true  [get_ports SI5344_2_HP_p]
 set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_GC_p]
 set_property DIFF_TERM true  [get_ports SI5344_2_HP_GC_p]
 
