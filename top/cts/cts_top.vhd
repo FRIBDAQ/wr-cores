@@ -186,6 +186,7 @@ begin
       CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
       CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
       CLKOUT0_USE_FINE_PS => "FALSE",  -- Fine phase shift enable (TRUE/FALSE)
+
       COMPENSATION => "AUTO",          -- Clock input compensation
       DIVCLK_DIVIDE => 1,              -- Master division value
       IS_RST_INVERTED => '1',

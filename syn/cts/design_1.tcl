@@ -247,7 +247,6 @@ proc create_root_design { parentCell } {
   set LEMO_HDGC_IN2_n [ create_bd_port -dir I LEMO_HDGC_IN2_n ]
   set LEMO_HDGC_IN3_p [ create_bd_port -dir I LEMO_HDGC_IN3_p ]
   set LEMO_HDGC_IN3_n [ create_bd_port -dir I LEMO_HDGC_IN3_n ]
-  set P2_HDIO2 [ create_bd_port -dir IO P2_HDIO2 ]
   set GTH_SFP_RX0_p [ create_bd_port -dir I GTH_SFP_RX0_p ]
   set GTH_SFP_RX0_n [ create_bd_port -dir I GTH_SFP_RX0_n ]
   set GTH_SFP_TX0_p [ create_bd_port -dir O GTH_SFP_TX0_p ]
@@ -257,17 +256,20 @@ proc create_root_design { parentCell } {
   set SFP_RX_LOS0 [ create_bd_port -dir I SFP_RX_LOS0 ]
   set SFP_MOD_ABS0 [ create_bd_port -dir I SFP_MOD_ABS0 ]
   set SFP_DISABLE0 [ create_bd_port -dir O SFP_DISABLE0 ]
-  set P2_HDIO1 [ create_bd_port -dir O P2_HDIO1 ]
-  set P2_HDIO4 [ create_bd_port -dir O P2_HDIO4 ]
-  set P2_HDIO3 [ create_bd_port -dir IO P2_HDIO3 ]
   set SI5344_HP_GC_p [ create_bd_port -dir I -type clk -freq_hz 125000000 SI5344_HP_GC_p ]
   set SI5344_HP_GC_n [ create_bd_port -dir I -type clk -freq_hz 125000000 SI5344_HP_GC_n ]
   set SI5344_2_HP_GC_p [ create_bd_port -dir I -type clk -freq_hz 125000000 SI5344_2_HP_GC_p ]
   set SI5344_2_HP_GC_n [ create_bd_port -dir I SI5344_2_HP_GC_n ]
-  set P1_HPIO1_p [ create_bd_port -dir IO P1_HPIO1_p ]
-  set P1_HPIO1_n [ create_bd_port -dir IO P1_HPIO1_n ]
   set LED_FPGA_DS0 [ create_bd_port -dir O LED_FPGA_DS0 ]
   set LED_FPGA_DS1 [ create_bd_port -dir O LED_FPGA_DS1 ]
+  set P2_HDIO1 [ create_bd_port -dir IO P2_HDIO1 ]
+  set P2_HDIO4 [ create_bd_port -dir IO P2_HDIO4 ]
+  set P2_HDIO2 [ create_bd_port -dir O P2_HDIO2 ]
+  set P2_HDIO3 [ create_bd_port -dir O P2_HDIO3 ]
+  set SI5344_2_HP_p [ create_bd_port -dir I SI5344_2_HP_p ]
+  set SI5344_2_HP_n [ create_bd_port -dir I SI5344_2_HP_n ]
+  set P1_HPIO1_n [ create_bd_port -dir IO P1_HPIO1_n ]
+  set P1_HPIO1_p [ create_bd_port -dir IO P1_HPIO1_p ]
 
   # Create instance: zynq_ultra_ps_e_0, and set properties
   set zynq_ultra_ps_e_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0 ]
@@ -321,11 +323,21 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_26_POLARITY {Default} \
     CONFIG.PSU_MIO_26_SLEW {fast} \
     CONFIG.PSU_MIO_27_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_27_INPUT_TYPE {cmos} \
+    CONFIG.PSU_MIO_27_POLARITY {Default} \
     CONFIG.PSU_MIO_27_SLEW {slow} \
+    CONFIG.PSU_MIO_28_DRIVE_STRENGTH {12} \
+    CONFIG.PSU_MIO_28_POLARITY {Default} \
+    CONFIG.PSU_MIO_28_SLEW {fast} \
     CONFIG.PSU_MIO_29_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_29_INPUT_TYPE {cmos} \
+    CONFIG.PSU_MIO_29_POLARITY {Default} \
     CONFIG.PSU_MIO_29_SLEW {slow} \
     CONFIG.PSU_MIO_2_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_2_SLEW {slow} \
+    CONFIG.PSU_MIO_30_DRIVE_STRENGTH {12} \
+    CONFIG.PSU_MIO_30_POLARITY {Default} \
+    CONFIG.PSU_MIO_30_SLEW {fast} \
     CONFIG.PSU_MIO_32_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_32_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_32_POLARITY {Default} \
@@ -404,9 +416,10 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_9_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_9_SLEW {slow} \
     CONFIG.PSU_MIO_TREE_PERIPHERALS {Quad SPI Flash#Quad SPI Flash#Quad SPI Flash#Quad SPI Flash#Quad SPI Flash#Quad SPI Flash#SPI 1#GPIO0 MIO#GPIO0 MIO#SPI 1#SPI 1#SPI 1#GPIO0 MIO#SD 0#SD 0#SD 0#SD 0#SD\
-0#SD 0#SD 0#SD 0#SD 0#SD 0#SD 0#I2C 1#I2C 1#GPIO1 MIO#DPAUX#DPAUX#DPAUX#DPAUX#PMU GPI 5#GPIO1 MIO#GPIO1 MIO#GPIO1 MIO#PMU GPO 3#UART 1#UART 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem\
-1#Gem 1#MDIO 1#MDIO 1#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB0 Reset#USB1 Reset} \
-    CONFIG.PSU_MIO_TREE_SIGNALS {sclk_out#miso_mo1#mo2#mo3#mosi_mi0#n_ss_out#sclk_out#gpio0[7]#gpio0[8]#n_ss_out[0]#miso#mosi#gpio0[12]#sdio0_data_out[0]#sdio0_data_out[1]#sdio0_data_out[2]#sdio0_data_out[3]#sdio0_data_out[4]#sdio0_data_out[5]#sdio0_data_out[6]#sdio0_data_out[7]#sdio0_cmd_out#sdio0_clk_out#sdio0_bus_pow#scl_out#sda_out#gpio1[26]#dp_aux_data_out#dp_hot_plug_detect#dp_aux_data_oe#dp_aux_data_in#gpi[5]#gpio1[32]#gpio1[33]#gpio1[34]#gpo[3]#txd#rxd#rgmii_tx_clk#rgmii_txd[0]#rgmii_txd[1]#rgmii_txd[2]#rgmii_txd[3]#rgmii_tx_ctl#rgmii_rx_clk#rgmii_rxd[0]#rgmii_rxd[1]#rgmii_rxd[2]#rgmii_rxd[3]#rgmii_rx_ctl#gem1_mdc#gem1_mdio_out#ulpi_clk_in#ulpi_dir#ulpi_tx_data[2]#ulpi_nxt#ulpi_tx_data[0]#ulpi_tx_data[1]#ulpi_stp#ulpi_tx_data[3]#ulpi_tx_data[4]#ulpi_tx_data[5]#ulpi_tx_data[6]#ulpi_tx_data[7]#ulpi_clk_in#ulpi_dir#ulpi_tx_data[2]#ulpi_nxt#ulpi_tx_data[0]#ulpi_tx_data[1]#ulpi_stp#ulpi_tx_data[3]#ulpi_tx_data[4]#ulpi_tx_data[5]#ulpi_tx_data[6]#ulpi_tx_data[7]#reset#reset}\
+0#SD 0#SD 0#SD 0#SD 0#SD 0#SD 0#I2C 1#I2C 1#GPIO1 MIO#GPIO1 MIO#GPIO1 MIO#GPIO1 MIO#GPIO1 MIO#PMU GPI 5#GPIO1 MIO#GPIO1 MIO#GPIO1 MIO#PMU GPO 3#UART 1#UART 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem 1#Gem\
+1#Gem 1#Gem 1#Gem 1#Gem 1#MDIO 1#MDIO 1#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 0#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB 1#USB0 Reset#USB1 Reset}\
+\
+    CONFIG.PSU_MIO_TREE_SIGNALS {sclk_out#miso_mo1#mo2#mo3#mosi_mi0#n_ss_out#sclk_out#gpio0[7]#gpio0[8]#n_ss_out[0]#miso#mosi#gpio0[12]#sdio0_data_out[0]#sdio0_data_out[1]#sdio0_data_out[2]#sdio0_data_out[3]#sdio0_data_out[4]#sdio0_data_out[5]#sdio0_data_out[6]#sdio0_data_out[7]#sdio0_cmd_out#sdio0_clk_out#sdio0_bus_pow#scl_out#sda_out#gpio1[26]#gpio1[27]#gpio1[28]#gpio1[29]#gpio1[30]#gpi[5]#gpio1[32]#gpio1[33]#gpio1[34]#gpo[3]#txd#rxd#rgmii_tx_clk#rgmii_txd[0]#rgmii_txd[1]#rgmii_txd[2]#rgmii_txd[3]#rgmii_tx_ctl#rgmii_rx_clk#rgmii_rxd[0]#rgmii_rxd[1]#rgmii_rxd[2]#rgmii_rxd[3]#rgmii_rx_ctl#gem1_mdc#gem1_mdio_out#ulpi_clk_in#ulpi_dir#ulpi_tx_data[2]#ulpi_nxt#ulpi_tx_data[0]#ulpi_tx_data[1]#ulpi_stp#ulpi_tx_data[3]#ulpi_tx_data[4]#ulpi_tx_data[5]#ulpi_tx_data[6]#ulpi_tx_data[7]#ulpi_clk_in#ulpi_dir#ulpi_tx_data[2]#ulpi_nxt#ulpi_tx_data[0]#ulpi_tx_data[1]#ulpi_stp#ulpi_tx_data[3]#ulpi_tx_data[4]#ulpi_tx_data[5]#ulpi_tx_data[6]#ulpi_tx_data[7]#reset#reset}\
 \
     CONFIG.PSU_SD0_INTERNAL_BUS_WIDTH {8} \
     CONFIG.PSU_USB3__DUAL_CLOCK_ENABLE {1} \
@@ -472,6 +485,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__CRL_APB__GEM3_REF_CTRL__SRCSEL {IOPLL} \
     CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__ACT_FREQMHZ {249.997498} \
     CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__SRCSEL {IOPLL} \
+    CONFIG.PSU__CRL_APB__I2C0_REF_CTRL__ACT_FREQMHZ {99.999001} \
     CONFIG.PSU__CRL_APB__I2C0_REF_CTRL__FREQMHZ {100} \
     CONFIG.PSU__CRL_APB__I2C0_REF_CTRL__SRCSEL {IOPLL} \
     CONFIG.PSU__CRL_APB__I2C1_REF_CTRL__ACT_FREQMHZ {99.999001} \
@@ -526,6 +540,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__CRL_APB__USB3_DUAL_REF_CTRL__SRCSEL {IOPLL} \
     CONFIG.PSU__CRL_APB__USB3__ENABLE {1} \
     CONFIG.PSU__CSUPMU__PERIPHERAL__VALID {1} \
+    CONFIG.PSU__CSU__CSU_TAMPER_1__ENABLE {0} \
     CONFIG.PSU__DDRC__BG_ADDR_COUNT {1} \
     CONFIG.PSU__DDRC__BRC_MAPPING {ROW_BANK_COL} \
     CONFIG.PSU__DDRC__BUS_WIDTH {64 Bit} \
@@ -584,6 +599,8 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__GPIO0_MIO__PERIPHERAL__ENABLE {1} \
     CONFIG.PSU__GPIO1_MIO__IO {MIO 26 .. 51} \
     CONFIG.PSU__GPIO1_MIO__PERIPHERAL__ENABLE {1} \
+    CONFIG.PSU__GPIO2_MIO__IO {MIO 52 .. 77} \
+    CONFIG.PSU__GPIO2_MIO__PERIPHERAL__ENABLE {1} \
     CONFIG.PSU__GPIO_EMIO_WIDTH {1} \
     CONFIG.PSU__GPIO_EMIO__PERIPHERAL__ENABLE {1} \
     CONFIG.PSU__GPIO_EMIO__PERIPHERAL__IO {1} \
@@ -819,9 +836,12 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $util_vector_logic_1
 
 
+  # Create instance: util_ds_buf_0, and set properties
+  set util_ds_buf_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0 ]
+
   # Create port connections
-  connect_bd_net -net CTSExtensionMux_0_A0_o [get_bd_pins CTSExtensionMux_0/A0_o] [get_bd_ports P2_HDIO1]
-  connect_bd_net -net CTSExtensionMux_0_A1_o [get_bd_pins CTSExtensionMux_0/A1_o] [get_bd_ports P2_HDIO4]
+  connect_bd_net -net CTSExtensionMux_0_A0_o [get_bd_pins CTSExtensionMux_0/A0_o] [get_bd_ports P2_HDIO2]
+  connect_bd_net -net CTSExtensionMux_0_A1_o [get_bd_pins CTSExtensionMux_0/A1_o] [get_bd_ports P2_HDIO3]
   connect_bd_net -net CTSExtensionMux_0_eeprom_scl_o [get_bd_pins CTSExtensionMux_0/eeprom_scl_o] [get_bd_pins cts_top_0/eeprom_scl_in]
   connect_bd_net -net CTSExtensionMux_0_eeprom_sda_o [get_bd_pins CTSExtensionMux_0/eeprom_sda_o] [get_bd_pins cts_top_0/eeprom_sda_in]
   connect_bd_net -net GTH_REFCLK0_n_1 [get_bd_ports GTH_REFCLK0_n] [get_bd_pins cts_top_0/wr_clk_sfp_125m_n_i]
@@ -836,22 +856,24 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net LEMO_HDGC_IN2_p_1 [get_bd_ports LEMO_HDGC_IN2_p] [get_bd_pins LEMO_IN_2/IBUF_DS_P]
   connect_bd_net -net LEMO_HDGC_IN3_n_1 [get_bd_ports LEMO_HDGC_IN3_n] [get_bd_pins LEMO_IN_3/IBUF_DS_N]
   connect_bd_net -net LEMO_HDGC_IN3_p_1 [get_bd_ports LEMO_HDGC_IN3_p] [get_bd_pins LEMO_IN_3/IBUF_DS_P]
-  connect_bd_net -net LEMO_IN_1_IBUF_OUT [get_bd_pins LEMO_IN_1/IBUF_OUT] [get_bd_pins LEMO_OUT_3/OBUF_IN] [get_bd_pins LEMO_OUT_2/OBUF_IN]
+  connect_bd_net -net LEMO_IN_3_IBUF_OUT [get_bd_pins LEMO_IN_3/IBUF_OUT] [get_bd_pins LEMO_OUT_3/OBUF_IN]
   connect_bd_net -net Net [get_bd_ports P1_HPIO1_p] [get_bd_pins cts_top_0/sfp_sda_b]
   connect_bd_net -net Net1 [get_bd_ports P1_HPIO1_n] [get_bd_pins cts_top_0/sfp_scl_b]
-  connect_bd_net -net Net2 [get_bd_ports P2_HDIO2] [get_bd_pins CTSExtensionMux_0/DA_b]
-  connect_bd_net -net Net3 [get_bd_ports P2_HDIO3] [get_bd_pins CTSExtensionMux_0/DB_b]
+  connect_bd_net -net Net2 [get_bd_ports P2_HDIO1] [get_bd_pins CTSExtensionMux_0/DA_b]
+  connect_bd_net -net Net3 [get_bd_ports P2_HDIO4] [get_bd_pins CTSExtensionMux_0/DB_b]
   connect_bd_net -net SFP_MOD_ABS0_1 [get_bd_ports SFP_MOD_ABS0] [get_bd_pins cts_top_0/sfp_det_i]
   connect_bd_net -net SFP_RX_LOS0_1 [get_bd_ports SFP_RX_LOS0] [get_bd_pins cts_top_0/sfp_los_i]
   connect_bd_net -net SI5344_2_HP_GC_n_1 [get_bd_ports SI5344_2_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_helper_125m_n_i]
   connect_bd_net -net SI5344_2_HP_GC_p_1 [get_bd_ports SI5344_2_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_helper_125m_p_i]
+  connect_bd_net -net SI5344_2_HP_n_1 [get_bd_ports SI5344_2_HP_n] [get_bd_pins util_ds_buf_0/IBUF_DS_N]
+  connect_bd_net -net SI5344_2_HP_p_1 [get_bd_ports SI5344_2_HP_p] [get_bd_pins util_ds_buf_0/IBUF_DS_P]
   connect_bd_net -net SI5344_HP_GC_n_1 [get_bd_ports SI5344_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_main_125m_n_i]
   connect_bd_net -net SI5344_HP_GC_p_1 [get_bd_ports SI5344_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_main_125m_p_i]
+  connect_bd_net -net cts_top_0_clk_ref_10m_o [get_bd_pins cts_top_0/clk_ref_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN] [get_bd_pins CTSExtensionMux_0/clk_10MHz_i]
   connect_bd_net -net cts_top_0_eeprom_scl_out [get_bd_pins cts_top_0/eeprom_scl_out] [get_bd_pins CTSExtensionMux_0/eeprom_scl_i]
   connect_bd_net -net cts_top_0_eeprom_sda_out [get_bd_pins cts_top_0/eeprom_sda_out] [get_bd_pins CTSExtensionMux_0/eeprom_sda_i]
   connect_bd_net -net cts_top_0_led_act_o [get_bd_pins cts_top_0/led_act_o] [get_bd_ports LED_FPGA_DS1]
   connect_bd_net -net cts_top_0_led_link_o [get_bd_pins cts_top_0/led_link_o] [get_bd_ports LED_FPGA_DS0]
-  connect_bd_net -net cts_top_0_lemo0_o [get_bd_pins cts_top_0/clk_ref_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN]
   connect_bd_net -net cts_top_0_pll20dac_cs_n_o [get_bd_pins cts_top_0/pll20dac_cs_n_o] [get_bd_pins CTSExtensionMux_0/A1_i]
   connect_bd_net -net cts_top_0_pll25dac_cs_n_o [get_bd_pins cts_top_0/pll25dac_cs_n_o] [get_bd_pins CTSExtensionMux_0/A0_i]
   connect_bd_net -net cts_top_0_plldac_din_o [get_bd_pins cts_top_0/plldac_din_o] [get_bd_pins CTSExtensionMux_0/plldac_din_i]
@@ -861,6 +883,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net cts_top_0_sfp_txn_o [get_bd_pins cts_top_0/sfp_txn_o] [get_bd_ports GTH_SFP_TX0_n]
   connect_bd_net -net cts_top_0_sfp_txp_o [get_bd_pins cts_top_0/sfp_txp_o] [get_bd_ports GTH_SFP_TX0_p]
   connect_bd_net -net cts_top_0_uart_txd_o [get_bd_pins cts_top_0/uart_txd_o] [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_rxd]
+  connect_bd_net -net util_ds_buf_0_IBUF_OUT [get_bd_pins util_ds_buf_0/IBUF_OUT] [get_bd_pins LEMO_OUT_2/OBUF_IN]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_N [get_bd_pins LEMO_OUT_0/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT0_n]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_P [get_bd_pins LEMO_OUT_0/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT0_p]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_N [get_bd_pins LEMO_OUT_1/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT1_n]
@@ -881,7 +904,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -893,4 +915,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
