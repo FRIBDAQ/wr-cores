@@ -87,8 +87,10 @@ entity cts_top is
     sfp_rxp_i              : in  std_logic;
     sfp_rxn_i              : in  std_logic;
     sfp_det_i              : in  std_logic;
-    sfp_sda_b              : inout std_logic;
-    sfp_scl_b              : inout std_logic;
+    sfp_sda_in             : in  std_logic;
+    sfp_sda_out            : out std_logic;
+    sfp_scl_in             : in  std_logic;
+    sfp_scl_out            : out std_logic;
     sfp_tx_disable_o       : out std_logic;
     sfp_los_i              : in  std_logic;
 
@@ -116,10 +118,6 @@ architecture Behavioral of cts_top is
     signal rst_n: std_logic;
     signal clk_sys_62m5 : std_logic;
     signal clk_ref_125m : std_logic;
-
-    signal sfp_scl_out, sfp_scl_in : std_logic;
-    signal sfp_sda_out, sfp_sda_in : std_logic;
-    signal sfp_scl_t, sfp_sda_t : std_logic;
 
     signal clk_10MHz_fb : std_logic;
     signal clk_10MHz_locked : std_logic;
@@ -215,22 +213,6 @@ begin
    );
 
    clk_ref_10m_o <= clk_10MHz;
-
-   sfp_scl_inst : IOBUF
-   port map(
-     IO => sfp_scl_b,
-     O => sfp_scl_in,
-     I => '0',
-     T => sfp_scl_t);
-   sfp_scl_t <= '0' when sfp_scl_out = '0' else '1';
-
-   sfp_sda_inst : IOBUF
-   port map(
-     IO => sfp_sda_b,
-     O => sfp_sda_in,
-     I => '0',
-     T => sfp_sda_t);
-   sfp_sda_t <= '0' when sfp_sda_out = '0' else '1';
 
    act_led_inst : OBUF
    port map (

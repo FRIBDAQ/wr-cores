@@ -104,8 +104,8 @@ set_property PACKAGE_PIN Y5     [get_ports GTH_REFCLK0_n]    ;# Bank 224 - som24
 #set_property PACKAGE_PIN K3     [get_ports HP_SFP_RX0_n]     ;# Bank  65 VCCO - som240_2_c12 - IO_L11N_T1U_N9_GC_65
 #set_property PACKAGE_PIN N9     [get_ports LIO2_p]           ;# Bank  65 VCCO - som240_2_c14 - IO_L17P_T2U_N8_AD10P_65
 #set_property PACKAGE_PIN N8     [get_ports LIO2_n]           ;# Bank  65 VCCO - som240_2_c15 - IO_L17N_T2U_N9_AD10N_65
-set_property PACKAGE_PIN U8     [get_ports P1_HPIO1_p]       ;# Bank  65 VCCO - som240_2_c17 - IO_L3P_T0L_N4_AD15P_65
-set_property PACKAGE_PIN V8     [get_ports P1_HPIO1_n]       ;# Bank  65 VCCO - som240_2_c18 - IO_L3N_T0L_N5_AD15N_65
+#set_property PACKAGE_PIN U8     [get_ports P1_HPIO1_p]       ;# Bank  65 VCCO - som240_2_c17 - IO_L3P_T0L_N4_AD15P_65
+#set_property PACKAGE_PIN V8     [get_ports P1_HPIO1_n]       ;# Bank  65 VCCO - som240_2_c18 - IO_L3N_T0L_N5_AD15N_65
 #set_property PACKAGE_PIN P7     [get_ports P1_HPIO2_p]       ;# Bank  65 VCCO - som240_2_c20 - IO_L16P_T2U_N6_QBC_AD3P_65
 #set_property PACKAGE_PIN P6     [get_ports P1_HPIO2_n]       ;# Bank  65 VCCO - som240_2_c21 - IO_L16N_T2U_N7_QBC_AD3N_65
 #set_property PACKAGE_PIN AD5    [get_ports HP_SFP_RX1_p]     ;# Bank  64 VCCO - som240_2_c29 - IO_L13P_T2L_N0_GC_QBC_64
@@ -173,10 +173,10 @@ set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT1_p]
 set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT2_p]
 set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT3_p]
 
-set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_p]
-set_property SLEW FAST           [get_ports P1_HPIO1_p]
-set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_n]
-set_property SLEW FAST           [get_ports P1_HPIO1_n]
+#set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_p]
+#set_property PULLUP true         [get_ports P1_HPIO1_p]
+#set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_n]
+#set_property PULLUP true         [get_ports P1_HPIO1_n]
 
 set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO1]
 set_property SLEW FAST           [get_ports P2_HDIO1]
