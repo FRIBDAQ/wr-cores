@@ -545,7 +545,9 @@ begin  -- architecture struct
       sclk_divsel_i => "001",
       dac_cs_n_o(0) => dac_dmtd_cs_n_o,
       dac_sclk_o    => dac_dmtd_sclk_o,
-      dac_sdata_o   => dac_dmtd_din_o);
+      dac_sdata_o   => dac_dmtd_din_o,
+      dac_sel_i     => "000");
+
 
   cmp_refclk_dac : gc_serial_dac
     generic map (
@@ -562,7 +564,8 @@ begin  -- architecture struct
       sclk_divsel_i => "001",
       dac_cs_n_o(0) => dac_refclk_cs_n_o,
       dac_sclk_o    => dac_refclk_sclk_o,
-      dac_sdata_o   => dac_refclk_din_o);
+      dac_sdata_o   => dac_refclk_din_o,
+      dac_sel_i     => "000");
 
   -----------------------------------------------------------------------------
   -- The WR PTP core with optional fabric interface attached
