@@ -133,6 +133,8 @@ entity xwr_core is
     clk_ext_i : in std_logic := '0';
 
     --  External clocks (multipled to 125Mhz), only if g_with_external_clock_input
+    --  This clock (ideally the 10Mhz multiplied through a PLL) is used to
+    --  discipline the main clock in grand master mode.
     clk_ext_mul_i : in std_logic := '0';
     --  Status of the external clocks (for software, not used in HDL)
     clk_ext_mul_locked_i : in std_logic := '1';
