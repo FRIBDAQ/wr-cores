@@ -57,7 +57,7 @@ peripheral {
       prefix = "ECCR";
 
   field {
-         name = "Enable External Clock PLL";
+         name = "External Clock channel tagging enable";
          prefix = "EXT_EN";
          type = BIT;
          access_bus = READ_WRITE;

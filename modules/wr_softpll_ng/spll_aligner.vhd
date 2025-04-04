@@ -62,6 +62,7 @@ entity spll_aligner is
     --  New samples of the counters are provided at g_sample_rate Hz
     --  When a new sample is available the valid signal is set, which
     --  must be reset/acknowledged by the ack.
+    --  FIXME: cref_o is not used by software and could be removed
     sample_cref_o  : out std_logic_vector(g_counter_width-1 downto 0);
     sample_cin_o   : out std_logic_vector(g_counter_width-1 downto 0);
     sample_valid_o : out std_logic;
