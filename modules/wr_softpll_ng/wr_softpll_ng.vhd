@@ -171,11 +171,7 @@ architecture rtl of wr_softpll_ng is
 
   constant c_DBG_FIFO_COALESCE  : integer := 100;
 
-  function f_num_total_channels
-    return integer is
-  begin
-    return g_num_ref_inputs + g_num_outputs + g_num_exts;
-  end f_num_total_channels;
+  constant c_num_total_channels : natural := g_num_ref_inputs + g_num_outputs + g_num_exts;
 
   function f_pick (
     cond     : boolean;
@@ -212,10 +208,10 @@ architecture rtl of wr_softpll_ng is
   end resize;
 
 
-  type t_tag_array is array (0 to f_num_total_channels-1) of std_logic_vector(g_tag_bits-1 downto 0);
+  type t_tag_array is array (0 to c_num_total_channels-1) of std_logic_vector(g_tag_bits-1 downto 0);
 
   signal tags, tags_masked                          : t_tag_array;
-  signal tags_grant_p, tags_p, tags_req, tags_grant : std_logic_vector(f_num_total_channels-1 downto 0);
+  signal tags_grant_p, tags_p, tags_req, tags_grant : std_logic_vector(c_num_total_channels-1 downto 0);
   signal tag_muxed                                  : std_logic_vector(g_tag_bits-1 downto 0);
   signal tag_src, tag_src_pre                       : std_logic_vector (5 downto 0);
   signal tag_valid, tag_valid_pre                   : std_logic;
@@ -612,7 +608,7 @@ begin  -- rtl
         tag_valid     <= '0';
       else
         
-        for i in 0 to f_num_total_channels-1 loop
+        for i in 0 to c_num_total_channels-1 loop
           if(tags_grant_p(i) = '1') then
             tags_masked(i) <= tags(i);
           else
@@ -633,7 +629,7 @@ begin  -- rtl
 
         muxed := (others => '0');
 
-        for i in 0 to f_num_total_channels-1 loop
+        for i in 0 to c_num_total_channels-1 loop
           muxed := muxed or tags_masked(i);
         end loop;
 
