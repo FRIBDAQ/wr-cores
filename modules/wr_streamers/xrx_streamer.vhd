@@ -173,18 +173,16 @@ architecture rtl of xrx_streamer is
   signal state : t_rx_state;
 
   signal ser_count : unsigned(7 downto 0);
-  signal seq_no, seq_new,count  : unsigned(14 downto 0);
+  signal seq_no,count  : unsigned(14 downto 0);
 
   signal crc_match, crc_en, crc_en_masked, crc_restart : std_logic;
 
   signal detect_escapes, is_escape : std_logic;
-  signal rx_pending                : std_logic;
 
   signal pack_data, fifo_data : std_logic_vector(g_data_width-1 downto 0);
 
   signal fifo_drop, fifo_accept, fifo_accept_d0, fifo_dvalid, fifo_full, fifo_dreq : std_logic;
   signal fifo_sync, fifo_last, frames_lost, blocks_lost      : std_logic;
-  signal fifo_dout, fifo_din                                 : std_logic_vector(g_data_width + 1 + 28 + 1 downto 0);
 
   --attribute mark_debug                : string;
   --attribute mark_debug of fifo_drop   : signal is "true";
@@ -196,7 +194,6 @@ architecture rtl of xrx_streamer is
   --attribute mark_debug of fifo_dreq   : signal is "true";
 
   signal fifo_target_ts_en : std_logic;
-  signal fifo_target_ts    : std_logic_vector(28 downto 0);
 
   signal pending_write, fab_dvalid_pre : std_logic;
 
@@ -206,12 +203,10 @@ architecture rtl of xrx_streamer is
   signal rx_tag_valid_stored          : std_logic;
 
   signal got_next_subframe : std_logic;
-  signal is_frame_seq_id : std_logic;
   signal word_count                                                        : unsigned(11 downto 0);
   signal sync_seq_no : std_logic;
 
   signal rx_latency         : unsigned(27 downto 0);
-  signal rx_latency_stored  : unsigned(27 downto 0);
   signal rx_latency_valid   : std_logic;
   signal is_vlan            : std_logic;
 
@@ -266,7 +261,7 @@ begin  -- rtl
 
   crc_en_masked <= crc_en and fsm_in.dvalid;
 
-  U_Fabric_Sink : xwb_fabric_sink
+  U_Fabric_Sink : entity work.xwb_fabric_sink
     port map (
       clk_i     => clk_sys_i,
       rst_n_i   => rst_int_n,
