@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the EN-SMM PXIe-FMC board.
--- https://gitlab.com/ohwr/project/pxie-fmc
+-- https://gitlab.com/ohwr/project/pxie-fmc (obsolete)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2020 CERN
 -------------------------------------------------------------------------------

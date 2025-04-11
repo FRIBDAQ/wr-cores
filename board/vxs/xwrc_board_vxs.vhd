@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the VXS board.
--- https://gitlab.com/ohwr/project/vxs/
+-- https://gitlab.com/ohwr/project/vxs/ (obsolete)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2018 CERN
 -------------------------------------------------------------------------------

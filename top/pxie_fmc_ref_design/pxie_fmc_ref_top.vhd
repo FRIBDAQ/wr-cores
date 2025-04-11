@@ -20,7 +20,7 @@
 -- * provide a reference top HDL file showing how the WRPC can be instantiated
 --   in HDL projects.
 --
--- PXIe-FMC: https://gitlab.com/ohwr/project/pxie-fmc
+-- PXIe-FMC: https://gitlab.com/ohwr/project/pxie-fmc (obsolete)
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2020 CERN

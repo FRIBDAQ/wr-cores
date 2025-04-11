@@ -5,10 +5,10 @@
 -- Monday, May 13 2019
 --
 -- ../../ip_cores/general-cores/tools/sdb_desc_gen.tcl is part of OHWR general-cores:
--- https://gitlab.com/ohwr/project/general-cores/wiki
+-- https://gitlab.com/ohwr/project/general-cores/-/wikis
 --
 -- For more information on SDB meta information, see also:
--- https://gitlab.com/ohwr/project/sdb/wiki
+-- https://gitlab.com/ohwr/project/sdb/-/wikis
 --------------------------------------------------------------------------------
 
 library ieee;

@@ -9,7 +9,7 @@
 -- needed to operate the core on the VXS board.
 -- Version with no VHDL records on the top-level (mainly for Verilog
 -- instantiation).
--- https://gitlab.com/ohwr/project/vxs/
+-- https://gitlab.com/ohwr/project/vxs/ (obsolete)
 -------------------------------------------------------------------------------
 -- Copyright (c) 2018 CERN
 -------------------------------------------------------------------------------
