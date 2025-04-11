@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- CERN
 -- wr-cores/timing
--- https://www.ohwr.org/project/wr-cores
+-- https://gitlab.com/ohwr/project/wr-cores
 --------------------------------------------------------------------------------
 --
 -- unit name  : pulse_stamper_sync.vhd

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : White Rabbit NIC wrapper
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wr_nic_wrapper.vhd
 -- Company    : Seven Solutions

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for CLBv4
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wr_clbv4_pkg.vhd
 -- Author(s)  : Pascal Bos

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for clbv3
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wrc_board_clbv3.vhd
 -- Author(s)  : Peter Jansweijer <peterj@nikhef.nl>

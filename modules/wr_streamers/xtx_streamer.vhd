@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Reception streamer
 -- Project    : WR streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : xtx_streamer.vhd
 -- Author     : Tomasz Wlostowski

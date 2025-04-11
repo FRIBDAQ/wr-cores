@@ -5,10 +5,10 @@
 -- Monday, May 13 2019
 --
 -- ../../ip_cores/general-cores/tools/sdb_desc_gen.tcl is part of OHWR general-cores:
--- https://www.ohwr.org/projects/general-cores/wiki
+-- https://gitlab.com/ohwr/project/general-cores/wiki
 --
 -- For more information on SDB meta information, see also:
--- https://www.ohwr.org/projects/sdb/wiki
+-- https://gitlab.com/ohwr/project/sdb/wiki
 --------------------------------------------------------------------------------
 
 library ieee;
@@ -26,6 +26,6 @@ package synthesis_descriptor is
     syn_username     => "Maciej Lipinski");
 
   constant c_sdb_repo_url : t_sdb_repo_url := (
-    repo_url => "https://ohwr.org/project/wr-cores.git                          ");
+    repo_url => "https://gitlab.com/ohwr/project/wr-cores.git                          ");
 
 end package synthesis_descriptor;

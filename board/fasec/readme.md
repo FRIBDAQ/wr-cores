@@ -1,6 +1,6 @@
 # FASEC board
 
-More info on this Zynq-7000 board at https://ohwr.org/project/fasec/wikis/home
+More info on this Zynq-7000 board at https://gitlab.com/ohwr/project/fasec/-/wikis/home
 
 ## wrc_board_fasec IP
 

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Platform-dependent components needed for WR PTP Core on Xilinx
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wrc_platform_xilinx.vhd
 -- Author     : Maciej Lipinski, Grzegorz Daniluk, Dimitrios Lampridis

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Wrapper for xrx_streamer
 -- Project    : WR Streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : rx_streamer.vhd
 -- Author     : Tomasz Wlostowski <tomasz.wlostowski@cern.ch>

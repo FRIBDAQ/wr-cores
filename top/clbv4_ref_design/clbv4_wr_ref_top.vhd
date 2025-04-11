@@ -2,7 +2,7 @@
 -- Title      : WRPC reference design for KM3NeT Central Logic Board (CLBv4)
 --            : based on kintex-7
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : clbv4_wr_ref_top.vhd
 -- Author(s)  : Pascal Bos <bosp@nikhef.nl>

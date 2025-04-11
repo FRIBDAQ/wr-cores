@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WR-NIC Wrapper package
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wr_nic_wrapper_pkg.vhd
 -- Company    : Seven Solutions

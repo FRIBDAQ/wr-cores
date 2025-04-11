@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for SPEC
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : xwrc_board_spec.vhd
 -- Author(s)  : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
@@ -11,7 +11,7 @@
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the SPEC board.
--- http://www.ohwr.org/projects/spec/
+-- https://gitlab.com/ohwr/project/spec/-/wikis/home
 -------------------------------------------------------------------------------
 -- Copyright (c) 2017 CERN
 -------------------------------------------------------------------------------

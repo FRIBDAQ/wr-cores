@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for PXIe-FMC Carrier
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : xwrc_board_pxie_fmc.vhd
 -- Author(s)  : Greg Daniluk <grzegorz.daniluk@cern.ch>
@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the EN-SMM PXIe-FMC board.
--- https://ohwr.org/project/pxie-fmc
+-- https://gitlab.com/ohwr/project/pxie-fmc
 -------------------------------------------------------------------------------
 -- Copyright (c) 2020 CERN
 -------------------------------------------------------------------------------

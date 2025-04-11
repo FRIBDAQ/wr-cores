@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Common WRPC Wrapper
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : xwrc_board_common.vhd
 -- Company    : CERN (BE-CO-HT)

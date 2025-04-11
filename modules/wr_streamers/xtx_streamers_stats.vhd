@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WR tx streamers statistics
 -- Project    : WR streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : xrtx_streamers_stats.vhd
 -- Author     : Maciej Lipinski

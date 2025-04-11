@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for FASEC
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wrc_board_fasec.vhd
 -- Author(s)  : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
@@ -14,7 +14,7 @@
 -- needed to operate the core on the FASEC board.
 -- Version with no VHDL records on the top-level (mainly for Verilog
 -- instantiation).
--- http://www.ohwr.org/projects/fasec/
+-- https://gitlab.com/ohwr/project/fasec/
 -------------------------------------------------------------------------------
 -- Copyright (c) 2017 CERN
 -------------------------------------------------------------------------------

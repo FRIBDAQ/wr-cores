@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WR Streamers demo
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : spec_top.vhd
 -- Author(s)  : Tomasz Wlostowski (re-done by Maciej Lipinski, based on spec_top)

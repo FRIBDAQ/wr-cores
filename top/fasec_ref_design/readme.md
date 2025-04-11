@@ -1,6 +1,6 @@
 # FASEC Reference design
 
-More info on this board at https://ohwr.org/project/fasec/wikis/home
+More info on this board at https://gitlab.com/ohwr/project/fasec/-/wikis/home
 
 Construct the project as follows:
 ```

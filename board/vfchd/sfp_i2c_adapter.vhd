@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : SFP I2C adapter for VFC-HD board
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : sfp_i2c_adapter.vhd
 -- Author(s)  : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>

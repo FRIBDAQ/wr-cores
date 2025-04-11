@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for VFC-HD
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wrc_board_vfchd.vhd
 -- Author(s)  : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
@@ -14,7 +14,7 @@
 -- needed to operate the core on the VFC-HD board.
 -- Version with no VHDL records on the top-level (mainly for Verilog
 -- instantiation).
--- http://www.ohwr.org/projects/vfc-hd/
+-- https://gitlab.com/ohwr/project/vfc-hd/-/wikis/home 
 -------------------------------------------------------------------------------
 -- Copyright (c) 2016-2017 CERN
 -------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC reference design for CUTE
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : cute_wr_ref_top.vhd
 -- Author(s)  : Hongming Li <lihm.thu@foxmail.com>
@@ -20,7 +20,7 @@
 -- * provide a reference top HDL file showing how the WRPC can be instantiated
 --   in HDL projects.
 --
--- CUTE:  https://www.ohwr.org/projects/cute-wr-dp
+-- CUTE:  https://gitlab.com/ohwr/project/cute-wr-dp
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2018 CERN

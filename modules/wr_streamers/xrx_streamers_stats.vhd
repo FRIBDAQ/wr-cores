@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WR Recpetion Streamers statistics
 -- Project    : White Rabbit Streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : xrx_streamers_stats.vhd
 -- Author     : Maciej Lipinski

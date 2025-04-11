@@ -2,7 +2,7 @@
 -- Title      : WRPC reference design for KM3NeT Central Logic Board (CLBv3)
 --            : based on artix-7
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : clbv3_wr_ref_top.vhd
 -- Author(s)  : Peter Jansweijer <peterj@nikhef.nl>

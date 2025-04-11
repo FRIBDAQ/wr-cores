@@ -1,13 +1,13 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for VXS switch
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : xwrc_board_vxs.vhd
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the VXS board.
--- http://www.ohwr.org/projects/vxs/
+-- https://gitlab.com/ohwr/project/vxs/
 -------------------------------------------------------------------------------
 -- Copyright (c) 2018 CERN
 -------------------------------------------------------------------------------

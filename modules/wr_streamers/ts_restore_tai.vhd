@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- CERN
 -- wr-cores/wr-streamers
--- https://www.ohwr.org/project/wr-cores
+-- https://gitlab.com/ohwr/project/wr-cores
 --------------------------------------------------------------------------------
 --
 -- unit name  : ts_restore_tai.vhd

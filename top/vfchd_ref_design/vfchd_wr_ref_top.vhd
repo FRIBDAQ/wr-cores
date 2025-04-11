@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC reference design for VFC-HD
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : vfchd_wr_ref_top.vhd
 -- Author(s)  : Dimitrios Lampridis  <dimitrios.lampridis@cern.ch>
@@ -21,7 +21,7 @@
 -- * provide a reference top HDL file showing how the WRPC can be instantiated
 --   in HDL projects.
 --
--- VFC-HD:  http://www.ohwr.org/projects/vfc-hd/
+-- VFC-HD:  https://gitlab.com/ohwr/project/vfc-hd/-/wikis/home 
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2017 CERN

@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for VXS
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : wrc_board_vxs.vhd
 -------------------------------------------------------------------------------
@@ -9,7 +9,7 @@
 -- needed to operate the core on the VXS board.
 -- Version with no VHDL records on the top-level (mainly for Verilog
 -- instantiation).
--- http://www.ohwr.org/projects/vxs/
+-- https://gitlab.com/ohwr/project/vxs/
 -------------------------------------------------------------------------------
 -- Copyright (c) 2018 CERN
 -------------------------------------------------------------------------------

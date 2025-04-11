@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // Title      : WR streamers testbench
 // Project    : White Rabbit Cores
-// URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+// URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 //-----------------------------------------------------------------------------
 // File       : main.sv
 // Author(s)  : Tomasz Wlostosky ,

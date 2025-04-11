@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Package for WR Steamers
 -- Project    : WR Streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : streamers_pkg.vhd
 -- Author     : Tomasz Wlostowski <tomasz.wlostowski@cern.ch>

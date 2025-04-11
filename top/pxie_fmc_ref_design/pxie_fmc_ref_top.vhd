@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC reference design for PXIe-FMC board
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : pxie_fmc_ref_top.vhd
 -- Author(s)  : Greg Daniluk <grzegorz.daniluk@cern.ch>
@@ -20,7 +20,7 @@
 -- * provide a reference top HDL file showing how the WRPC can be instantiated
 --   in HDL projects.
 --
--- PXIe-FMC: https://ohwr.org/project/pxie-fmc
+-- PXIe-FMC: https://gitlab.com/ohwr/project/pxie-fmc
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2020 CERN

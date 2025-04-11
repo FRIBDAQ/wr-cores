@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC reference design for SPEC
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : spec_wr_ref_top.vhd
 -- Author(s)  : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
@@ -21,7 +21,7 @@
 -- * provide a reference top HDL file showing how the WRPC can be instantiated
 --   in HDL projects.
 --
--- SPEC:  http://www.ohwr.org/projects/spec/
+-- SPEC:  https://gitlab.com/ohwr/project/spec/-/wikis/home
 --
 -------------------------------------------------------------------------------
 -- Copyright (c) 2017-2018 CERN

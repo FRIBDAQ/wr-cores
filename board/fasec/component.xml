@@ -3074,7 +3074,7 @@
       <xilinx:displayName>wrc_board_fasec_v5_0</xilinx:displayName>
       <xilinx:definitionSource>package_project</xilinx:definitionSource>
       <xilinx:vendorDisplayName>CERN BE-CO-HT</xilinx:vendorDisplayName>
-      <xilinx:vendorURL>https://www.ohwr.org/projects/wr-cores/wiki/wrpc_core</xilinx:vendorURL>
+      <xilinx:vendorURL>https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core</xilinx:vendorURL>
       <xilinx:coreRevision>13</xilinx:coreRevision>
       <xilinx:coreCreationDateTime>2024-05-10T07:52:37Z</xilinx:coreCreationDateTime>
       <xilinx:tags>

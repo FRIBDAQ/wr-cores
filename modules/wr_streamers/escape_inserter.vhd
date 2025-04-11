@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : Escape insertion unit
 -- Project    : WR Streamers
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/WR_Streamers
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/WR-Streamers
 -------------------------------------------------------------------------------
 -- File       : gc_escape_inserter.vhd
 -- Author     : Tomasz Wlostowski

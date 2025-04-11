@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- Title      : WRPC Wrapper for DI/OT System Board (Xilinx ZU-7)
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
 -------------------------------------------------------------------------------
 -- File       : xwrc_board_diot_simple.vhd
 -- Author(s)  : Greg Daniluk <grzegorz.daniluk@cern.ch>
@@ -10,7 +10,7 @@
 -------------------------------------------------------------------------------
 -- Description: Top-level wrapper for WR PTP core including all the modules
 -- needed to operate the core on the DI/OT System Board.
--- https://ohwr.org/project/diot-sb-zu
+-- https://gitlab.com/ohwr/project/diot-sb-zu
 -------------------------------------------------------------------------------
 -- Copyright (c) 2021 CERN
 -------------------------------------------------------------------------------
