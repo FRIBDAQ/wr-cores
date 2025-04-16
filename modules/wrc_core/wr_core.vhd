@@ -730,10 +730,11 @@ begin
   -----------------------------------------------------------------------------
   -- Endpoint
   -----------------------------------------------------------------------------
-  U_Endpoint : xwr_endpoint
+  U_Endpoint : entity work.xwr_endpoint
     generic map (
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
+      g_ep_idx              => 0,
       g_simulation          => f_int2bool(g_simulation),
       g_tx_runt_padding     => g_tx_runt_padding,
       g_pcs_16bit           => g_pcs_16bit,

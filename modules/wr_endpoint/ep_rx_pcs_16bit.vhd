@@ -165,8 +165,6 @@ architecture behavioral of ep_rx_pcs_16bit is
   signal rx_state         : t_tbif_rx_state;
   signal preamble_cntr    : unsigned(2 downto 0);
   signal rx_busy          : std_logic;
-  signal rx_enable_synced : std_logic;
-  signal rx_rdreq         : std_logic;
 
   -- 8b10b decoding and postprocessing signals
   signal d_data                                 : std_logic_vector(15 downto 0);
@@ -180,7 +178,6 @@ architecture behavioral of ep_rx_pcs_16bit is
   signal d_is_cal                               : std_logic;
   signal phy_rx_data_shrunk     : std_logic_vector(15 downto 0);
   signal phy_rx_data_muxed      : std_logic_vector(15 downto 0);
-  signal phy_rx_k_shrunk        : std_logic_vector(1 downto 0);
   signal phy_rx_k_muxed         : std_logic_vector(1 downto 0);
 
   signal d_is_shrunk : std_logic;
@@ -204,14 +201,12 @@ architecture behavioral of ep_rx_pcs_16bit is
 
 -- RMON counter pulses
   signal rmon_rx_overrun_p_int   : std_logic;
-  signal rmon_syncloss_p_int     : std_logic;
   signal rmon_invalid_code_p_int : std_logic;
 
 -- Misc. signals
   signal cal_pattern_cntr      : unsigned(c_cal_pattern_counter_bits-1 downto 0);
 
   signal pcs_fab_out       : t_ep_internal_fabric;
-  signal pcs_valid_int     : std_logic;
   signal timestamp_pending : std_logic_vector(2 downto 0) := "000";
 
   attribute mark_debug : string;

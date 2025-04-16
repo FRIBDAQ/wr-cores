@@ -234,7 +234,6 @@ architecture rtl of ep_1000basex_pcs is
   signal an_rx_valid   : std_logic;
   signal an_idle_match : std_logic;
 
-  signal pcs_enable        : std_logic;
   signal synced, sync_lost : std_logic;
   signal synced_d1         : std_logic;
 
@@ -243,9 +242,7 @@ architecture rtl of ep_1000basex_pcs is
 
   signal pcs_reset_n : std_logic;
 
-  signal wb_stb, wb_ack : std_logic;
-
-  signal tx_clk, rx_clk : std_logic;
+  signal wb_stb : std_logic;
 
   --RMON events
   signal rmon_tx_underrun : std_logic;
@@ -447,7 +444,7 @@ begin  -- rtl
   -- process: translates the MDIO reads/writes into Wishbone read/writes
   -- inputs: mdio_stb_i, wb_ack
   -- ouputs: mdio_ready_o, wb_stb
-  p_translate_mdio_wb : process(clk_sys_i, rst_n_i)
+  p_translate_mdio_wb : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if (rst_n_i = '0') then

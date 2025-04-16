@@ -67,7 +67,7 @@ entity xwr_endpoint is
     g_use_new_txcrc         : boolean                        := false;
     g_with_stop_traffic     : boolean                        := false;
     g_phy_lpcalib           : boolean                        := false;
-    g_ep_idx                : integer
+    g_ep_idx                : integer                        := 0
     );
   port (
 
@@ -304,7 +304,7 @@ architecture syn of xwr_endpoint is
 
 begin
 
-  U_Wrapped_Endpoint : wr_endpoint
+  U_Wrapped_Endpoint : entity work.wr_endpoint
     generic map (
       g_interface_mode      => g_interface_mode,
       g_address_granularity => g_address_granularity,

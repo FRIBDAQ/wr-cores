@@ -110,19 +110,13 @@ architecture syn of ep_autonegotiation is
   signal link_timer_expired : std_logic;
 
   signal an_enable_changed, an_enable_d0 : std_logic;
-  signal toggle_tx, toggle_rx            : std_logic;
 
   signal rx_config_reg : std_logic_vector(15 downto 0);
 
   signal acknowledge_match : std_logic;
   signal ability_match     : std_logic;
   signal consistency_match : std_logic;
-  
-  
-  
 begin  -- syn
-
-
   -- process: link timer (counts until MSB of link_timer == 1).
   -- inputs: link_timer_restart
   -- outputs: link_timer_expired
