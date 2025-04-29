@@ -104,6 +104,7 @@ entity cts_top is
     -- Clock out
     ---------------------------------------------------------------------------
     clk_ref_10m_o       : out std_logic;
+    clk_ref_50m_o       : out std_logic;
 
     ---------------------------------------------------------------------------
     -- LEDs
@@ -122,6 +123,7 @@ architecture Behavioral of cts_top is
     signal clk_10MHz_fb : std_logic;
     signal clk_10MHz_locked : std_logic;
     signal clk_10MHz : std_logic;
+    signal clk_50MHz : std_logic;
 
     signal led_act_buf, led_link_buf, pps_p_buf: std_logic;
 begin
@@ -184,6 +186,10 @@ begin
       CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
       CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
       CLKOUT0_USE_FINE_PS => "FALSE",  -- Fine phase shift enable (TRUE/FALSE)
+      CLKOUT1_DIVIDE => 20,         -- Divide amount for CLKOUT0
+      CLKOUT1_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
+      CLKOUT1_PHASE => 0.0,            -- Phase offset for CLKOUT0
+      CLKOUT1_USE_FINE_PS => "FALSE",  -- Fine phase shift enable (TRUE/FALSE)
 
       COMPENSATION => "AUTO",          -- Clock input compensation
       DIVCLK_DIVIDE => 1,              -- Master division value
@@ -193,6 +199,7 @@ begin
    port map (
       CLKFBOUT => clk_10MHz_fb,         -- 1-bit output: Feedback clock
       CLKOUT0 => clk_10MHz,           -- 1-bit output: CLKOUT0
+      CLKOUT1 => clk_50MHz,           -- 1-bit output: CLKOUT0
       LOCKED => clk_10MHz_locked,             -- 1-bit output: LOCK
       PSDONE => open,             -- 1-bit output: Phase shift done
       CDDCREQ => '0',           -- 1-bit input: Request to dynamic divide clock
@@ -213,6 +220,7 @@ begin
    );
 
    clk_ref_10m_o <= clk_10MHz;
+   clk_ref_50m_o <= clk_50MHz;
 
    act_led_inst : OBUF
    port map (

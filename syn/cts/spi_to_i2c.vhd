@@ -53,7 +53,7 @@ PORT(
 END spi_to_i2c;
 
 ARCHITECTURE behavior OF spi_to_i2c IS
-  TYPE machine IS(ready, spi_rx, calc_write_size, i2c, i2c_2, i2c_3, i2c_4);     --state machine datatype
+  TYPE machine IS(ready, spi_rx, calc_write_size, i2c, wait_1, i2c_2, wait_2, i2c_3, wait_3, i2c_4);     --state machine datatype
 
   SIGNAL state         : machine;                       --current state
   SIGNAL message       : STD_LOGIC_VECTOR(23 DOWNTO 0) := (others => '0'); --message sent and received
@@ -86,6 +86,7 @@ BEGIN
   PROCESS(clk, reset_n)
     VARIABLE i2c_busy_cnt : INTEGER := 0;  --keeps track of i2c busy signals during transaction
     VARIABLE ii           : INTEGER;
+    VARIABLE wait_cnt     : INTEGER := 0;
   BEGIN
 
     IF(reset_n = '0') THEN                 --reset asserted
@@ -144,11 +145,19 @@ BEGIN
               WHEN 2 =>                                     --2nd busy high: command 2 latched, ready to stop
                 i2c_ena <= '0';                               --deassert enable to stop transaction after command 2
                 IF(i2c_busy = '0') THEN                       --indicates command 2 is finished and any data is ready
-                  i2c_busy_cnt := 0;                          --reset busy_cnt for next transaction
-                  state <= i2c_2;
+                  i2c_busy_cnt := 0;                       --reset busy_cnt for next transaction
+                  wait_cnt := 0;
+                  state <= wait_1;
                 END IF;
               WHEN OTHERS => NULL;
             END CASE;
+          end if;
+
+        WHEN wait_1 =>
+          if wait_cnt < 10000 then
+            wait_cnt := wait_cnt + 1;
+          else
+            state <= i2c_2;
           end if;
 
         WHEN i2c_2 =>
@@ -169,9 +178,18 @@ BEGIN
             IF(i2c_busy = '0') THEN                       --indicates command 2 is finished and any data is ready
               message(23) <= i2c_ack_err;                 --let spi master know if there was an i2c ack error
               i2c_busy_cnt := 0;                          --reset busy_cnt for next transaction
-              state <= i2c_3;
+              wait_cnt := 0;
+              state <= wait_2;
             END IF;
           END IF;
+
+
+        WHEN wait_2 =>
+          if wait_cnt < 2000 then
+            wait_cnt := wait_cnt + 1;
+          else
+            state <= i2c_3;
+          end if;
 
         WHEN i2c_3 =>
           i2c_busy_prev <= i2c_busy;                      --capture the value of the previous i2c busy signal
@@ -191,10 +209,18 @@ BEGIN
               i2c_ena <= '0';                               --deassert enable to stop transaction after command 2
               IF(i2c_busy = '0') THEN                       --indicates command 2 is finished and any data is ready
                 i2c_busy_cnt := 0;                          --reset busy_cnt for next transaction
-                state <= i2c_4;
+                wait_cnt := 0;
+                state <= wait_3;
               END IF;
             WHEN OTHERS => NULL;
           END CASE;
+
+        WHEN wait_3 =>
+          if wait_cnt < 10000 then
+            wait_cnt := wait_cnt + 1;
+          else
+            state <= i2c_4;
+          end if;
 
         WHEN i2c_4 =>
           i2c_busy_prev <= i2c_busy;                      --capture the value of the previous i2c busy signal
@@ -209,7 +235,8 @@ BEGIN
               i2c_data_wr <= x"1d";          --the slave register to access is these 8 bits
             WHEN 1 =>                                     --1st busy high: command 1 latched, okay to issue command 2
               i2c_rw <= '0';                             --command to read or right the slave register is bit 16
-              i2c_data_wr <= (conv_integer(decinc) => '1', others => '0');           --data to write to register (i2c master ignores if it's a read)
+              i2c_data_wr <= (others => '0');
+              i2c_data_wr(conv_integer(decinc)) <= '1';           --data to write to register (i2c master ignores if it's a read)
             WHEN 2 =>                                     --2nd busy high: command 2 latched, ready to stop
               i2c_ena <= '0';                               --deassert enable to stop transaction after command 2
               IF(i2c_busy = '0') THEN                       --indicates command 2 is finished and any data is ready

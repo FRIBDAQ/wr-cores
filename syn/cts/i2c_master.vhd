@@ -33,6 +33,9 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 USE ieee.std_logic_unsigned.all;
 
+library UNISIM;
+use UNISIM.VComponents.all;
+
 ENTITY i2c_master IS
   GENERIC(
     input_clk : INTEGER := 50_000_000; --input clock speed from user logic in Hz
@@ -66,6 +69,13 @@ ARCHITECTURE logic OF i2c_master IS
   SIGNAL data_rx       : STD_LOGIC_VECTOR(7 DOWNTO 0);   --data received from slave
   SIGNAL bit_cnt       : INTEGER RANGE 0 TO 7 := 7;      --tracks bit number in transaction
   SIGNAL stretch       : STD_LOGIC := '0';               --identifies if slave is stretching scl
+
+  SIGNAL scl_i         : STD_LOGIC;
+  SIGNAL scl_o         : STD_LOGIC;
+  SIGNAL scl_t         : STD_LOGIC;
+  SIGNAL sda_i         : STD_LOGIC;
+  SIGNAL sda_o         : STD_LOGIC;
+  SIGNAL sda_t         : STD_LOGIC;
 BEGIN
 
   --generate the timing for the bus clock (scl_clk) and the data clock (data_clk)
@@ -91,7 +101,7 @@ BEGIN
           data_clk <= '1';
         WHEN divider*2 TO divider*3-1 =>  --third 1/4 cycle of clocking
           scl_clk <= '1';                 --release scl
-          IF(scl = '0') THEN              --detect if slave is stretching clock
+          IF(scl_i = '0') THEN              --detect if slave is stretching clock
             stretch <= '1';
           ELSE
             stretch <= '0';
@@ -216,13 +226,13 @@ BEGIN
               ack_error <= '0';                     --reset acknowledge error output
             END IF;
           WHEN slv_ack1 =>                          --receiving slave acknowledge (command)
-            IF(sda /= '0' OR ack_error = '1') THEN  --no-acknowledge or previous no-acknowledge
+            IF(sda_i /= '0' OR ack_error = '1') THEN  --no-acknowledge or previous no-acknowledge
               ack_error <= '1';                     --set error output if no-acknowledge
             END IF;
           WHEN rd =>                                --receiving slave data
-            data_rx(bit_cnt) <= sda;                --receive current slave data bit
+            data_rx(bit_cnt) <= sda_i;              --receive current slave data bit
           WHEN slv_ack2 =>                          --receiving slave acknowledge (write)
-            IF(sda /= '0' OR ack_error = '1') THEN  --no-acknowledge or previous no-acknowledge
+            IF(sda_i /= '0' OR ack_error = '1') THEN  --no-acknowledge or previous no-acknowledge
               ack_error <= '1';                     --set error output if no-acknowledge
             END IF;
           WHEN stop =>
@@ -239,9 +249,29 @@ BEGIN
     sda_ena_n <= data_clk_prev WHEN start,     --generate start condition
                  NOT data_clk_prev WHEN stop,  --generate stop condition
                  sda_int WHEN OTHERS;          --set to internal sda signal    
-      
+
   --set scl and sda outputs
-  scl <= '0' WHEN (scl_ena = '1' AND scl_clk = '0') ELSE 'Z';
-  sda <= '0' WHEN sda_ena_n = '0' ELSE 'Z';
-  
+--  scl <= '0' WHEN (scl_ena = '1' AND scl_clk = '0') ELSE 'Z';
+--  sda <= '0' WHEN sda_ena_n = '0' ELSE 'Z';
+
+  scl_inst : IOBUF
+  port map (
+    IO => scl,
+    O  => scl_i,
+    I  => scl_o,
+    T  => scl_t
+  );
+  scl_o <= '0';
+  scl_t <= '0' when scl_ena = '1' and scl_clk = '0' else '1';
+
+  sda_inst : IOBUF
+  port map (
+    IO => sda,
+    O  => sda_i,
+    I  => sda_o,
+    T  => sda_t
+  );
+  sda_o <= '0';
+  sda_t <= '0' when sda_ena_n = '0' else '1';
+
 END logic;

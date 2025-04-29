@@ -104,8 +104,8 @@ set_property PACKAGE_PIN Y5     [get_ports GTH_REFCLK0_n]    ;# Bank 224 - som24
 #set_property PACKAGE_PIN K3     [get_ports HP_SFP_RX0_n]     ;# Bank  65 VCCO - som240_2_c12 - IO_L11N_T1U_N9_GC_65
 #set_property PACKAGE_PIN N9     [get_ports LIO2_p]           ;# Bank  65 VCCO - som240_2_c14 - IO_L17P_T2U_N8_AD10P_65
 #set_property PACKAGE_PIN N8     [get_ports LIO2_n]           ;# Bank  65 VCCO - som240_2_c15 - IO_L17N_T2U_N9_AD10N_65
-#set_property PACKAGE_PIN U8     [get_ports P1_HPIO1_p]       ;# Bank  65 VCCO - som240_2_c17 - IO_L3P_T0L_N4_AD15P_65
-#set_property PACKAGE_PIN V8     [get_ports P1_HPIO1_n]       ;# Bank  65 VCCO - som240_2_c18 - IO_L3N_T0L_N5_AD15N_65
+set_property PACKAGE_PIN U8     [get_ports P1_HPIO1_p]       ;# Bank  65 VCCO - som240_2_c17 - IO_L3P_T0L_N4_AD15P_65
+set_property PACKAGE_PIN V8     [get_ports P1_HPIO1_n]       ;# Bank  65 VCCO - som240_2_c18 - IO_L3N_T0L_N5_AD15N_65
 #set_property PACKAGE_PIN P7     [get_ports P1_HPIO2_p]       ;# Bank  65 VCCO - som240_2_c20 - IO_L16P_T2U_N6_QBC_AD3P_65
 #set_property PACKAGE_PIN P6     [get_ports P1_HPIO2_n]       ;# Bank  65 VCCO - som240_2_c21 - IO_L16N_T2U_N7_QBC_AD3N_65
 #set_property PACKAGE_PIN AD5    [get_ports HP_SFP_RX1_p]     ;# Bank  64 VCCO - som240_2_c29 - IO_L13P_T2L_N0_GC_QBC_64
@@ -173,10 +173,12 @@ set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT1_p]
 set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT2_p]
 set_property IOSTANDARD LVDS [get_ports LEMO_HP_OUT3_p]
 
-#set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_p]
-#set_property PULLUP true         [get_ports P1_HPIO1_p]
-#set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_n]
-#set_property PULLUP true         [get_ports P1_HPIO1_n]
+set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_p]
+set_property PULLUP true         [get_ports P1_HPIO1_p]
+set_property SLEW FAST           [get_ports P1_HPIO1_p]
+set_property IOSTANDARD LVCMOS18 [get_ports P1_HPIO1_n]
+set_property PULLUP true         [get_ports P1_HPIO1_n]
+set_property SLEW FAST           [get_ports P1_HPIO1_n]
 
 set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO1]
 set_property SLEW FAST           [get_ports P2_HDIO1]
@@ -197,9 +199,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS1]
 create_clock -period  8.000 -name SFP_125MHz        -waveform {0.000  4.000} [get_ports {GTH_REFCLK0_p}]
 create_clock -period  8.000 -name WR_MAIN           -waveform {0.000  4.000} [get_ports {SI5344_HP_GC_p}]
 create_clock -period  8.000 -name WR_HELPER         -waveform {0.000  4.000} [get_ports {SI5344_2_HP_GC_p}]
-create_clock -period 16.000 -name gth_txclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_tx_usrclk2_out[0]}]
-create_clock -period 16.000 -name gth_rxclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_rx_usrclk2_out[0]}]
+create_clock -period 16.000 -name gth_txclk        -waveform {0.000  8.000} [get_nets {design_2_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_tx_usrclk2_out[0]}]
+create_clock -period 16.000 -name gth_rxclk        -waveform {0.000  8.000} [get_nets {design_2_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_rx_usrclk2_out[0]}]
 
-create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_default_plls.gen_zynqus_default_plls.cmp_clk_dmtd_buf_o/O]
+create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_2_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_default_plls.gen_zynqus_default_plls.cmp_clk_dmtd_buf_o/O]
 
 set_clock_groups -asynchronous -group {SFP_125MHz} -group {WR_MAIN} -group {WR_HELPER} -group {gth_txclk} -group {gth_rxclk} -group {clk_pll_dmtd}
