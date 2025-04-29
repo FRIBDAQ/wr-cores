@@ -76,8 +76,6 @@ architecture behavioral of ep_tx_crc_inserter is
 
   signal odd_length : std_logic;
 
-  signal embed_valid : std_logic;
-
   signal stored_msb : std_logic_vector(7 downto 0);
   signal in_payload : std_logic;
   signal src_dreq_d0 : std_logic;
@@ -100,8 +98,8 @@ begin  -- behavioral
   crc_gen_reset  <= '1' when rst_n_i = '0' or snk_fab_i.sof = '1'                                         else '0';
   crc_gen_enable <= '1' when (snk_fab_i.dvalid = '1' and in_payload = '1') else '0';
 
-	gen_old_crc: if(g_use_new_crc = false) generate
-  	U_tx_crc_generator : gc_crc_gen
+  gen_old_crc: if(g_use_new_crc = false) generate
+    U_tx_crc_generator : entity work.gc_crc_gen
   	  generic map (
   	    g_polynomial              => x"04C11DB7",
   	    g_init_value              => x"ffffffff",
@@ -119,6 +117,7 @@ begin  -- behavioral
   	    half_i  => snk_fab_i.bytesel,
   	    data_i  => snk_fab_i.data,
   	    match_o => open,
+        restart_i => open,
   	    crc_o   => crc_value);
 	end generate;
 

@@ -152,8 +152,8 @@ architecture behavioral of ep_tx_header_processor is
 
   signal snk_valid : std_logic;
 
-  signal sof_p1, eof_p1, abort_p1, error_p1 : std_logic;
-  signal snk_cyc_d0                         : std_logic;
+  signal sof_p1, eof_p1, error_p1 : std_logic;
+  signal snk_cyc_d0               : std_logic;
 
   signal stored_status : t_wrf_status_reg;
 
@@ -166,72 +166,12 @@ architecture behavioral of ep_tx_header_processor is
   signal decoded_status : t_wrf_status_reg;
 
   signal abort_now : std_logic;
-  signal stall_int : std_logic;
   signal tx_en        : std_logic;
   signal ep_ctrl     : std_logic;
   signal bitsel_d    : std_logic;
   signal needs_padding  : std_logic;
   signal to_be_untagged : std_logic;
   signal sof_reg     : std_logic;
-
-  function b2s (x : boolean)
-    return std_logic is
-  begin
-    if(x) then
-      return '1';
-    else
-      return '0';
-    end if;
-  end function;
-
-  function f_pick (cond : boolean; when_1 : std_logic_vector; when_0 : std_logic_vector)
-    return std_logic_vector is
-  begin
-    if(cond) then
-      return when_1;
-    else
-      return when_0;
-    end if;
-  end function;
-
-  function f_pick (cond : std_logic; when_1 : std_logic_vector; when_0 : std_logic_vector)
-    return std_logic_vector is
-  begin
-    if(cond = '1') then
-      return when_1;
-    else
-      return when_0;
-    end if;
-  end function;
-
-  function f_pick (cond : boolean; when_1 : std_logic ; when_0 : std_logic)
-    return std_logic is
-  begin
-    if(cond) then
-      return when_1;
-    else
-      return when_0;
-    end if;
-  end function;
-  
-  function f_fabric_2_slv (
-    in_i : t_wrf_sink_in;
-    in_o : t_wrf_sink_out) return std_logic_vector is
-    variable tmp : std_logic_vector(31 downto 0);
-  begin
-    tmp(15 downto 0)  := in_i.dat;
-    tmp(17 downto 16) := in_i.adr;
-    tmp(19 downto 18) := in_i.sel;
-    tmp(20)           := in_i.cyc;
-    tmp(21)           := in_i.stb;
-    tmp(22)           := in_i.we;
-    tmp(23)           := in_o.ack;
-    tmp(24)           := in_o.stall;
-    tmp(25)           := in_o.err;
-    tmp(26)           := in_o.rty;
-    return tmp;
-  end f_fabric_2_slv;
-  
 begin  -- behavioral
   
   p_detect_frame : process(clk_sys_i)
@@ -252,7 +192,7 @@ begin  -- behavioral
 
   decoded_status <= f_unmarshall_wrf_status(wb_snk_i.dat);
 
-  error_p1 <= snk_valid and b2s(wb_snk_i.adr = c_WRF_STATUS) and decoded_status.error;
+  error_p1 <= snk_valid and f_to_std_logic(wb_snk_i.adr = c_WRF_STATUS) and decoded_status.error;
 
 -- abort_now <= '1' when (state /= TXF_IDLE and state /= TXF_GAP) and (regs_i.ecr_tx_en_o = '0' or error_p1 = '1') else '0';
  abort_now <= '1' when (state /= TXF_IDLE and state /= TXF_GAP) and (tx_en = '0' or error_p1 = '1') else
@@ -294,7 +234,7 @@ begin  -- behavioral
         stored_status.has_crc  <= '0';
       else
         if(snk_valid = '1' and wb_snk_i.adr = c_WRF_STATUS) then
-          stored_status <= f_unmarshall_wrf_status(wb_snk_i.dat);
+          stored_status <= decoded_status;
         end if;
       end if;
     end if;

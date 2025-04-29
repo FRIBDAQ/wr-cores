@@ -207,7 +207,7 @@ begin  -- behavioral
     end if;
   end process;
 
-  p_gen_tcomp_irq : process(clk_sys_i, rst_n_i)
+  p_gen_tcomp_irq : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then
@@ -224,7 +224,7 @@ begin  -- behavioral
     end if;
   end process;
 
-  p_gen_sr_tx_done : process(clk_sys_i, rst_n_i)
+  p_gen_sr_tx_done : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then
@@ -241,7 +241,7 @@ begin  -- behavioral
     end if;
   end process;
 
-  p_fsm : process(clk_sys_i, rst_n_i)
+  p_fsm : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then

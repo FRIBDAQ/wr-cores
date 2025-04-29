@@ -53,6 +53,7 @@
 --      0x900: WRPC diagnostics registers (for firmware) (periph 4)
 --      0xa00: freq monitor
 --      0xb00: cpu csr
+--      0xc00: SDB
 --      0x8000: Auxillary space (Etherbone config, etc)
 
 library ieee;
