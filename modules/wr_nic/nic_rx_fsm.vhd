@@ -110,36 +110,6 @@ entity nic_rx_fsm is
 end nic_rx_fsm;
 
 architecture behavioral of NIC_RX_FSM is
-
-  component nic_elastic_buffer
-    generic (
-      g_depth : integer);
-    port (
-      clk_sys_i : in  std_logic;
-      rst_n_i   : in  std_logic;
-      snk_i     : in  t_wrf_sink_in;
-      snk_o     : out t_wrf_sink_out;
-      fab_o     : out t_ep_internal_fabric;
-      dreq_i    : in  std_logic);
-  end component;
-
-  component nic_bw_throttling
-    port (
-      clk_sys_i   : in  std_logic;
-      rst_n_i     : in  std_logic;
-      pps_p_i     : in std_logic;
-      pps_valid_i : in std_logic;
-      snk_i   : in  t_wrf_sink_in;
-      snk_o   : out t_wrf_sink_out;
-      src_o   : out t_wrf_source_out;
-      src_i   : in  t_wrf_source_in;
-      en_i         : in  std_logic;
-      new_limit_i  : in  std_logic;
-      bwmax_kbps_i : in  unsigned(15 downto 0);
-      bw_bps_o     : out std_logic_vector(31 downto 0));
-  end component;
-
-
   type t_rx_fsm_state is (RX_DISABLED, RX_WAIT_SOF, RX_REQUEST_DESCRIPTOR, RX_DATA, RX_UPDATE_DESC, RX_MEM_RESYNC, RX_MEM_FLUSH);
 
   signal cur_rx_desc : t_rx_descriptor;
@@ -151,7 +121,6 @@ architecture behavioral of NIC_RX_FSM is
 
   signal rx_buf_addr     : unsigned(c_nic_buf_size_log2-3 downto 0);
   signal rx_buf_data     : std_logic_vector(31 downto 0);
-  signal rx_is_payload   : std_logic;
   signal rx_newpacket    : std_logic;
   signal rx_newpacket_d0 : std_logic;
 
@@ -172,7 +141,7 @@ architecture behavioral of NIC_RX_FSM is
   
 begin
 
-  U_Throttling: nic_bw_throttling
+  U_Throttling: entity work.nic_bw_throttling
     port map (
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_n_i,
@@ -199,7 +168,7 @@ begin
   end process;
   regs_o.maxrxbw_i <= max_bw_reg;
 
-  U_Buffer : nic_elastic_buffer
+  U_Buffer : entity work.nic_elastic_buffer
     generic map (
       g_depth => 64)
     port map (
@@ -222,7 +191,7 @@ begin
   wrf_terminate  <= '1' when (fab_in.eof = '1' or fab_in.error = '1') else '0';
 
 -- process produces the RCOMP interrupt each time a packet has been received
-  p_handle_rx_interrupt : process(clk_sys_i, rst_n_i)
+  p_handle_rx_interrupt : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then
@@ -243,7 +212,7 @@ begin
 
 
 -- process produces the REC field in SR register
-  p_handle_status_rec : process(clk_sys_i, rst_n_i)
+  p_handle_status_rec : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then
@@ -261,9 +230,8 @@ begin
   end process;
 
 -- the big beast
-  p_main_fsm : process(clk_sys_i, rst_n_i)
+  p_main_fsm : process(clk_sys_i)
   begin
-
     if rising_edge(clk_sys_i) then
       if rst_n_i = '0' then
         state                 <= RX_DISABLED;
