@@ -68,7 +68,7 @@ entity spec_wr_ref_top is
     -- changed to non-zero in the instantiation of the top level DUT in the testbench.
     -- Its purpose is to reduce some internal counters/timeouts to speed up simulations.
     g_SIMULATION : integer := 0;
-    g_AUX_TIMING_CONFIG : t_wr_timecode_config := (FALSE, TRUE, TRUE)
+    g_AUX_TIMING_CONFIG : t_wr_timecode_config := (c_WITH_AUXCLK_IDX=>FALSE, c_WITH_IRIG_IDX=>TRUE, c_WITH_NMEA_IDX=>TRUE)
   );
   port (
     ---------------------------------------------------------------------------

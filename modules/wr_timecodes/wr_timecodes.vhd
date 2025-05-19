@@ -50,7 +50,7 @@ entity wr_timecodes is
     g_address_granularity   : t_wishbone_address_granularity := BYTE;
     g_ref_clock_rate        : integer := 62500;
     g_serdes_data_width     : integer := 8;
-    g_timecode_config       : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG
+    g_timecode_config       : t_wr_timecode_config := c_WR_TIMECODE_NONE
   );
   port (
 

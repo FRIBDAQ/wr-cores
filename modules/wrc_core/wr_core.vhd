@@ -111,7 +111,7 @@ entity wr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
-    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG;
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
     );
   port(
@@ -328,7 +328,7 @@ entity wr_core is
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
-    pll_serdes_locked_i  : in std_logic := '0';
+    aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
 
     --timing outputs
     utc_o                : out t_utc_out;
@@ -678,7 +678,7 @@ begin
         pps_valid_i => pps_valid,
         pps_pre_i   => pps_pre,
         pps_i       => s_pps_csync,
-        pll_serdes_locked_i => pll_serdes_locked_i,
+        pll_serdes_locked_i => aux_timing_serdes_locked_i,
 
         utc_o        => utc_o,
         aux_timing_o => aux_timing_o

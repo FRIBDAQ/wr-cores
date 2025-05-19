@@ -64,7 +64,7 @@ package wr_spec_pkg is
       g_diag_rw_size              : integer              := 0;
       g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
       g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
-      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       g_with_serdes               : boolean              := false
     );
     port (
@@ -183,7 +183,7 @@ package wr_spec_pkg is
       g_diag_ro_vector_width      : integer := 0;
       g_diag_rw_vector_width      : integer := 0;
       g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
-      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       g_with_serdes               : boolean := false
     );
     port (

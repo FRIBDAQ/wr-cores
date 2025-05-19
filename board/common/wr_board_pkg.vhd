@@ -130,7 +130,7 @@ package wr_board_pkg is
       g_rx_streamer_params        : t_rx_streamer_params           := c_rx_streamer_params_defaut;
       g_sfp_i2c_mux_enable        : boolean                        := FALSE;
       g_fabric_iface              : t_board_fabric_iface           := PLAIN;
-      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG);
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE);
     port (
       clk_sys_i            : in  std_logic;
       clk_dmtd_i           : in  std_logic;
@@ -225,7 +225,7 @@ package wr_board_pkg is
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
       link_ok_o            : out std_logic;
-      pll_serdes_locked_i  : in std_logic := '0';
+      aux_timing_serdes_locked_i  : in std_logic := '0';
       utc_o                : out t_utc_out;
       aux_timing_o         : out t_aux_timing_out);
   end component xwrc_board_common;

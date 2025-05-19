@@ -109,7 +109,7 @@ entity xwr_core is
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
-    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE
     );
   port(
     ---------------------------------------------------------------------------
@@ -289,9 +289,9 @@ entity xwr_core is
     rst_aux_n_o : out std_logic;
 
     -- Auxiliary Timing (clk_ref)
-    pll_serdes_locked_i  : in std_logic := '0';
-    utc_o                : out t_utc_out;
-    aux_timing_o         : out t_aux_timing_out;
+    aux_timing_serdes_locked_i  : in std_logic := '0';    --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
+    utc_o                       : out t_utc_out;
+    aux_timing_o                : out t_aux_timing_out;
 
     --  Auxillary diagnostics (used by snmp, clk_sys)
     aux_diag_i    : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others =>(others=>'0'));
@@ -490,7 +490,7 @@ begin
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
 
-      pll_serdes_locked_i  => pll_serdes_locked_i,
+      aux_timing_serdes_locked_i  => aux_timing_serdes_locked_i,
 
       utc_o                => utc_o,
       aux_timing_o         => aux_timing_o,

@@ -172,9 +172,9 @@ entity xwrc_platform_xilinx is
     ext_ref_mul_locked_o  : out std_logic;
     ext_ref_mul_stopped_o : out std_logic;
     ext_ref_rst_i         : in  std_logic             := '0';
-    -- Aux clock generation
+    -- Aux clock generation, can be left unconnecting if aux timing is not used
     serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
-    pll_serdes_locked_o   : out std_logic;
+    aux_timing_serdes_locked_o  : out std_logic;  --serdes pll locked indicator to wr_timecodes
     serdes_o              : out std_logic
     );
 
@@ -866,10 +866,9 @@ begin  -- architecture rtl
 
   ---------------------------------------------------------------------------
 
-  gen_serdes : if (g_with_serdes = TRUE) generate
+  gen_serdes : if g_with_serdes generate
 
     signal serdes_div_clk : std_logic;
-    signal serdes_out_vec : std_logic_vector(0 downto 0);
     signal rst_serdes  : std_logic;
 
    begin
@@ -951,14 +950,13 @@ begin  -- architecture rtl
         )
         port map(
           DATA_OUT_FROM_DEVICE => serdes_i,
-          DATA_OUT_TO_PINS     => serdes_out_vec,
+          DATA_OUT_TO_PINS(0)  => serdes_o,
           CLK_IN               => pll_serdes_out,
           CLK_DIV_IN           => serdes_div_clk,
           IO_RESET             => rst_serdes
         );
 
-       serdes_o   <= serdes_out_vec(0);
-       pll_serdes_locked_o <= pll_serdes_locked;
+       aux_timing_serdes_locked_o <= pll_serdes_locked;
 
     end generate gen_kintex7_artix7_serdes;
 
@@ -1054,14 +1052,13 @@ begin  -- architecture rtl
         )
         port map(
           DATA_OUT_FROM_DEVICE => serdes_i,
-          DATA_OUT_TO_PINS     => serdes_out_vec,
+          DATA_OUT_TO_PINS(0)  => serdes_o,
           CLK_IN               => pll_serdes_out_buf,
           CLK_DIV_IN           => serdes_div_clk,
           IO_RESET             => rst_serdes
         );
 
-       serdes_o   <= serdes_out_vec(0);
-       pll_serdes_locked_o <= pll_serdes_locked;
+       aux_timing_serdes_locked_o <= pll_serdes_locked;
 
     end generate gen_zynqus_serdes;
 

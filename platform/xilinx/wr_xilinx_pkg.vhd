@@ -115,7 +115,7 @@ package wr_xilinx_pkg is
       ext_ref_mul_stopped_o : out std_logic;
       ext_ref_rst_i         : in  std_logic             := '0';
       serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
-      pll_serdes_locked_o   : out std_logic;
+      aux_timing_serdes_locked_o  : out std_logic;
       serdes_o              : out std_logic);
   end component xwrc_platform_xilinx;
 

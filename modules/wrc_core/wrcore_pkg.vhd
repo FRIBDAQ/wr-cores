@@ -122,7 +122,7 @@ package wrcore_pkg is
       g_address_granularity   : t_wishbone_address_granularity := BYTE;
       g_ref_clock_rate        : integer := 62500000;
       g_serdes_data_width     : integer := 8;
-      g_timecode_config      : t_wr_timecode_config := c_WR_TIMECODE_DEFCONFIG
+      g_timecode_config      : t_wr_timecode_config := c_WR_TIMECODE_NONE
     );
     port (
 
@@ -480,7 +480,7 @@ package wrcore_pkg is
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
       g_with_clock_freq_monitor   : boolean                        := true;
-      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_DEFCONFIG);
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE);
     port(
       clk_sys_i            : in std_logic;
       clk_dmtd_i           : in std_logic := '0';
@@ -641,8 +641,10 @@ package wrcore_pkg is
       g_diag_ro_size              : integer                        := 0;
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
+      g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
       g_with_clock_freq_monitor   : boolean                        := true;
-      g_with_auxclk_gen           : boolean                        := false
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
+      g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
       );
     port(
       ---------------------------------------------------------------------------
@@ -859,8 +861,11 @@ package wrcore_pkg is
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
 
-      auxclk_sd_word_o     : out std_logic_vector(7 downto 0);
-      pll_serdes_locked_i  : in std_logic := '0';
+      aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
+
+      --timing outputs
+      utc_o                : out t_utc_out;
+      aux_timing_o         : out t_aux_timing_out;
 
       rst_aux_n_o : out std_logic;
 
