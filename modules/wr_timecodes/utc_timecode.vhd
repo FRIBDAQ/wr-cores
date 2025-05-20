@@ -56,18 +56,18 @@ entity utc_timecode is
     pps_pre_i   : in std_logic := '0';
 
     --sys clk domain
-    utc_year_sys_i  : in std_logic_vector(11 downto 0);
-    utc_diy_sys_i   : in std_logic_vector(8 downto 0);
-    utc_month_sys_i : in std_logic_vector(3 downto 0);
-    utc_day_sys_i   : in std_logic_vector(4 downto 0);
-    utc_hour_sys_i  : in std_logic_vector(5 downto 0);
-    utc_min_sys_i   : in std_logic_vector(5 downto 0);
-    utc_sec_sys_i   : in std_logic_vector(5 downto 0);
-    utc_sbs_sys_i   : in std_logic_vector(16 downto 0);
-    ls_val_sys_i    : in std_logic_vector(7 downto 0);
-    ls_flag_sys_i   : in std_logic_vector(1 downto 0);
-    ls_valid_sys_i  : in std_logic;
-    utc_valid_sys_i : in std_logic;
+    utc_year_sys_i  : in std_logic_vector(11 downto 0); --year value
+    utc_diy_sys_i   : in std_logic_vector(8 downto 0);  --day in year value
+    utc_month_sys_i : in std_logic_vector(3 downto 0);  --month value
+    utc_day_sys_i   : in std_logic_vector(4 downto 0);  --day value
+    utc_hour_sys_i  : in std_logic_vector(5 downto 0);  --hour value
+    utc_min_sys_i   : in std_logic_vector(5 downto 0);  --minute value
+    utc_sec_sys_i   : in std_logic_vector(5 downto 0);  --second value
+    utc_sbs_sys_i   : in std_logic_vector(16 downto 0); --straight binary seconds value
+    ls_val_sys_i    : in std_logic_vector(7 downto 0);  --leap seconds value
+    ls_flag_sys_i   : in std_logic_vector(1 downto 0);  --leap seconds flags (0)=59, (1)=61
+    ls_valid_sys_i  : in std_logic;                     --leap seconds fields are valid
+    utc_valid_sys_i : in std_logic;                     --utc fields are valid
 
     utc_year_sys_o  : out std_logic_vector(11 downto 0);
     utc_diy_sys_o   : out std_logic_vector(8 downto 0);
@@ -116,6 +116,11 @@ architecture rtl of utc_timecode is
   signal pps_valid_sys : std_logic;
   signal pps_pre_sys   : std_logic;
 
+  signal utc_valid_p_ref   : std_logic;
+  signal utc_valid_ref_reg : std_logic;
+  signal ls_valid_p_ref  : std_logic;
+  signal ls_valid_ref_reg : std_logic;
+
   signal utc_valid_ref : std_logic;
   signal utc_year_ref  : std_logic_vector(11 downto 0);
   signal utc_diy_ref   : std_logic_vector(8 downto 0);
@@ -144,123 +149,13 @@ begin
 
   utc_valid_sys <= pps_valid_sys and utc_valid_sys_i;
 
-  --synchronisers
-  U_sync_utc_year: gc_sync_register
-    generic map (
-      g_width => utc_year_sys_i'length
-    )
+  U_sync_ls_valid: gc_sync_ffs
     port map (
       clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_year_sys_i,
-      q_o       => utc_year_ref
-    );
-
-  U_sync_utc_diy: gc_sync_register
-    generic map (
-      g_width => utc_diy_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_diy_sys_i,
-      q_o       => utc_diy_ref
-    );
-
-  U_sync_utc_month: gc_sync_register
-    generic map (
-      g_width => utc_month_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_month_sys_i,
-      q_o       => utc_month_ref
-    );
-
-  U_sync_utc_day: gc_sync_register
-    generic map (
-      g_width => utc_day_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_day_sys_i,
-      q_o       => utc_day_ref
-    );
-
-  U_sync_utc_hour: gc_sync_register
-    generic map (
-      g_width => utc_hour_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_hour_sys_i,
-      q_o       => utc_hour_ref
-    );
-
-  U_sync_utc_min: gc_sync_register
-    generic map (
-      g_width => utc_min_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_min_sys_i,
-      q_o       => utc_min_ref
-    );
-
-  U_sync_utc_sec: gc_sync_register
-    generic map (
-      g_width => utc_sec_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_sec_sys_i,
-      q_o       => utc_sec_ref
-    );
-
-  U_sync_utc_sbs: gc_sync_register
-    generic map (
-      g_width => utc_sbs_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_sbs_sys_i,
-      q_o       => utc_sbs_ref
-    );
-
-  U_sync_ls_val: gc_sync_register
-    generic map (
-      g_width => ls_val_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => ls_val_sys_i,
-      q_o       => ls_val_ref
-    );
-
-  U_sync_ls_flag: gc_sync_register
-    generic map (
-      g_width => ls_flag_sys_i'length
-    )
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => ls_flag_sys_i,
-      q_o       => ls_flag_ref
-    );
-
-  U_sync_ls_valid: gc_sync
-    port map (
-      clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => ls_valid_sys_i,
-      q_o       => ls_valid_ref
+      rst_n_i   => rst_ref_n_i,
+      data_i    => ls_valid_sys_i,
+      synced_o  => ls_valid_ref,
+      ppulse_o  => ls_valid_p_ref
     );
 
   U_sync_pps_valid: gc_sync
@@ -271,13 +166,74 @@ begin
       q_o       => pps_valid_sys
     );
 
-  U_sync_utc_valid: gc_sync
+  U_sync_utc_valid: gc_sync_ffs
     port map (
       clk_i     => clk_ref_i,
-      rst_n_a_i => rst_ref_n_i,
-      d_i       => utc_valid_sys,
-      q_o       => utc_valid_ref
+      rst_n_i   => rst_ref_n_i,
+      data_i    => utc_valid_sys,
+      synced_o  => utc_valid_ref,
+      ppulse_o  => utc_valid_p_ref
     );
+
+  --intention is that utc_valid_sys set when all utc_sys fields are stable
+  --sync this to clk_ref and use as en for clk_ref regs
+  p_sync_utc_regs: process(clk_ref_i) is
+  begin
+    if rising_edge(clk_ref_i) then
+      if(rst_ref_n_i = '0') then
+        utc_year_ref  <= (others => '0');
+        utc_diy_ref   <= (others => '0');
+        utc_month_ref <= (others => '0');
+        utc_day_ref   <= (others => '0');
+        utc_hour_ref  <= (others => '0');
+        utc_min_ref   <= (others => '0');
+        utc_sec_ref   <= (others => '0');
+        utc_sbs_ref   <= (others => '0');
+      else
+        if(utc_valid_p_ref = '1') then
+          utc_year_ref  <= utc_year_sys_i;
+          utc_diy_ref   <= utc_diy_sys_i;
+          utc_month_ref <= utc_month_sys_i;
+          utc_day_ref   <= utc_day_sys_i;
+          utc_hour_ref  <= utc_hour_sys_i;
+          utc_min_ref   <= utc_min_sys_i;
+          utc_sec_ref   <= utc_sec_sys_i;
+          utc_sbs_ref   <= utc_sbs_sys_i;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  --register to align with utc_ref regs
+  p_utc_valid_reg: process(clk_ref_i) is
+  begin
+    if rising_edge(clk_ref_i) then
+      utc_valid_ref_reg <= utc_valid_ref;
+    end if;
+  end process;
+
+  --same for leap seconds
+  p_sync_ls_regs: process(clk_ref_i) is
+  begin
+    if rising_edge(clk_ref_i) then
+      if(rst_ref_n_i = '0') then
+        ls_val_ref   <= (others => '0');
+        ls_flag_ref  <= (others => '0');
+      else
+        if(ls_valid_p_ref = '1') then
+          ls_val_ref  <= ls_val_sys_i;
+          ls_flag_ref <= ls_flag_sys_i;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  p_ls_valid_reg: process(clk_ref_i) is
+  begin
+    if rising_edge(clk_ref_i) then
+      ls_valid_ref_reg <= ls_valid_ref;
+    end if;
+  end process;
 
   --bcd formatting
   U_utc2bcd: entity work.utc2bcd
@@ -286,7 +242,7 @@ begin
     rst_n_i         => rst_ref_n_i,
     clk_i           => clk_ref_i,
 
-    utc_hex_valid_i => utc_valid_ref,
+    utc_hex_valid_i => utc_valid_ref_reg,
     year_hex_i      => utc_year_ref,
     diy_hex_i       => utc_diy_ref,
     month_hex_i     => utc_month_ref,
@@ -344,9 +300,9 @@ begin
   utc_min_ref_o     <= utc_min_ref;
   utc_sec_ref_o     <= utc_sec_ref;
   utc_sbs_ref_o     <= utc_sbs_ref;
-  utc_valid_ref_o   <= utc_valid_ref;
+  utc_valid_ref_o   <= utc_valid_ref_reg;
   ls_val_ref_o      <= ls_val_ref;
   ls_flag_ref_o     <= ls_flag_ref;
-  ls_valid_ref_o    <= ls_valid_ref;
+  ls_valid_ref_o    <= ls_valid_ref_reg;
 
 end rtl;
