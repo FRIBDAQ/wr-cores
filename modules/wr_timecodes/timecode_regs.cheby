@@ -240,4 +240,4 @@ memory-map:
   - submap:
       name: nmea
       description: nmea master interface submap
-      filename: ../wr_nmea/nmea_regs.cheby
+      filename: ../wr_nmea/nmea_master_regs.cheby
