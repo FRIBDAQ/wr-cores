@@ -52,6 +52,7 @@ memory-map:
       address: 0x0
       x-hdl:
         write-strobe: True
+        type: wire
       children:
       - field:
           name: hp_width
@@ -64,6 +65,7 @@ memory-map:
       access: rw
       x-hdl:
         write-strobe: True
+        type: wire
       children:
       - field:
           name: low_width
