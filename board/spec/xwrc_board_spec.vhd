@@ -85,8 +85,7 @@ entity xwrc_board_spec is
     g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
     g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
-    g_aux_timing_config          : t_wr_timecode_config := c_WR_TIMECODE_NONE;
-    g_with_serdes                : boolean              := false);
+    g_aux_timing_config          : t_wr_timecode_config := c_WR_TIMECODE_NONE);
   port (
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -322,11 +321,10 @@ architecture struct of xwrc_board_spec is
   signal ext_ref_rst         : std_logic;
 
   -- Auxclock serdes word
-  signal auxclk_sd_data : std_logic_vector(7 downto 0);
   signal aux_timing_serdes_locked : std_logic;
-
   signal aux_timing_out : t_aux_timing_out;
-  signal serdes_out    : std_logic;
+  signal serdes_out     : std_logic;
+
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -350,7 +348,7 @@ begin  -- architecture struct
       g_use_default_plls          => TRUE,
       g_aux_pll_cfg               => g_aux_pll_cfg,
       g_phy_refclk_sel            => 4,
-      g_with_serdes               => g_with_serdes,
+      g_aux_timing_config         => g_aux_timing_config,
       g_simulation                => g_simulation)
     port map (
       areset_n_i                  => areset_n_i,

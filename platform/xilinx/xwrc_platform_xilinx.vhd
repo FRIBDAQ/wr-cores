@@ -51,6 +51,7 @@ library work;
 use work.endpoint_pkg.all;
 use work.gencores_pkg.all;
 use work.wr_xilinx_pkg.all;
+use work.wr_timecode_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -75,8 +76,8 @@ entity xwrc_platform_xilinx is
       -- default value of 4 selects CLK10 / CLK11 (see UG386, Fig 2-3, page 41)
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
       g_gtp_mux_enable            : boolean := FALSE;
-      -- Set to TRUE to enable serdes for auxclk, irig or nmea
-      g_with_serdes               : boolean := FALSE;
+      -- Enables serdes for auxclk, irig or nmea
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       -- Set to TRUE will speed up some initialization processes
       g_simulation                : integer := 0);
   port (
@@ -194,6 +195,7 @@ architecture rtl of xwrc_platform_xilinx is
   signal clk_ref             : std_logic;
   signal clk_sys             : std_logic;
   signal clk_sys_out         : std_logic;
+  constant c_WITH_SERDES     : boolean := f_aux_timing_enabled(g_aux_timing_config);
 
 begin  -- architecture rtl
 
@@ -236,12 +238,20 @@ begin  -- architecture rtl
       severity ERROR;
   end generate gen_dual_SFP_support;
 
-  gen_serdes_support: if (g_with_serdes and g_fpga_family /= "spartan6" and g_fpga_family /= "kintex7" and g_fpga_family /= "artix7")
+  gen_serdes_support: if c_WITH_SERDES and g_fpga_family /= "spartan6" and g_fpga_family /= "kintex7" and g_fpga_family /= "artix7"
   generate
     assert FALSE
       report "Auxclk/IRIG-B/NMEA output not supported on [" & g_fpga_family & "]"
       severity ERROR;
   end generate gen_serdes_support;
+
+  gen_auxclk_support: if f_auxclk_enabled(g_aux_timing_config) and g_fpga_family = "spartan6"
+  generate
+    assert FALSE
+      report "Auxclk output not supported on spartan6"
+      severity ERROR;
+  end generate gen_auxclk_support;
+
   -----------------------------------------------------------------------------
   -- Clock PLLs
   -----------------------------------------------------------------------------
@@ -1330,7 +1340,7 @@ begin  -- architecture rtl
   end generate gen_phy_artix7;
 
 
-  gen_serdes: if g_with_serdes generate
+  gen_serdes: if c_WITH_SERDES generate
 
     signal serdes_div_clk : std_logic;
     signal rst_serdes  : std_logic;

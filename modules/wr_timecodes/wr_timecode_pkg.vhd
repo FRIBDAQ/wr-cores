@@ -78,6 +78,12 @@ package wr_timecode_pkg is
   constant c_WITH_IRIG_IDX   : natural := 1;
   constant c_WITH_NMEA_IDX   : natural := 2;
 
+  function f_aux_timing_enabled(config : t_wr_timecode_config)
+  return boolean;
+
+  function f_auxclk_enabled(config : t_wr_timecode_config)
+  return boolean;
+
 end wr_timecode_pkg;
 
 package body wr_timecode_pkg is
@@ -96,5 +102,17 @@ package body wr_timecode_pkg is
     dst.serdes_out        := serdes_out;
     return dst;
   end function f_aux_timing_assign_serdes_out;
+
+  function f_aux_timing_enabled(config : t_wr_timecode_config)
+  return boolean is
+  begin
+    return config(0) or config(1) or config(2);
+  end function f_aux_timing_enabled;
+
+  function f_auxclk_enabled(config : t_wr_timecode_config)
+  return boolean is
+  begin
+    return config(c_WITH_AUXCLK_IDX);
+  end function f_auxclk_enabled;
 
 end package body wr_timecode_pkg;

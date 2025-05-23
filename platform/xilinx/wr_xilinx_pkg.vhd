@@ -36,6 +36,7 @@ use ieee.std_logic_1164.all;
 library work;
 use work.endpoint_pkg.all;
 use work.wishbone_pkg.all;
+use work.wr_timecode_pkg.all;
 
 package wr_xilinx_pkg is
 
@@ -61,7 +62,7 @@ package wr_xilinx_pkg is
       g_gtp_enable_ch1            : integer := 1;
       g_gtp_mux_enable            : boolean := FALSE;
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
-      g_with_serdes               : boolean := FALSE;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       g_simulation                : integer := 0
       );
     port (

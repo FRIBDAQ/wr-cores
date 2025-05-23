@@ -655,7 +655,7 @@ begin
   --------------------------------------
   -- Timecode generator
   --------------------------------------
-  gen_aux_timing: if g_aux_timing_config(0) or g_aux_timing_config(1) or g_aux_timing_config(2) generate
+  gen_aux_timing: if f_aux_timing_enabled(g_aux_timing_config) generate
 
     TIMECODE_GEN: wr_timecodes
       generic map (
@@ -686,7 +686,7 @@ begin
 
   end generate gen_aux_timing;
 
-  gen_without_aux_timing: if not g_aux_timing_config(0) and not g_aux_timing_config(1) and not g_aux_timing_config(2) generate
+  gen_without_aux_timing: if not f_aux_timing_enabled(g_aux_timing_config) generate
 
     timecode_wb_out <= (dat => (others => '0'),
                         stall => '0',

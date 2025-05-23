@@ -80,8 +80,7 @@ entity wrc_board_spec is
     g_diag_ro_vector_width      : integer := 0;
     g_diag_rw_vector_width      : integer := 0;
     g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
-    g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
-    g_with_serdes               : boolean := false
+    g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE
     );
   port (
     ---------------------------------------------------------------------------
@@ -457,8 +456,7 @@ begin  -- architecture struct
       g_diag_ro_size              => c_diag_ro_size,
       g_diag_rw_size              => c_diag_rw_size,
       g_aux_sdb                   => g_aux_sdb,
-      g_aux_timing_config         => g_aux_timing_config,
-      g_with_serdes               => g_with_serdes)
+      g_aux_timing_config         => g_aux_timing_config)
     port map (
       areset_n_i           => areset_n_i,
       areset_edge_n_i      => areset_edge_n_i,
