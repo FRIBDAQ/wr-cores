@@ -95,10 +95,10 @@ architecture rtl of wr_timecodes is
   signal aux_timing_out : t_aux_timing_out;
 
   signal auxclk_adr_out         : std_logic_vector(2 downto 2);
-  signal auxclk_adr_out_resize  : std_logic_vector(31 downto 0);
+  signal auxclk_adr_out_resize  : std_logic_vector(31 downto 0) := (others => '0');
 
   signal nmea_adr_out         : std_logic_vector(3 downto 2);
-  signal nmea_adr_out_resize  : std_logic_vector(31 downto 0);
+  signal nmea_adr_out_resize  : std_logic_vector(31 downto 0) := (others => '0');
 
   signal utc_valid_ref        : std_logic;
   signal utc_year_ref         : std_logic_vector(11 downto 0);
@@ -253,9 +253,7 @@ begin
 --------------------------------------------------------------------------------
   gen_nmea: if g_timecode_config(c_WITH_NMEA_IDX) generate
 
-    nmea_adr_out_resize(3 downto 2)  <= nmea_adr_out;
-    nmea_adr_out_resize(31 downto 4) <= (others => '0');
-    nmea_adr_out_resize(1 downto 0)  <= (others => '0');
+    nmea_adr_out_resize(nmea_adr_out'range) <= nmea_adr_out;
 
     nmea_wb_in.adr <= nmea_adr_out_resize;
 
@@ -313,9 +311,7 @@ begin
 --------------------------------------------------------------------------------
   gen_auxclk: if g_timecode_config(c_WITH_AUXCLK_IDX) generate
 
-    auxclk_adr_out_resize(3 downto 3)  <= auxclk_adr_out;
-    auxclk_adr_out_resize(31 downto 4) <= (others => '0');
-    auxclk_adr_out_resize(2 downto 0)  <= (others => '0');
+    auxclk_adr_out_resize(auxclk_adr_out'range) <= auxclk_adr_out;
 
     auxclk_wb_in.adr <= auxclk_adr_out_resize;
 
