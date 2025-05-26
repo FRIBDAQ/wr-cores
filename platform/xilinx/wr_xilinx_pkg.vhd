@@ -369,49 +369,49 @@ package wr_xilinx_pkg is
     );
   end component;
 
-  component oserdes_4_to_1_spartan6 is
-  generic (
-    SYS_W       : integer := 1;
-    DEV_W       : integer := 4);
-  port (
-    -- From the device out to the system
-    DATA_OUT_FROM_DEVICE    : in  std_logic_vector(DEV_W-1 downto 0);
-    DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
-    -- Clock and reset signals
-    CLK_IN                  : in    std_logic;                    -- Single ended Fast clock from PLL
-    PLL_LOCKED_IN           : in    std_logic;                    -- CLK_IN PLL locked
-    CLK_DIV_IN              : in    std_logic;                    -- divided clock in (must come from from BUFG)
-    IO_RESET                : in    std_logic                     -- Reset signal for IO circuit
-    );
-  end component oserdes_4_to_1_spartan6;
-
-  component oserdes_8_to_1_7series is
-  generic (
-    SYS_W       : integer := 1;
-    -- width of the data for the device
-    DEV_W       : integer := 8);
-  port (
-    -- From the device out to the system
-    DATA_OUT_FROM_DEVICE    : in std_logic_vector(DEV_W-1 downto 0);
-    DATA_OUT_TO_PINS        : out std_logic_vector(SYS_W-1 downto 0);
-    CLK_IN                  : in std_logic;
-    CLK_DIV_IN              : in std_logic;
-    IO_RESET                : in std_logic
-    );
-  end component oserdes_8_to_1_7series;
-
-  component oserdes_8_to_1_ultrascale is
-  generic (
-    SYS_W         : integer := 1;
-    DEV_W         : integer := 8
+  component xoserdes_4_to_1_spartan6 is
+  generic
+  (
+    g_clkin_period : real := 8.000                --clk_i period (ns)
   );
-  port (
-    DATA_OUT_FROM_DEVICE : in std_logic_vector(DEV_W-1 downto 0);
-    DATA_OUT_TO_PINS     : out std_logic_vector(SYS_W-1 downto 0);
-    CLK_IN               : in std_logic;
-    CLK_DIV_IN           : in std_logic;
-    IO_RESET             : in std_logic
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(3 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
   );
-  end component oserdes_8_to_1_ultrascale;
+  end component xoserdes_4_to_1_spartan6;
+
+  component xoserdes_8_to_1_7series is
+  generic
+  (
+    g_clkin_period : real := 16.000               --clk_i period (ns)
+  );
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(7 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
+  );
+  end component xoserdes_8_to_1_7series;
+
+  component xoserdes_8_to_1_ultrascale is
+  generic
+  (
+    g_clkin_period : real := 16.000               --clk_i period (ns)
+  );
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(7 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
+  );
+  end component xoserdes_8_to_1_ultrascale;
 
 end wr_xilinx_pkg;
