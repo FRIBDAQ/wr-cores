@@ -19,8 +19,11 @@ create_clock -period 13.400 -name clk [get_ports {refclk1_p_i}]
 # I/O constraints
 ##################
 
-set_property PACKAGE_PIN V6 [get_ports {refclk1_p_i}]
+#set_property PACKAGE_PIN V6 [get_ports {refclk1_p_i}]
 #set_property PACKAGE_PIN V7 [get_ports {refclk1_n_i}]
+
+set_property PACKAGE_PIN Y6 [get_ports {refclk0_p_i}]
+set_property PACKAGE_PIN Y5 [get_ports {refclk0_n_i}]
 
 set_property PACKAGE_PIN T2 [get_ports {pad_rxp_i}]
 set_property PACKAGE_PIN T1 [get_ports {pad_rxn_i}]
@@ -40,3 +43,6 @@ set_property IOSTANDARD LVCMOS18 [get_ports sfp_led2_o]
 
 set_property PACKAGE_PIN L3 [get_ports {clk_25m_i}]
 set_property IOSTANDARD LVCMOS18 [get_ports {clk_25m_i}]
+
+set_property PACKAGE_PIN AD11 [get_ports pmod4_2_b]
+set_property IOSTANDARD LVCMOS33 [get_ports pmod4_2_b]

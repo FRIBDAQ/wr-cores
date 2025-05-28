@@ -7,12 +7,13 @@ memory-map:
      name: wrpc
      interface: wb-32-be
      size: 4k
-     address: 0x1000
+     address: 0x0000
      x-hdl:
        busgroup: True
   - reg:
       name: ctrl
       comment: control register
+      address: 0x1000
       width: 32
       access: rw
       children:
@@ -28,5 +29,6 @@ memory-map:
   - reg:
       name: status
       comment: status register
+      address: 0x1008
       width: 32
       access: ro
