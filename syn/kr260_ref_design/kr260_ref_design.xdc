@@ -30,10 +30,13 @@ set_property PACKAGE_PIN R3 [get_ports {pad_txn_o}]
 
 set_property PACKAGE_PIN F8 [get_ports {led1_o}]
 set_property PACKAGE_PIN E8 [get_ports {led2_o}]
-set_property PACKAGE_PIN G8 [get_ports {sfp_led1_o}]
-set_property PACKAGE_PIN F7 [get_ports {sfp_led2_o}]
-
 set_property IOSTANDARD LVCMOS18 [get_ports led1_o]
 set_property IOSTANDARD LVCMOS18 [get_ports led2_o]
+
+set_property PACKAGE_PIN G8 [get_ports {sfp_led1_o}]
+set_property PACKAGE_PIN F7 [get_ports {sfp_led2_o}]
 set_property IOSTANDARD LVCMOS18 [get_ports sfp_led1_o]
 set_property IOSTANDARD LVCMOS18 [get_ports sfp_led2_o]
+
+set_property PACKAGE_PIN L3 [get_ports {clk_25m_i}]
+set_property IOSTANDARD LVCMOS18 [get_ports {clk_25m_i}]

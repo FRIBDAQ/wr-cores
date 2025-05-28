@@ -46,6 +46,8 @@ entity kr260_ref_top is
     refclk1_n_i : in std_logic;
     refclk1_p_i : in std_logic;
 
+    clk_25m_i   : in std_logic;
+    
     pad_txn_o : out std_logic;
     pad_txp_o : out std_logic;
 
@@ -134,6 +136,8 @@ architecture top of kr260_ref_top is
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
 
+  signal clk_25m : std_logic;
+
   signal count : natural range 0 to 74_250_000 - 1;
   signal clk_74m25, clk_62m5 : std_logic;
   signal clk_fb, pll_locked : std_logic;
@@ -170,7 +174,13 @@ begin
         CLRMASK => '0',
         DIV => "000",
         I => refclk_74m25_int);
- 
+
+
+  inst_bufg: BUFG
+    port map (
+      O => clk_25m,
+      I => clk_25m_i);
+
   --  VCO: 800-1600Mhz
   --  input: 74.25 * 20 = 1485Mhz
   --         74.25 * 16 = 1188Mhz  / 19 => 62.52
@@ -247,19 +257,19 @@ begin
 
   rst <= not rst_n;
 
-  process(clk_62m5)
+  process(clk_25m)
   begin
-    if rising_edge(clk_62m5) then
+    if rising_edge(clk_25m) then
       if rst_n = '0' then
         led1_o <= '0';
         led2_o <= '1';
         count <= 0;
       else
-        if count = 31_250_000 - 1 then
+        if count = 12_500_000 - 1 then
           led1_o <= '1';
           led2_o <= '0';
           count <= count + 1;
-        elsif count = 62_500_000 - 1 then
+        elsif count = 25_000_000 - 1 then
           led1_o <= '0';
           led2_o <= '1';
           count <= 0;
