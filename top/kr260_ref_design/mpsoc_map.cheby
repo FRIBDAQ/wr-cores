@@ -31,3 +31,19 @@ memory-map:
       comment: status register
       width: 32
       access: ro
+  - reg:
+      name: const_a
+      comment: constant
+      width: 32
+      access: ro
+      preset: 0x00112233
+      x-hdl:
+        type: const
+  - reg:
+      name: const_b
+      comment: constant
+      width: 32
+      access: ro
+      preset: 0xaabbccdd
+      x-hdl:
+        type: const
