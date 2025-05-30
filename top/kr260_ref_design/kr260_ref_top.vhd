@@ -94,58 +94,58 @@ architecture top of kr260_ref_top is
     );
   end component mpsoc;
 
-  ------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
-COMPONENT gtwizard_ultrascale_0
-PORT (
-  gtwiz_userclk_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_tx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_tx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_tx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_tx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_rx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-  gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-  gtrefclk00_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  qpll0lock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  qpll0outclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  qpll0outrefclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  tx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-  txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-  txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-  txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-  gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-  rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-  rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-  rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-  rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-  txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
-);
+  COMPONENT gtwizard_ultrascale_0
+  PORT (
+    gtwiz_userclk_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    gtrefclk00_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0lock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0outclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0outrefclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxslide_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    tx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
+  );
 END COMPONENT;
 
   signal refclk_156m25, refclk_156m25_int : std_logic;
@@ -559,6 +559,7 @@ begin
       rxcommadeten_in(0) => '1',
       rxmcommaalignen_in(0) => '0',
       rxpcommaalignen_in(0) => '0',
+      rxslide_in(0) => gth_rx_slide_out,
       tx8b10ben_in(0) => '1',
       txctrl0_in => x"0000",
       txctrl1_in => x"0000",
@@ -641,7 +642,7 @@ begin
   gth_status_a(10) <= gth_rx_comma_det_in;
   gth_status_a(11) <= gth_rx_pma_reset_done_in;
 
-  gth_status_a(12) <= gth_tx_pma_reset_done_in;
+  gth_status_a(12) <= phy16_in.rdy;
   gth_status_a(13) <= gth_tx_prg_div_reset_done;
   gth_status_a(14) <= qpll0_lock;
   gth_status_a(15) <= phy_rst;
@@ -667,8 +668,8 @@ begin
     inst_ila: ila_0
       port map (
         clk => clk_62m5,
-        probe0(23 downto 0) => gth_status,
-        probe0(31 downto 24) => (others => '0')
+        probe0(15 downto 0) => gth_status(15 downto 0),
+        probe0(31 downto 16) => gth_rx_data_in
       );
   end generate;
 end top;
