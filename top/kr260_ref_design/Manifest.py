@@ -1,6 +1,6 @@
 fetchto = "../../ip_cores"
 
-files = [ "kr260_ref_top.vhd",
+files = [ "kr260_ref_top.vhd", "wr_gthe4_adapter.vhd",
           "mpsoc.bd", "mpsoc_map.vhd",
         ]
 
