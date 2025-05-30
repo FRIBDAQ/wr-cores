@@ -160,7 +160,7 @@ END COMPONENT;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst : std_logic;
-  signal gth_status_a, gth_status : std_logic_vector(11 downto 0);
+  signal gth_status_a, gth_status : std_logic_vector(12 downto 0);
   signal uart_rx, uart_tx : std_logic;
 
   signal wb_wrpc_in: t_wishbone_master_in;
@@ -434,6 +434,8 @@ begin
       txpmaresetdone_out(0) => gth_status_a(10),
       txprgdivresetdone_out(0) => gth_status_a(11));
   
+      gth_status_a(12) <= rst;
+
   gen_sync: for i in gth_status'range generate
     inst_sync: entity work.gc_sync
     port map (

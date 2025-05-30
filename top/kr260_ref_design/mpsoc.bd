@@ -12,7 +12,6 @@
     "design_tree": {
       "zynq_ultra_ps_e_0": "",
       "axi_protocol_convert_0": "",
-      "ila_0": "",
       "axi_dwidth_converter_0": ""
     },
     "interface_ports": {
@@ -1326,7 +1325,7 @@
           "PSU__LPD_SLCR__CSUPMU__ACT_FREQMHZ": {
             "value": "100.000000"
           },
-          "PSU__MAXIGP0__DATA_WIDTH": {
+          "PSU__MAXIGP2__DATA_WIDTH": {
             "value": "128"
           },
           "PSU__OVERRIDE__BASIC_CLOCK": {
@@ -1544,23 +1543,23 @@
             "value": "1"
           },
           "PSU__USE__M_AXI_GP0": {
-            "value": "1"
+            "value": "0"
           },
           "PSU__USE__M_AXI_GP1": {
             "value": "0"
           },
           "PSU__USE__M_AXI_GP2": {
-            "value": "0"
+            "value": "1"
           }
         },
         "interface_ports": {
-          "M_AXI_HPM0_FPD": {
+          "M_AXI_HPM0_LPD": {
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Master",
             "address_space_ref": "Data",
             "base_address": {
-              "minimum": "0xA0000000",
-              "maximum": "0x0047FFFFFFFF",
+              "minimum": "0x80000000",
+              "maximum": "0x9FFFFFFF",
               "width": "40"
             }
           }
@@ -1652,13 +1651,6 @@
           }
         }
       },
-      "ila_0": {
-        "vlnv": "xilinx.com:ip:ila:6.2",
-        "ip_revision": "16",
-        "xci_name": "mpsoc_ila_0_0",
-        "xci_path": "ip/mpsoc_ila_0_0/mpsoc_ila_0_0.xci",
-        "inst_hier_path": "ila_0"
-      },
       "axi_dwidth_converter_0": {
         "vlnv": "xilinx.com:ip:axi_dwidth_converter:2.1",
         "ip_revision": "33",
@@ -1679,8 +1671,8 @@
     "interface_nets": {
       "axi_dwidth_converter_0_M_AXI": {
         "interface_ports": [
-          "axi_protocol_convert_0/S_AXI",
-          "axi_dwidth_converter_0/M_AXI"
+          "axi_dwidth_converter_0/M_AXI",
+          "axi_protocol_convert_0/S_AXI"
         ]
       },
       "axi_protocol_convert_0_M_AXI": {
@@ -1691,9 +1683,8 @@
       },
       "zynq_ultra_ps_e_0_M_AXI_HPM0_LPD": {
         "interface_ports": [
-          "zynq_ultra_ps_e_0/M_AXI_HPM0_FPD",
-          "axi_dwidth_converter_0/S_AXI",
-          "ila_0/SLOT_0_AXI"
+          "zynq_ultra_ps_e_0/M_AXI_HPM0_LPD",
+          "axi_dwidth_converter_0/S_AXI"
         ]
       },
       "zynq_ultra_ps_e_0_UART_0": {
@@ -1708,8 +1699,7 @@
         "ports": [
           "clk_axi",
           "axi_protocol_convert_0/aclk",
-          "ila_0/clk",
-          "zynq_ultra_ps_e_0/maxihpm0_fpd_aclk",
+          "zynq_ultra_ps_e_0/maxihpm0_lpd_aclk",
           "axi_dwidth_converter_0/s_axi_aclk"
         ]
       },
@@ -1742,7 +1732,7 @@
             "segments": {
               "SEG_M_AXI_Reg": {
                 "address_block": "/M_AXI/Reg",
-                "offset": "0x00A0000000",
+                "offset": "0x0080000000",
                 "range": "64K"
               }
             }
