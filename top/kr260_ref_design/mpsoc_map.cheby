@@ -29,6 +29,6 @@ memory-map:
   - reg:
       name: status
       comment: status register
-      address: 0x1008
+      address: 0x1010
       width: 32
       access: ro
