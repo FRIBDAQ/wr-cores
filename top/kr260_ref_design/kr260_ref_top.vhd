@@ -105,14 +105,6 @@ architecture top of kr260_ref_top is
     gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -168,7 +160,7 @@ END COMPONENT;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst : std_logic;
-  signal gth_status_a, gth_status : std_logic_vector(23 downto 0);
+  signal gth_status_a, gth_status : std_logic_vector(11 downto 0);
   signal uart_rx, uart_tx : std_logic;
 
   signal wb_wrpc_in: t_wishbone_master_in;
@@ -364,13 +356,13 @@ begin
     ctrl_led2_o => sfp_led2_o,
     ctrl_gth_rst_o => gth_rst,
     status_i (gth_status'range) => gth_status,
-    status_i (31 downto gth_status'left + 1) => (others => '0')
+    status_i (31 downto gth_status'left + 1) => (others => '1')
   );
 
   inst_wrcore : entity work.xwr_core
     generic map (
       g_board_name => "KR26",
-      g_dpram_initf => "../../../../bin/wrpc/wrc_phy8.bram",
+      g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
       g_dpram_size => 192 * 1024 / 4
     )
     port map (
@@ -408,23 +400,15 @@ begin
       gtwiz_userclk_rx_usrclk_out => open,
       gtwiz_userclk_rx_usrclk2_out(0) => rx_clk,
       gtwiz_userclk_rx_active_out(0) => gth_status_a(1),
-      gtwiz_buffbypass_tx_reset_in(0) => '0',
-      gtwiz_buffbypass_tx_start_user_in(0) => '0',
-      gtwiz_buffbypass_tx_done_out(0) => gth_status_a(2),
-      gtwiz_buffbypass_tx_error_out(0) => gth_status_a(3),
-      gtwiz_buffbypass_rx_reset_in(0) => '0',
-      gtwiz_buffbypass_rx_start_user_in(0) => '0',
-      gtwiz_buffbypass_rx_done_out(0) => gth_status_a(4),
-      gtwiz_buffbypass_rx_error_out(0) => gth_status_a(5),
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
       gtwiz_reset_all_in(0) => rst,
       gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
       gtwiz_reset_tx_datapath_in(0) => '0',
       gtwiz_reset_rx_pll_and_datapath_in(0) => '0',
       gtwiz_reset_rx_datapath_in(0) => '0',
-      gtwiz_reset_rx_cdr_stable_out(0) => gth_status_a(6),
-      gtwiz_reset_tx_done_out(0) => gth_status_a(7),
-      gtwiz_reset_rx_done_out(0) => gth_status_a(8),
+      gtwiz_reset_rx_cdr_stable_out(0) => gth_status_a(2),
+      gtwiz_reset_tx_done_out(0) => gth_status_a(3),
+      gtwiz_reset_rx_done_out(0) => gth_status_a(4),
       gtwiz_userdata_tx_in => x"0000",
       gtwiz_userdata_rx_out => open,
       gtrefclk00_in(0) => refclk0,
@@ -438,17 +422,17 @@ begin
       txctrl0_in => x"0000",
       txctrl1_in => x"0000",
       txctrl2_in => x"00",
-      gtpowergood_out(0) => gth_status_a(9),
-      rxbyteisaligned_out(0) => gth_status_a(10),
-      rxbyterealign_out(0) => gth_status_a(11),
-      rxcommadet_out(0) => gth_status_a(12),
+      gtpowergood_out(0) => gth_status_a(5),
+      rxbyteisaligned_out(0) => gth_status_a(6),
+      rxbyterealign_out(0) => gth_status_a(7),
+      rxcommadet_out(0) => gth_status_a(8),
       rxctrl0_out => open,
       rxctrl1_out => open,
       rxctrl2_out => open,
       rxctrl3_out => open,
-      rxpmaresetdone_out(0) => gth_status_a(13),
-      txpmaresetdone_out(0) => gth_status_a(14),
-      txprgdivresetdone_out(0) => gth_status_a(15));
+      rxpmaresetdone_out(0) => gth_status_a(9),
+      txpmaresetdone_out(0) => gth_status_a(10),
+      txprgdivresetdone_out(0) => gth_status_a(11));
   
   gen_sync: for i in gth_status'range generate
     inst_sync: entity work.gc_sync
