@@ -209,8 +209,6 @@ END COMPONENT;
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
-
-  signal dbg_state : std_logic_vector(4 downto 0);
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -635,8 +633,7 @@ begin
       gth_rx_pma_reset_done_i => gth_rx_pma_reset_done_in,
       gth_tx_pma_reset_done_i => gth_tx_pma_reset_done_in,
       gth_rx_clk_i => phy16_in.rx_clk,
-      gth_tx_clk_i => phy16_in.ref_clk,
-      dbg_state_o => dbg_state
+      gth_tx_clk_i => phy16_in.ref_clk
     );
 
   phy16_in.sfp_los <= '0';
@@ -672,7 +669,7 @@ begin
     );
   end generate;
 
-  gen_ila: if true generate
+  gen_ila: if false generate
     component ila_0
       port (
         clk    : in STD_LOGIC;
@@ -686,8 +683,7 @@ begin
         probe0(15 downto 0) => gth_status(15 downto 0),
         probe0(31 downto 16) => gth_rx_data_in,
         probe0(47 downto 32) => gth_tx_data_out,
-        probe0(52 downto 48) => dbg_state,
-        probe0(63 downto 53) => (others => '0')
+        probe0(63 downto 48) => (others => '0')
       );
   end generate;
 end top;
