@@ -80,7 +80,9 @@ entity gtp_bitslide is
     bitslide_o : out std_logic_vector(4 downto 0);
 
 -- '1' when the bitsliding has been completed and the link is up
-    synced_o : out std_logic
+    synced_o : out std_logic;
+
+    dbg_state_o : out std_logic_vector(4 downto 0)
     );
 
 end gtp_bitslide;
@@ -155,6 +157,19 @@ begin  -- behavioral
       if(serdes_ready_i = '0') then
         state <= S_SYNC_LOST;
       end if;
+
+      case state is
+        when S_SYNC_LOST =>
+        dbg_state_o <= b"00001";
+        when S_STABILIZE =>
+        dbg_state_o <= b"00010";
+        when S_SLIDE =>
+        dbg_state_o <= b"00100";
+        when S_PAUSE =>
+        dbg_state_o <= b"01000";
+        when S_GOT_SYNC =>
+        dbg_state_o <= b"10000";
+      end case;
 
       case state is
 

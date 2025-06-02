@@ -46,3 +46,18 @@ set_property IOSTANDARD LVCMOS18 [get_ports {clk_25m_i}]
 
 set_property PACKAGE_PIN AD11 [get_ports pmod4_2_b]
 set_property IOSTANDARD LVCMOS33 [get_ports pmod4_2_b]
+
+set_property PACKAGE_PIN A10 [get_ports sfp_tx_fault_i]
+set_property IOSTANDARD LVCMOS33 [get_ports sfp_tx_fault_i]
+
+set_property PACKAGE_PIN Y10 [get_ports sfp_tx_disable_o]
+set_property IOSTANDARD LVCMOS33 [get_ports sfp_tx_disable_o]
+
+set_property PACKAGE_PIN W10 [get_ports sfp_mod_abs_i]
+set_property IOSTANDARD LVCMOS33 [get_ports sfp_mod_abs_i]
+
+set_property PACKAGE_PIN AC11 [get_ports sfp_sda_b]
+set_property IOSTANDARD LVCMOS33 [get_ports sfp_sda_b]
+
+set_property PACKAGE_PIN AB11 [get_ports sfp_scl_b]
+set_property IOSTANDARD LVCMOS33 [get_ports sfp_scl_b]

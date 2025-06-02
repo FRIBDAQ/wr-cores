@@ -60,6 +60,12 @@ entity kr260_ref_top is
     sfp_led1_o : out std_logic;
     sfp_led2_o : out std_logic;
 
+    sfp_tx_fault_i : in std_logic;
+    sfp_tx_disable_o : out std_logic;
+    sfp_mod_abs_i : in std_logic;
+    sfp_sda_b : inout std_logic;
+    sfp_scl_b : inout std_logic;
+
     pmod4_2_b : out std_logic
   );
 end;
@@ -166,6 +172,7 @@ END COMPONENT;
   signal gth_rst, phy_rst : std_logic;
   signal gth_status_a, gth_status : std_logic_vector(23 downto 0) := (others => '0');
   signal uart_rx, uart_tx : std_logic;
+  signal sfp_scl_out, sfp_sda_out : std_logic;
 
   signal wb_wrpc_in: t_wishbone_master_in;
   signal wb_wrpc_out: t_wishbone_master_out;
@@ -202,6 +209,8 @@ END COMPONENT;
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
+
+  signal dbg_state : std_logic_vector(4 downto 0);
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -396,7 +405,8 @@ begin
   inst_wrcore : entity work.xwr_core
     generic map (
       g_board_name => "KR26",
-      g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
+--      g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
+      g_dpram_initf => "",
       g_dpram_size => 192 * 1024 / 4,
       g_pcs_16bit => true,
       g_records_for_phy => true
@@ -455,11 +465,11 @@ begin
       sda_o => open,
       sda_i => open,
 
-      sfp_det_i => '0',
-      sfp_scl_o => open,
-      sfp_scl_i => open,
-      sfp_sda_o => open,
-      sfp_sda_i => open,
+      sfp_det_i => sfp_mod_abs_i,
+      sfp_scl_o => sfp_scl_out,
+      sfp_scl_i => sfp_scl_b,
+      sfp_sda_o => sfp_sda_out,
+      sfp_sda_i => sfp_sda_b,
 
       spi_sclk_o => open,
       spi_ncs_o => open,
@@ -522,7 +532,12 @@ begin
     );
   -- uart_rx <= uart_tx;
 
-  
+  sfp_tx_disable_o <= phy16_out.sfp_tx_disable;
+  phy16_in.sfp_tx_fault <= sfp_tx_fault_i;
+
+  sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
+  sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
+
   inst_gth: gtwizard_ultrascale_0
     port map (
       gthrxn_in(0)  => pad_rxn_i,
@@ -620,10 +635,10 @@ begin
       gth_rx_pma_reset_done_i => gth_rx_pma_reset_done_in,
       gth_tx_pma_reset_done_i => gth_tx_pma_reset_done_in,
       gth_rx_clk_i => phy16_in.rx_clk,
-      gth_tx_clk_i => phy16_in.ref_clk
+      gth_tx_clk_i => phy16_in.ref_clk,
+      dbg_state_o => dbg_state
     );
 
-  phy16_in.sfp_tx_fault <= '0';
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
 
@@ -640,7 +655,7 @@ begin
   gth_status_a(8) <= gtwiz_userclk_rx_active_in;
   gth_status_a(9) <= gth_rx_byte_aligned_in;
   gth_status_a(10) <= gth_rx_comma_det_in;
-  gth_status_a(11) <= gth_rx_pma_reset_done_in;
+  gth_status_a(11) <= gth_rx_slide_out; -- gth_rx_pma_reset_done_in;
 
   gth_status_a(12) <= phy16_in.rdy;
   gth_status_a(13) <= gth_tx_prg_div_reset_done;
@@ -661,7 +676,7 @@ begin
     component ila_0
       port (
         clk    : in STD_LOGIC;
-        probe0 : in STD_LOGIC_VECTOR(31 downto 0)
+        probe0 : in STD_LOGIC_VECTOR(63 downto 0)
       );
     end component  ;
   begin
@@ -669,7 +684,10 @@ begin
       port map (
         clk => clk_62m5,
         probe0(15 downto 0) => gth_status(15 downto 0),
-        probe0(31 downto 16) => gth_rx_data_in
+        probe0(31 downto 16) => gth_rx_data_in,
+        probe0(47 downto 32) => gth_tx_data_out,
+        probe0(52 downto 48) => dbg_state,
+        probe0(63 downto 53) => (others => '0')
       );
   end generate;
 end top;
