@@ -133,7 +133,7 @@ architecture behavioral of gtp_bitslide is
   constant c_max_bts               : integer := f_max_bts;
 
 
-  type t_bitslide_fsm_state is (S_SYNC_LOST, S_STABILIZE, S_SLIDE, S_PAUSE, S_GOT_SYNC, S_RESET_CDR);
+  type t_bitslide_fsm_state is (S_SYNC_LOST, S_STABILIZE, S_SLIDE, S_PAUSE, S_GOT_SYNC);
   signal cur_slide : unsigned(4 downto 0);
   signal state     : t_bitslide_fsm_state;
   signal counter   : unsigned(23 downto 0);
