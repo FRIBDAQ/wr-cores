@@ -82,7 +82,9 @@ entity wr_gthe4_adapter is
     gth_tx_pma_reset_done_i : in std_logic;
 
     gth_rx_clk_i : in std_logic;
-    gth_tx_clk_i : in std_logic
+    gth_tx_clk_i : in std_logic;
+
+    dbg_state_o : out std_logic_vector(4 downto 0)
    );
 end wr_gthe4_adapter;
 
@@ -131,7 +133,8 @@ begin
   U_Bitslide : entity work.gtp_bitslide
     generic map (
       g_simulation => 0,
-      g_target     => "ultrascale")
+      g_target     => "ultrascale",
+      g_use_rx_byte_is_aligned => true)
     port map (
       gtp_rst_i                => rst_i,
       gtp_rx_clk_i             => gth_rx_clk_i,
@@ -141,7 +144,8 @@ begin
       gtp_rx_slide_o           => gth_rx_slide_o,
       gtp_rx_cdr_rst_o         => open,
       bitslide_o               => rx_bitslide_o,
-      synced_o                 => rx_synced);
+      synced_o                 => rx_synced,
+      dbg_state_o => dbg_state_o);
 
   gth_tx_k_o <= tx_k_i(0) & tx_k_i(1);
   gth_tx_data_o <= tx_data_i(7 downto 0) & tx_data_i(15 downto 8);
