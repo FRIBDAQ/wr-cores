@@ -328,8 +328,23 @@ package wr_spec_pkg is
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
       pps_led_o            : out std_logic;
-      utc_o                : out t_utc_out;
-      aux_timing_o         : out t_aux_timing_out;
+      utc_year_o           : out std_logic_vector(11 downto 0);
+      utc_diy_o            : out std_logic_vector(8 downto 0);
+      utc_month_o          : out std_logic_vector(3 downto 0);
+      utc_day_o            : out std_logic_vector(4 downto 0);
+      utc_hour_o           : out std_logic_vector(5 downto 0);
+      utc_min_o            : out std_logic_vector(5 downto 0);
+      utc_sec_o            : out std_logic_vector(5 downto 0);
+      utc_sbs_o            : out std_logic_vector(16 downto 0);
+      utc_valid_o          : out std_logic;
+      ls_val_o             : out std_logic_vector(7 downto 0);
+      ls_flag_o            : out std_logic_vector(1 downto 0);
+      ls_valid_o           : out std_logic;
+      irig_o               : out std_logic;
+      irig_valid_o         : out std_logic;
+      nmea_o               : out std_logic;
+      nmea_valid_o         : out std_logic;
+      serdes_dat_o         : out std_logic_vector(7 downto 0);
       link_ok_o            : out std_logic);
   end component wrc_board_spec;
 

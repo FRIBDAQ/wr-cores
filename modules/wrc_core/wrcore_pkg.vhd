@@ -863,9 +863,24 @@ package wrcore_pkg is
 
       aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
 
-      --timing outputs
-      utc_o                : out t_utc_out;
-      aux_timing_o         : out t_aux_timing_out;
+      --Aux Timing outputs
+      utc_year_o           : out std_logic_vector(11 downto 0);
+      utc_diy_o            : out std_logic_vector(8 downto 0);
+      utc_month_o          : out std_logic_vector(3 downto 0);
+      utc_day_o            : out std_logic_vector(4 downto 0);
+      utc_hour_o           : out std_logic_vector(5 downto 0);
+      utc_min_o            : out std_logic_vector(5 downto 0);
+      utc_sec_o            : out std_logic_vector(5 downto 0);
+      utc_sbs_o            : out std_logic_vector(16 downto 0);
+      utc_valid_o          : out std_logic;
+      ls_val_o             : out std_logic_vector(7 downto 0);
+      ls_flag_o            : out std_logic_vector(1 downto 0);
+      ls_valid_o           : out std_logic;
+      irig_o               : out std_logic;
+      irig_valid_o         : out std_logic;
+      nmea_o               : out std_logic;
+      nmea_valid_o         : out std_logic;
+      serdes_dat_o         : out std_logic_vector(7 downto 0);
 
       rst_aux_n_o : out std_logic;
 

@@ -492,8 +492,23 @@ begin
 
       aux_timing_serdes_locked_i  => aux_timing_serdes_locked_i,
 
-      utc_o                => utc_o,
-      aux_timing_o         => aux_timing_o,
+      utc_year_o           => utc_o.utc_year,
+      utc_diy_o            => utc_o.utc_diy,
+      utc_month_o          => utc_o.utc_month,
+      utc_day_o            => utc_o.utc_day,
+      utc_hour_o           => utc_o.utc_hour,
+      utc_min_o            => utc_o.utc_min,
+      utc_sec_o            => utc_o.utc_sec,
+      utc_sbs_o            => utc_o.utc_sbs,
+      utc_valid_o          => utc_o.utc_valid,
+      ls_val_o             => utc_o.ls_val,
+      ls_flag_o            => utc_o.ls_flag,
+      ls_valid_o           => utc_o.ls_valid,
+      irig_o               => aux_timing_o.irig,
+      irig_valid_o         => aux_timing_o.irig_valid,
+      nmea_o               => aux_timing_o.nmea,
+      nmea_valid_o         => aux_timing_o.nmea_valid,
+      serdes_dat_o         => aux_timing_o.serdes_in,
 
       rst_aux_n_o => rst_aux_n_o,
 

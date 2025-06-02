@@ -308,8 +308,24 @@ entity wrc_board_spec is
     pps_valid_o : out std_logic;
     pps_led_o   : out std_logic;
     -- Timecode outputs
-    utc_o         : out t_utc_out;
-    aux_timing_o  : out t_aux_timing_out;
+    utc_year_o    : out std_logic_vector(11 downto 0);
+    utc_diy_o     : out std_logic_vector(8 downto 0);
+    utc_month_o   : out std_logic_vector(3 downto 0);
+    utc_day_o     : out std_logic_vector(4 downto 0);
+    utc_hour_o    : out std_logic_vector(5 downto 0);
+    utc_min_o     : out std_logic_vector(5 downto 0);
+    utc_sec_o     : out std_logic_vector(5 downto 0);
+    utc_sbs_o     : out std_logic_vector(16 downto 0);
+    utc_valid_o   : out std_logic;
+    ls_val_o      : out std_logic_vector(7 downto 0);
+    ls_flag_o     : out std_logic_vector(1 downto 0);
+    ls_valid_o    : out std_logic;
+    irig_o        : out std_logic;
+    irig_valid_o  : out std_logic;
+    nmea_o        : out std_logic;
+    nmea_valid_o  : out std_logic;
+    serdes_dat_o  : out std_logic_vector(7 downto 0);
+
     -- Link ok indication
     link_ok_o  : out std_logic
     );
@@ -353,6 +369,10 @@ architecture std_wrapper of wrc_board_spec is
   -- streamers config
   signal wrs_tx_cfg_in  : t_tx_streamer_cfg;
   signal wrs_rx_cfg_in  : t_rx_streamer_cfg;
+
+  -- aux timing interface
+  signal utc_out        : t_utc_out;
+  signal aux_timing_out : t_aux_timing_out;
 
 begin  -- architecture struct
 
@@ -438,6 +458,24 @@ begin  -- architecture struct
   wrs_rx_cfg_in.accept_broadcasts <= wrs_rx_cfg_acc_b_i;
   wrs_rx_cfg_in.filter_remote     <= wrs_rx_cfg_flt_r_i;
   wrs_rx_cfg_in.fixed_latency     <= wrs_rx_cfg_fix_l_i;
+
+  utc_year_o    <= utc_out.utc_year;
+  utc_diy_o     <= utc_out.utc_diy;
+  utc_month_o   <= utc_out.utc_month;
+  utc_day_o     <= utc_out.utc_day;
+  utc_hour_o    <= utc_out.utc_hour;
+  utc_min_o     <= utc_out.utc_min;
+  utc_sec_o     <= utc_out.utc_sec;
+  utc_sbs_o     <= utc_out.utc_sbs;
+  utc_valid_o   <= utc_out.utc_valid;
+  ls_val_o      <= utc_out.ls_val;
+  ls_flag_o     <= utc_out.ls_flag;
+  ls_valid_o    <= utc_out.ls_valid;
+  irig_o        <= aux_timing_out.irig;
+  irig_valid_o  <= aux_timing_out.irig_valid;
+  nmea_o        <= aux_timing_out.nmea;
+  nmea_valid_o  <= aux_timing_out.nmea_valid;
+  serdes_dat_o  <= aux_timing_out.serdes_in;
 
   -- Instantiate the records-based module
   cmp_xwrc_board_spec : xwrc_board_spec
@@ -547,8 +585,8 @@ begin  -- architecture struct
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
-      utc_o                => utc_o,
-      aux_timing_o         => aux_timing_o,
+      utc_o                => utc_out,
+      aux_timing_o         => aux_timing_out,
       link_ok_o            => link_ok_o);
 
 end architecture std_wrapper;

@@ -330,9 +330,24 @@ entity wr_core is
 
     aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
 
-    --timing outputs
-    utc_o                : out t_utc_out;
-    aux_timing_o         : out t_aux_timing_out;
+    --Aux Timing outputs
+    utc_year_o           : out std_logic_vector(11 downto 0);
+    utc_diy_o            : out std_logic_vector(8 downto 0);
+    utc_month_o          : out std_logic_vector(3 downto 0);
+    utc_day_o            : out std_logic_vector(4 downto 0);
+    utc_hour_o           : out std_logic_vector(5 downto 0);
+    utc_min_o            : out std_logic_vector(5 downto 0);
+    utc_sec_o            : out std_logic_vector(5 downto 0);
+    utc_sbs_o            : out std_logic_vector(16 downto 0);
+    utc_valid_o          : out std_logic;
+    ls_val_o             : out std_logic_vector(7 downto 0);
+    ls_flag_o            : out std_logic_vector(1 downto 0);
+    ls_valid_o           : out std_logic;
+    irig_o               : out std_logic;
+    irig_valid_o         : out std_logic;
+    nmea_o               : out std_logic;
+    nmea_valid_o         : out std_logic;
+    serdes_dat_o         : out std_logic_vector(7 downto 0);
 
     rst_aux_n_o : out std_logic;
 
@@ -656,6 +671,9 @@ begin
   -- Timecode generator
   --------------------------------------
   gen_aux_timing: if f_aux_timing_enabled(g_aux_timing_config) generate
+    signal utc_out        : t_utc_out;
+    signal aux_timing_out : t_aux_timing_out;
+  begin
 
     TIMECODE_GEN: wr_timecodes
       generic map (
@@ -680,9 +698,27 @@ begin
         pps_i       => s_pps_csync,
         pll_serdes_locked_i => aux_timing_serdes_locked_i,
 
-        utc_o        => utc_o,
-        aux_timing_o => aux_timing_o
+        utc_o        => utc_out,
+        aux_timing_o => aux_timing_out
       );
+
+    utc_year_o    <= utc_out.utc_year;
+    utc_diy_o     <= utc_out.utc_diy;
+    utc_month_o   <= utc_out.utc_month;
+    utc_day_o     <= utc_out.utc_day;
+    utc_hour_o    <= utc_out.utc_hour;
+    utc_min_o     <= utc_out.utc_min;
+    utc_sec_o     <= utc_out.utc_sec;
+    utc_sbs_o     <= utc_out.utc_sbs;
+    utc_valid_o   <= utc_out.utc_valid;
+    ls_val_o      <= utc_out.ls_val;
+    ls_flag_o     <= utc_out.ls_flag;
+    ls_valid_o    <= utc_out.ls_valid;
+    irig_o        <= aux_timing_out.irig;
+    irig_valid_o  <= aux_timing_out.irig_valid;
+    nmea_o        <= aux_timing_out.nmea;
+    nmea_valid_o  <= aux_timing_out.nmea_valid;
+    serdes_dat_o  <= aux_timing_out.serdes_in;
 
   end generate gen_aux_timing;
 
