@@ -462,15 +462,16 @@ architecture struct of wr_core is
      4  => f_sdb_embed_device(c_wrc_periph0_sdb,    x"00000400"),  -- Syscon
      5  => f_sdb_embed_device(c_wrc_periph1_sdb,    x"00000500"),  -- UART
      6  => f_sdb_embed_device(c_wrc_periph2_sdb,    x"00000600"),  -- 1-Wire
-     7  => f_sdb_embed_device(c_wrc_periph4_sdb,    x"00000800"),  -- wdiag (usr)
-     8  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
-     9  => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
-     10 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
-     11 => f_sdb_embed_device(c_wrc_tc_sdb,         x"00000c00"),  -- timing outputs
+     7  => f_sdb_embed_device(c_wrc_tc_sdb,         x"00000700"),  -- timing outputs
+     8  => f_sdb_embed_device(c_wrc_periph4_sdb,    x"00000800"),  -- wdiag (usr)
+     9  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
+     10 => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
+     11 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
+     --                       secbar sdb            x"00000c00"
      12 => f_sdb_embed_device(g_aux_sdb,            x"00008000")   -- aux WB bus
    );
 
-  constant c_secbar_sdb_address : t_wishbone_address := x"00001000";
+  constant c_secbar_sdb_address : t_wishbone_address := x"00000c00";
   constant c_secbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_secbar_layout, c_secbar_sdb_address);
 
@@ -1102,17 +1103,17 @@ begin
   secbar_master_i(6) <= periph_slave_o(2);
   periph_slave_i(2)  <= secbar_master_o(6);
 
-  secbar_master_i(7) <= periph_slave_o(3);
-  periph_slave_i(3)  <= secbar_master_o(7);
+  secbar_master_i(8) <= periph_slave_o(3);
+  periph_slave_i(3)  <= secbar_master_o(8);
 
-  secbar_master_i(8) <= periph_slave_o(4);
-  periph_slave_i(4)  <= secbar_master_o(8);
+  secbar_master_i(9) <= periph_slave_o(4);
+  periph_slave_i(4)  <= secbar_master_o(9);
 
-  cpu_csr_wb_in <= secbar_master_o(10);
-  secbar_master_i(10) <= cpu_csr_wb_out;
+  cpu_csr_wb_in <= secbar_master_o(11);
+  secbar_master_i(11) <= cpu_csr_wb_out;
 
-  secbar_master_i(11) <= timecode_wb_out;
-  timecode_wb_in      <= secbar_master_o(11);
+  secbar_master_i(7) <= timecode_wb_out;
+  timecode_wb_in      <= secbar_master_o(7);
 
   aux_adr_o <= secbar_master_o(12).adr;
   aux_dat_o <= secbar_master_o(12).dat;
@@ -1200,8 +1201,8 @@ begin
         clk_sys_i => clk_sys_i,
         clk_in_i  => freqmon_in,
         pps_p1_i  => '0',
-        slave_i   => secbar_master_o(9),
-        slave_o   => secbar_master_i(9));
+        slave_i   => secbar_master_o(10),
+        slave_o   => secbar_master_i(10));
 
     freqmon_in(0) <= clk_sys_i;
     freqmon_in(1) <= clk_dmtd_i;
@@ -1219,7 +1220,7 @@ begin
   end generate gen_with_clock_monitor;
 
   gen_without_clock_monitor : if not g_with_clock_freq_monitor generate
-    secbar_master_i(9) <= (dat => (others => '0'),
+    secbar_master_i(10) <= (dat => (others => '0'),
                            stall => '0',
                            err => '0',
                            rty => '0',
