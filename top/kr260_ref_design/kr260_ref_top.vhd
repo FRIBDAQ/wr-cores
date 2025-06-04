@@ -66,7 +66,9 @@ entity kr260_ref_top is
     sfp_sda_b : inout std_logic;
     sfp_scl_b : inout std_logic;
 
-    pmod4_2_b : out std_logic
+    pmod4_2_b : out std_logic;
+    pmod4_4_b : out std_logic;
+    pmod4_6_b : out std_logic
   );
 end;
 
@@ -124,7 +126,10 @@ architecture top of kr260_ref_top is
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtrefclk00_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll0lock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sdm0data_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+    sdm0reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sdm0toggle_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sdm0width_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     qpll0outclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0outrefclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -209,6 +214,14 @@ END COMPONENT;
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
+
+  signal hpll_data_out, mpll_data_out : std_logic_vector(15 downto 0);
+  signal hpll_load, mpll_load : std_logic;
+
+  signal hpll_data, mpll_data : std_logic_vector(24 downto 0);
+  signal hpll_toggle, mpll_toggle : std_logic;
+  signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
+
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -425,10 +438,10 @@ begin
       clk_ext_rst_o => open,
       pps_ext_i => open,
 
-      dac_hpll_load_p1_o => open,
-      dac_hpll_data_o => open,
-      dac_dpll_load_p1_o => open,
-      dac_dpll_data_o => open,
+      dac_hpll_load_p1_o => hpll_load,
+      dac_hpll_data_o => hpll_data_out,
+      dac_dpll_load_p1_o => mpll_load,
+      dac_dpll_data_o => mpll_data_out,
 
       phy_ref_clk_i => open,
       phy_tx_data_o => open,
@@ -536,6 +549,37 @@ begin
   sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
   sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
 
+  process(clk_62m5)
+  begin
+    if rising_edge(clk_62m5) then
+      if rst_n = '0' then
+        mpll_cnt <= (others => '0');
+        hpll_cnt <= (others => '0');
+        mpll_toggle <= '0';
+        hpll_toggle <= '0';
+      else
+        if mpll_cnt = 0 then
+          if mpll_load = '1' then
+            --  Reformat.
+            --  According to 73205, only LSB are significant.
+            mpll_data(24) <= '0';
+            mpll_data(23 downto 8) <= mpll_data_out;
+            mpll_data(7 downto 0) <= (others => '0');
+            mpll_cnt <= (others => '1');
+          end if;
+        else
+          --  FB CLK should be way higher than system clock
+          if mpll_cnt(5 downto 4) = "00" then
+            mpll_toggle <= '0';
+          elsif mpll_cnt(5 downto 4) /= "11" then
+            mpll_toggle <= '1';
+          end if;
+          mpll_cnt <= mpll_cnt - 1;
+        end if;
+      end if;
+    end if;
+  end process;
+
   inst_gth: gtwizard_ultrascale_0
     port map (
       gthrxn_in(0)  => pad_rxn_i,
@@ -565,7 +609,14 @@ begin
       gtwiz_userdata_tx_in => gth_tx_data_out,
       gtwiz_userdata_rx_out => gth_rx_data_in,
       gtrefclk00_in(0) => refclk_156m25,
-      qpll0lock_out(0) => qpll0_lock,
+      sdm0data_in => mpll_data,
+      sdm0toggle_in(0) => mpll_toggle,
+      sdm0width_in => "00",  -- 16b
+      sdm0reset_in(0) => '0',
+--      sdm1data_in => hpll_data,
+--      sdm1toggle_in(0) => hpll_toggle,
+--      sdm1width_in => "00",  -- 16b
+--      qpll0lock_out(0) => qpll0_lock,
       qpll0outclk_out => open,
       qpll0outrefclk_out => open,
       rx8b10ben_in(0) => '1',
@@ -669,7 +720,7 @@ begin
     );
   end generate;
 
-  gen_ila: if false generate
+  gen_ila: if true generate
     component ila_0
       port (
         clk    : in STD_LOGIC;
@@ -682,8 +733,43 @@ begin
         clk => clk_62m5,
         probe0(15 downto 0) => gth_status(15 downto 0),
         probe0(31 downto 16) => gth_rx_data_in,
-        probe0(47 downto 32) => gth_tx_data_out,
-        probe0(63 downto 48) => (others => '0')
+--        probe0(47 downto 32) => gth_tx_data_out,
+        probe0(56 downto 32) => mpll_data,
+        probe0(57) => mpll_toggle,
+        probe0(58) => mpll_load,
+        probe0(63 downto 59) => (others => '0')
       );
   end generate;
+
+  process(phy16_in.ref_clk)
+    variable cnt : natural range 0 to 4 := 0;
+    variable v : std_logic := '0';
+  begin
+    if rising_edge(phy16_in.ref_clk) then
+      if cnt = 4 then
+        cnt := 0;
+        pmod4_6_b <= v;
+        v := not v;
+      else
+        cnt := cnt + 1;
+      end if;
+    end if;
+  end process;
+  --pmod4_2_b <= phy16_in.ref_clk;
+
+ process(clk_62m5)
+  variable cnt : natural range 0 to 4 := 0;
+  variable v : std_logic := '0';
+begin
+  if rising_edge(clk_62m5) then
+    if cnt = 4 then
+      cnt := 0;
+      pmod4_4_b <= v;
+      v := not v;
+    else
+      cnt := cnt + 1;
+    end if;
+  end if;
+end process;
+
 end top;
