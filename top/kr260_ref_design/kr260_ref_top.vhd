@@ -102,7 +102,7 @@ architecture top of kr260_ref_top is
     );
   end component mpsoc;
 
-  COMPONENT gtwizard_ultrascale_0
+  COMPONENT gthe4_sdm
   PORT (
     gtwiz_userclk_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_tx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -114,6 +114,14 @@ architecture top of kr260_ref_top is
     gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -580,7 +588,7 @@ begin
     end if;
   end process;
 
-  inst_gth: gtwizard_ultrascale_0
+  inst_gth: gthe4_sdm
     port map (
       gthrxn_in(0)  => pad_rxn_i,
       gthrxp_in(0)  => pad_rxp_i,
@@ -597,6 +605,15 @@ begin
       gtwiz_userclk_rx_usrclk_out => open,
       gtwiz_userclk_rx_usrclk2_out(0) => phy16_in.rx_clk,
       gtwiz_userclk_rx_active_out(0) => gtwiz_userclk_rx_active_in,
+      gtwiz_buffbypass_tx_reset_in(0) => gtwiz_buffbypass_tx_reset_out,
+      gtwiz_buffbypass_tx_start_user_in(0) => '0',
+      gtwiz_buffbypass_tx_done_out(0) => gtwiz_buffbypass_tx_done_in,
+      gtwiz_buffbypass_tx_error_out(0) => gtwiz_buffbypass_tx_error_in,
+      gtwiz_buffbypass_rx_reset_in(0) => gtwiz_buffbypass_rx_reset_out,
+      gtwiz_buffbypass_rx_start_user_in(0) => gtwiz_buffbypass_rx_start_user_out,
+      gtwiz_buffbypass_rx_done_out(0) => gtwiz_buffbypass_rx_done_in,
+      gtwiz_buffbypass_rx_error_out(0) => gtwiz_buffbypass_rx_error_in,
+  
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
       gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
       gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
@@ -640,11 +657,6 @@ begin
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
       txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done);
   
-  gtwiz_buffbypass_tx_done_in <= '1';
-  gtwiz_buffbypass_rx_done_in <= '1';
-  gtwiz_buffbypass_tx_error_in <= '0';
-  gtwiz_buffbypass_rx_error_in <= '0';
-
   phy_rst <= gth_rst or phy16_out.rst;
   inst_gthe4_adapter: entity work.wr_gthe4_adapter
     port map (
@@ -691,12 +703,12 @@ begin
   phy16_in.rx_sampled_clk <= '0';
 
   gth_status_a(0) <= gth_powergood;
-  gth_status_a(1) <= gtwiz_reset_all_out;
+  gth_status_a(1) <= gtwiz_reset_rx_cdr_stable_out;
   gth_status_a(2) <= gtwiz_reset_tx_done_in;
   gth_status_a(3) <= gtwiz_reset_rx_done_in;
 
-  gth_status_a(4) <= gtwiz_reset_rx_cdr_stable_out;
-  gth_status_a(5) <= gtwiz_userclk_tx_reset_out;
+  gth_status_a(4) <= gtwiz_buffbypass_rx_done_in;
+  gth_status_a(5) <= gtwiz_buffbypass_tx_done_in;
   gth_status_a(6) <= gtwiz_userclk_tx_active_in;
   gth_status_a(7) <= gtwiz_userclk_rx_reset_out;
 
@@ -757,11 +769,11 @@ begin
   end process;
   --pmod4_2_b <= phy16_in.ref_clk;
 
- process(clk_62m5)
+ process(phy16_in.rx_clk)
   variable cnt : natural range 0 to 4 := 0;
   variable v : std_logic := '0';
 begin
-  if rising_edge(clk_62m5) then
+  if rising_edge(phy16_in.rx_clk) then
     if cnt = 4 then
       cnt := 0;
       pmod4_4_b <= v;
