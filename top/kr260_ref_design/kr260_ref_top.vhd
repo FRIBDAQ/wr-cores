@@ -138,6 +138,10 @@ architecture top of kr260_ref_top is
     sdm0reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     sdm0toggle_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     sdm0width_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    sdm1data_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
+    sdm1toggle_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    sdm1width_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    qpll0lock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0outclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0outrefclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -151,6 +155,7 @@ architecture top of kr260_ref_top is
     txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    txsysclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -162,11 +167,11 @@ architecture top of kr260_ref_top is
     rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txoutclkfabric_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
-
   signal refclk_156m25, refclk_156m25_int : std_logic;
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
@@ -177,6 +182,7 @@ END COMPONENT;
   signal count : natural range 0 to 156_250_000 - 1;
   signal clk_156m25, clk_62m5 : std_logic;
   signal clk_fb, pll_locked : std_logic;
+  signal clk_dmtd : std_logic;
 
   signal m_axi4_out : t_axi4_lite_master_out_32;
   signal m_axi4_in : t_axi4_lite_master_in_32;
@@ -434,7 +440,7 @@ begin
       clk_sys_i => clk_62m5,
       rst_n_i => rst_n,
 
-      clk_dmtd_i => clk_62m5,
+      clk_dmtd_i => clk_dmtd,
       clk_ref_i => phy16_in.ref_clk,
 
       clk_dmtd_over_i => open,
@@ -567,11 +573,12 @@ begin
         hpll_toggle <= '0';
       else
         if mpll_cnt = 0 then
+          --  Idle, can accept a new value
           if mpll_load = '1' then
             --  Reformat.
             --  According to 73205, only LSB are significant.
             mpll_data <= (others => '0');
-            mpll_data(19 downto 4) <= mpll_data_out;
+            mpll_data(15 downto 0) <= mpll_data_out;
             mpll_cnt <= (others => '1');
           end if;
         else
@@ -582,6 +589,25 @@ begin
             mpll_toggle <= '1';
           end if;
           mpll_cnt <= mpll_cnt - 1;
+        end if;
+
+        if hpll_cnt = 0 then
+          --  Idle, can accept a new value
+          if hpll_load = '1' then
+            --  Reformat.
+            --  According to 73205, only LSB are significant.
+            hpll_data <= (others => '0');
+            hpll_data(19 downto 4) <= hpll_data_out;
+            hpll_cnt <= (others => '1');
+          end if;
+        else
+          --  FB CLK should be way higher than system clock
+          if hpll_cnt(5 downto 4) = "00" then
+            hpll_toggle <= '0';
+          elsif mpll_cnt(5 downto 4) /= "11" then
+            hpll_toggle <= '1';
+          end if;
+          hpll_cnt <= hpll_cnt - 1;
         end if;
       end if;
     end if;
@@ -629,12 +655,14 @@ begin
       sdm0toggle_in(0) => mpll_toggle,
       sdm0width_in => "00",  -- 00:24b, 10:16b
       sdm0reset_in(0) => '0',
---      sdm1data_in => hpll_data,
---      sdm1toggle_in(0) => hpll_toggle,
---      sdm1width_in => "00",  -- 16b
---      qpll0lock_out(0) => qpll0_lock,
+      sdm1data_in => hpll_data,
+      sdm1toggle_in(0) => hpll_toggle,
+      sdm1width_in => "00",  -- 00:24b
+      qpll0lock_out(0) => qpll0_lock,
       qpll0outclk_out => open,
       qpll0outrefclk_out => open,
+      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
+      txoutclkfabric_out(0) => clk_dmtd,
       rx8b10ben_in(0) => '1',
       rxcommadeten_in(0) => '1',
       rxmcommaalignen_in(0) => '0',

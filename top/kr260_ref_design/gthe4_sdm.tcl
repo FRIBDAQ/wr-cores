@@ -21,5 +21,9 @@ set_property -dict [list \
   CONFIG.RX_REFCLK_FREQUENCY {156.2495001} \
   CONFIG.RX_REFCLK_SOURCE {} \
   CONFIG.TX_REFCLK_FREQUENCY {156.2495001} \
+  CONFIG.ENABLE_OPTIONAL_PORTS {sdm0data_in sdm0reset_in sdm0toggle_in sdm0width_in sdm1data_in sdm1toggle_in sdm1width_in txsysclksel_in qpll0lock_out txoutclkfabric_out} \
+  CONFIG.SECONDARY_QPLL_ENABLE {true} \
+  CONFIG.SECONDARY_QPLL_FRACN_NUMERATOR {6871} \
+  CONFIG.SECONDARY_QPLL_LINE_RATE {1.25} \
 ] [get_ips gthe4_sdm]
 generate_target {instantiation_template} [get_files /home/tgingold/Repositories/ohwr/wr-cores-kria/syn/kr260_ref_design/kr260_ref_top.srcs/sources_1/ip/gthe4_sdm/gthe4_sdm.xci]
