@@ -36,6 +36,7 @@ use ieee.std_logic_1164.all;
 library work;
 use work.endpoint_pkg.all;
 use work.wishbone_pkg.all;
+use work.wr_timecode_pkg.all;
 
 package wr_xilinx_pkg is
 
@@ -61,6 +62,7 @@ package wr_xilinx_pkg is
       g_gtp_enable_ch1            : integer := 1;
       g_gtp_mux_enable            : boolean := FALSE;
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       g_simulation                : integer := 0
       );
     port (
@@ -112,7 +114,10 @@ package wr_xilinx_pkg is
       ext_ref_mul_o         : out std_logic;
       ext_ref_mul_locked_o  : out std_logic;
       ext_ref_mul_stopped_o : out std_logic;
-      ext_ref_rst_i         : in  std_logic             := '0');
+      ext_ref_rst_i         : in  std_logic             := '0';
+      serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
+      aux_timing_serdes_locked_o  : out std_logic;
+      serdes_o              : out std_logic);
   end component xwrc_platform_xilinx;
 
   component wr_gtp_phy_spartan6
@@ -363,5 +368,50 @@ package wr_xilinx_pkg is
     mdio_slave_o         : out t_wishbone_slave_out
     );
   end component;
+
+  component xoserdes_4_to_1_spartan6 is
+  generic
+  (
+    g_clkin_period : real := 8.000                --clk_i period (ns)
+  );
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(3 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
+  );
+  end component xoserdes_4_to_1_spartan6;
+
+  component xoserdes_8_to_1_7series is
+  generic
+  (
+    g_clkin_period : real := 16.000               --clk_i period (ns)
+  );
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(7 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
+  );
+  end component xoserdes_8_to_1_7series;
+
+  component xoserdes_8_to_1_ultrascale is
+  generic
+  (
+    g_clkin_period : real := 16.000               --clk_i period (ns)
+  );
+  port
+  (
+    clk_i     : in std_logic;                     --input to pll for generating serdes clk
+    rst_i     : in std_logic;                     --async reset
+    serdes_i  : in std_logic_vector(7 downto 0);  --serdes data in
+    serdes_o  : out std_logic;                    --serdes data out
+    pll_serdes_locked_o : out std_logic           --serdes clk pll locked indicator
+  );
+  end component xoserdes_8_to_1_ultrascale;
 
 end wr_xilinx_pkg;

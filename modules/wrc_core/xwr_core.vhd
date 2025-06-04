@@ -67,7 +67,7 @@ use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
-
+use work.wr_timecode_pkg.all;
 
 entity xwr_core is
   generic(
@@ -110,7 +110,8 @@ entity xwr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
-    g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
+    g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE
     );
   port(
     ---------------------------------------------------------------------------
@@ -294,6 +295,11 @@ entity xwr_core is
     --  Resynchronized reset (clk_sys)
     rst_aux_n_o : out std_logic;
 
+    -- Auxiliary Timing (clk_ref)
+    aux_timing_serdes_locked_i  : in std_logic := '0';    --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
+    utc_o                       : out t_utc_out;
+    aux_timing_o                : out t_aux_timing_out;
+
     --  Auxillary diagnostics (used by snmp, clk_sys)
     aux_diag_i    : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others =>(others=>'0'));
     aux_diag_o    : out t_generic_word_array(g_diag_rw_size-1 downto 0);
@@ -341,7 +347,8 @@ begin
       g_use_platform_specific_dpram => g_use_platform_specific_dpram,
       g_softpll_aux_channel_config => g_softpll_aux_channel_config,
       g_with_clock_freq_monitor   => g_with_clock_freq_monitor,
-      g_hwbld_date                => g_hwbld_date
+      g_hwbld_date                => g_hwbld_date,
+      g_aux_timing_config         => g_aux_timing_config
       )
     port map(
       clk_sys_i     => clk_sys_i,
@@ -489,6 +496,26 @@ begin
       pps_valid_o          => pps_valid_o,
       pps_p_o              => pps_p_o,
       pps_led_o            => pps_led_o,
+
+      aux_timing_serdes_locked_i  => aux_timing_serdes_locked_i,
+
+      utc_year_o           => utc_o.utc_year,
+      utc_diy_o            => utc_o.utc_diy,
+      utc_month_o          => utc_o.utc_month,
+      utc_day_o            => utc_o.utc_day,
+      utc_hour_o           => utc_o.utc_hour,
+      utc_min_o            => utc_o.utc_min,
+      utc_sec_o            => utc_o.utc_sec,
+      utc_sbs_o            => utc_o.utc_sbs,
+      utc_valid_o          => utc_o.utc_valid,
+      ls_val_o             => utc_o.ls_val,
+      ls_flag_o            => utc_o.ls_flag,
+      ls_valid_o           => utc_o.ls_valid,
+      irig_o               => aux_timing_o.irig,
+      irig_valid_o         => aux_timing_o.irig_valid,
+      nmea_o               => aux_timing_o.nmea,
+      nmea_valid_o         => aux_timing_o.nmea_valid,
+      serdes_dat_o         => aux_timing_o.serdes_in,
 
       rst_aux_n_o => rst_aux_n_o,
 

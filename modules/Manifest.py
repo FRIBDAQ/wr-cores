@@ -17,5 +17,8 @@ modules =  {
         "wr_nic",
         "wr_txtsu",
         "wr_irig",
+        "wr_nmea",
+        "wr_auxclk_gen",
+        "wr_timecodes",
     ]
 }

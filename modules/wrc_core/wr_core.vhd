@@ -69,6 +69,7 @@ use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 entity wr_core is
   generic(
@@ -110,6 +111,7 @@ entity wr_core is
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
+    g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
     );
   port(
@@ -326,6 +328,27 @@ entity wr_core is
     pps_p_o              : out std_logic;
     pps_led_o            : out std_logic;
 
+    aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
+
+    --Aux Timing outputs
+    utc_year_o           : out std_logic_vector(11 downto 0);
+    utc_diy_o            : out std_logic_vector(8 downto 0);
+    utc_month_o          : out std_logic_vector(3 downto 0);
+    utc_day_o            : out std_logic_vector(4 downto 0);
+    utc_hour_o           : out std_logic_vector(5 downto 0);
+    utc_min_o            : out std_logic_vector(5 downto 0);
+    utc_sec_o            : out std_logic_vector(5 downto 0);
+    utc_sbs_o            : out std_logic_vector(16 downto 0);
+    utc_valid_o          : out std_logic;
+    ls_val_o             : out std_logic_vector(7 downto 0);
+    ls_flag_o            : out std_logic_vector(1 downto 0);
+    ls_valid_o           : out std_logic;
+    irig_o               : out std_logic;
+    irig_valid_o         : out std_logic;
+    nmea_o               : out std_logic;
+    nmea_valid_o         : out std_logic;
+    serdes_dat_o         : out std_logic_vector(7 downto 0);
+
     rst_aux_n_o : out std_logic;
 
     link_ok_o : out std_logic;
@@ -379,9 +402,16 @@ architecture struct of wr_core is
   signal s_pps_csync : std_logic;
   signal pps_valid   : std_logic;
   signal ppsg_link_ok: std_logic;
+  signal pps_pre     : std_logic;
 
   signal ppsg_wb_in  : t_wishbone_slave_in;
   signal ppsg_wb_out : t_wishbone_slave_out;
+
+  -----------------------------------------------------------------------------
+  --Timecode generator
+  -----------------------------------------------------------------------------
+  signal timecode_wb_in : t_wishbone_slave_in;
+  signal timecode_wb_out : t_wishbone_slave_out;
 
   -----------------------------------------------------------------------------
   --Timing system
@@ -424,28 +454,29 @@ architecture struct of wr_core is
   -----------------------------------------------------------------------------
   --WB Secondary Crossbar
   -----------------------------------------------------------------------------
-  constant c_secbar_layout : t_sdb_record_array(11 downto 0) :=
-    (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb, x"00000000"),
-     1  => f_sdb_embed_device(c_xwr_endpoint_sdb, x"00000100"),
+  constant c_secbar_layout : t_sdb_record_array(12 downto 0) :=
+    (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb,   x"00000000"),
+     1  => f_sdb_embed_device(c_xwr_endpoint_sdb,   x"00000100"),
      2  => f_sdb_embed_device(c_xwr_softpll_ng_sdb, x"00000200"),
-     3  => f_sdb_embed_device(c_xwr_pps_gen_sdb,  x"00000300"),
-     4  => f_sdb_embed_device(c_wrc_periph0_sdb,  x"00000400"),  -- Syscon
-     5  => f_sdb_embed_device(c_wrc_periph1_sdb,  x"00000500"),  -- UART
-     6  => f_sdb_embed_device(c_wrc_periph2_sdb,  x"00000600"),  -- 1-Wire
-     7  => f_sdb_embed_device(c_wrc_periph4_sdb,  x"00000800"),  -- wdiag (usr)
-     8  => f_sdb_embed_device(c_wrc_periph5_sdb,  x"00000900"),  -- wdiag (cpu)
-     9  => f_sdb_embed_device(c_wrc_periph6_sdb,  x"00000a00"),  -- freq mon
-     10 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,  x"00000b00"),  -- cpu csr
-     --                     secbar sdb            x"00000c00"
-     11 => f_sdb_embed_device(g_aux_sdb,          x"00008000")   -- aux WB bus
+     3  => f_sdb_embed_device(c_xwr_pps_gen_sdb,    x"00000300"),
+     4  => f_sdb_embed_device(c_wrc_periph0_sdb,    x"00000400"),  -- Syscon
+     5  => f_sdb_embed_device(c_wrc_periph1_sdb,    x"00000500"),  -- UART
+     6  => f_sdb_embed_device(c_wrc_periph2_sdb,    x"00000600"),  -- 1-Wire
+     7  => f_sdb_embed_device(c_wrc_tc_sdb,         x"00000700"),  -- timing outputs
+     8  => f_sdb_embed_device(c_wrc_periph4_sdb,    x"00000800"),  -- wdiag (usr)
+     9  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
+     10 => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
+     11 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
+     --                       secbar sdb            x"00000c00"
+     12 => f_sdb_embed_device(g_aux_sdb,            x"00008000")   -- aux WB bus
    );
 
-  constant c_secbar_sdb_address : t_wishbone_address := x"00000C00";
+  constant c_secbar_sdb_address : t_wishbone_address := x"00000c00";
   constant c_secbar_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_secbar_layout, c_secbar_sdb_address);
 
-  signal secbar_master_i : t_wishbone_master_in_array(11 downto 0);
-  signal secbar_master_o : t_wishbone_master_out_array(11 downto 0);
+  signal secbar_master_i : t_wishbone_master_in_array(12 downto 0);
+  signal secbar_master_o : t_wishbone_master_out_array(12 downto 0);
 
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
@@ -625,6 +656,7 @@ begin
       pps_csync_o => s_pps_csync,
       pps_out_o   => pps_p_o,
       pps_led_o   => pps_led_o,
+      pps_pre_o   => pps_pre,
       pps_valid_o => pps_valid,
 
       tm_utc_o        => tm_tai_o,
@@ -635,6 +667,71 @@ begin
   ppsg_link_ok <= ep_led_link;
   pps_csync_o  <= s_pps_csync;
   pps_valid_o  <= pps_valid;
+
+  --------------------------------------
+  -- Timecode generator
+  --------------------------------------
+  gen_aux_timing: if f_aux_timing_enabled(g_aux_timing_config) generate
+    signal utc_out        : t_utc_out;
+    signal aux_timing_out : t_aux_timing_out;
+  begin
+
+    TIMECODE_GEN: wr_timecodes
+      generic map (
+        g_interface_mode        => PIPELINED,
+        g_address_granularity   => BYTE,
+        g_ref_clock_rate        => f_refclk_rate(g_pcs_16bit),
+        g_serdes_data_width     => f_pcs_data_width(g_pcs_16bit)/2,
+        g_timecode_config       => g_aux_timing_config
+      )
+      port map (
+
+        clk_sys_i   => clk_sys_i,
+        clk_ref_i   => clk_ref_i,
+        rst_sys_n_i => rst_net_n,
+        rst_ref_n_i => rst_net_resync_ref_n,
+
+        wb_i        => timecode_wb_in,
+        wb_o        => timecode_wb_out,
+
+        pps_valid_i => pps_valid,
+        pps_pre_i   => pps_pre,
+        pps_i       => s_pps_csync,
+        pll_serdes_locked_i => aux_timing_serdes_locked_i,
+
+        utc_o        => utc_out,
+        aux_timing_o => aux_timing_out
+      );
+
+    utc_year_o    <= utc_out.utc_year;
+    utc_diy_o     <= utc_out.utc_diy;
+    utc_month_o   <= utc_out.utc_month;
+    utc_day_o     <= utc_out.utc_day;
+    utc_hour_o    <= utc_out.utc_hour;
+    utc_min_o     <= utc_out.utc_min;
+    utc_sec_o     <= utc_out.utc_sec;
+    utc_sbs_o     <= utc_out.utc_sbs;
+    utc_valid_o   <= utc_out.utc_valid;
+    ls_val_o      <= utc_out.ls_val;
+    ls_flag_o     <= utc_out.ls_flag;
+    ls_valid_o    <= utc_out.ls_valid;
+    irig_o        <= aux_timing_out.irig;
+    irig_valid_o  <= aux_timing_out.irig_valid;
+    nmea_o        <= aux_timing_out.nmea;
+    nmea_valid_o  <= aux_timing_out.nmea_valid;
+    serdes_dat_o  <= aux_timing_out.serdes_in;
+
+  end generate gen_aux_timing;
+
+  gen_without_aux_timing: if not f_aux_timing_enabled(g_aux_timing_config) generate
+
+    timecode_wb_out <= (dat => (others => '0'),
+                        stall => '0',
+                        err => '0',
+                        rty => '0',
+                        ack => '1');
+
+  end generate gen_without_aux_timing;
 
   -----------------------------------------------------------------------------
   -- Software PLL
@@ -966,7 +1063,7 @@ begin
     generic map(
       g_verbose     => g_verbose,
       g_num_masters => 2,
-      g_num_slaves  => 12,
+      g_num_slaves  => 13,
       g_registered  => true,
       g_wraparound  => true,
       g_layout      => c_secbar_layout,
@@ -1007,28 +1104,30 @@ begin
   secbar_master_i(6) <= periph_slave_o(2);
   periph_slave_i(2)  <= secbar_master_o(6);
 
-  secbar_master_i(7) <= periph_slave_o(3);
-  periph_slave_i(3)  <= secbar_master_o(7);
+  secbar_master_i(8) <= periph_slave_o(3);
+  periph_slave_i(3)  <= secbar_master_o(8);
 
-  secbar_master_i(8) <= periph_slave_o(4);
-  periph_slave_i(4)  <= secbar_master_o(8);
+  secbar_master_i(9) <= periph_slave_o(4);
+  periph_slave_i(4)  <= secbar_master_o(9);
 
-  cpu_csr_wb_in <= secbar_master_o(10);
-  secbar_master_i(10) <= cpu_csr_wb_out;
+  cpu_csr_wb_in <= secbar_master_o(11);
+  secbar_master_i(11) <= cpu_csr_wb_out;
 
-  aux_adr_o <= secbar_master_o(11).adr;
-  aux_dat_o <= secbar_master_o(11).dat;
-  aux_sel_o <= secbar_master_o(11).sel;
-  aux_cyc_o <= secbar_master_o(11).cyc;
-  aux_stb_o <= secbar_master_o(11).stb;
-  aux_we_o  <= secbar_master_o(11).we;
+  secbar_master_i(7) <= timecode_wb_out;
+  timecode_wb_in      <= secbar_master_o(7);
 
-  secbar_master_i(11).dat   <= aux_dat_i;
-  secbar_master_i(11).ack   <= aux_ack_i;
-  secbar_master_i(11).stall <= aux_stall_i;
-  secbar_master_i(11).err   <= '0';
-  secbar_master_i(11).rty   <= '0';
+  aux_adr_o <= secbar_master_o(12).adr;
+  aux_dat_o <= secbar_master_o(12).dat;
+  aux_sel_o <= secbar_master_o(12).sel;
+  aux_cyc_o <= secbar_master_o(12).cyc;
+  aux_stb_o <= secbar_master_o(12).stb;
+  aux_we_o  <= secbar_master_o(12).we;
 
+  secbar_master_i(12).dat   <= aux_dat_i;
+  secbar_master_i(12).ack   <= aux_ack_i;
+  secbar_master_i(12).stall <= aux_stall_i;
+  secbar_master_i(12).err   <= '0';
+  secbar_master_i(12).rty   <= '0';
 
   -----------------------------------------------------------------------------
   -- WBP MUX
@@ -1103,8 +1202,8 @@ begin
         clk_sys_i => clk_sys_i,
         clk_in_i  => freqmon_in,
         pps_p1_i  => '0',
-        slave_i   => secbar_master_o(9),
-        slave_o   => secbar_master_i(9));
+        slave_i   => secbar_master_o(10),
+        slave_o   => secbar_master_i(10));
 
     freqmon_in(0) <= clk_sys_i;
     freqmon_in(1) <= clk_dmtd_i;
@@ -1122,7 +1221,7 @@ begin
   end generate gen_with_clock_monitor;
 
   gen_without_clock_monitor : if not g_with_clock_freq_monitor generate
-    secbar_master_i(9) <= (dat => (others => '0'),
+    secbar_master_i(10) <= (dat => (others => '0'),
                            stall => '0',
                            err => '0',
                            rty => '0',

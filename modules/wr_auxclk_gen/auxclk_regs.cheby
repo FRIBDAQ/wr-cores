@@ -1,0 +1,73 @@
+##############################################################################;
+## Title      : Auxclock Register Block
+## Project    : White Rabbit
+##############################################################################;
+## File       : auxclk_regs.cheby
+## Author     : Harvey Leicester
+## Company    : CERN BE-CEM-EDL
+## Created    : 2024-11-04
+## Last update: 2024-11-04
+##############################################################################
+## Description: register interface for auxclock generator
+##############################################################################
+##
+## Copyright (c) 2024 CERN / BE-CEM-EDL
+##
+## This source file is free software; you can redistribute it
+## and/or modify it under the terms of the GNU Lesser General
+## Public License as published by the Free Software Foundation;
+## either version 2.1 of the License, or (at your option) any
+## later version.
+##
+## This source is distributed in the hope that it will be
+## useful, but WITHOUT ANY WARRANTY; without even the implied
+## warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+## PURPOSE.  See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General
+## Public License along with this source; if not, download it
+## from http://www.gnu.org/licenses/lgpl-2.1l.html
+##
+##############################################################################
+memory-map:
+  name: auxclk_gen
+  description: Auxclock register block
+  bus: wb-32-be
+  x-hdl:
+    iogroup: auxclk_regs
+    name-suffix: _regs
+  schema-version:
+    core: 2.0.0
+    x-conversions: 1.0.0
+    x-hdl: 1.0.0
+    x-map-info: 1.0.0
+    x-wbgen: 1.0.0
+  children:
+  - reg:
+      name: PR
+      description: Period Register
+      width: 32
+      access: rw
+      address: 0x0
+      x-hdl:
+        write-strobe: True
+        type: wire
+      children:
+      - field:
+          name: hp_width
+          description: Half period width, defined as number of 2ns cycles
+          range: 15-0
+  - reg:
+      name: DCR
+      description: Duty Cycle Register
+      width: 32
+      access: rw
+      x-hdl:
+        write-strobe: True
+        type: wire
+      children:
+      - field:
+          name: low_width
+          description: Low state width, defined as number of 2ns cycles
+          range: 15-0

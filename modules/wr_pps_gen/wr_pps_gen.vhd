@@ -85,7 +85,7 @@ entity wr_pps_gen is
     pps_csync_o : out std_logic;
     pps_out_o   : out std_logic;
     pps_led_o   : out std_logic;
-
+    pps_pre_o   : out std_logic;
     pps_valid_o : out std_logic;
 
     tm_utc_o        : out std_logic_vector(39 downto 0);
@@ -475,6 +475,9 @@ begin  -- behavioral
   ppsg_cr_cnt_adj_i <= pps_valid_int;
 
   pps_valid_o <= pps_valid_int;
+
+--1 cycle before pps
+  pps_pre_o   <= ns_overflow;
 
   tm_utc_o        <= std_logic_vector(cntr_utc);
   tm_cycles_o     <= std_logic_vector(cntr_nsec);

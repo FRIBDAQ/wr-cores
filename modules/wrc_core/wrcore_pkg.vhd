@@ -40,6 +40,7 @@ use work.sysc_wbgen2_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 package wrcore_pkg is
 
@@ -89,10 +90,58 @@ package wrcore_pkg is
       pps_out_o       : out std_logic;
       pps_led_o       : out std_logic;
       pps_valid_o     : out std_logic;
+      pps_pre_o       : out std_logic;
       tm_utc_o        : out std_logic_vector(39 downto 0);
       tm_cycles_o     : out std_logic_vector(27 downto 0);
       tm_time_valid_o : out std_logic
       );
+  end component;
+
+  ---------------------------------------------------------------------------
+  --Timecode generator
+  ---------------------------------------------------------------------------
+  constant c_wrc_tc_sdb : t_sdb_device := (
+    abi_class     => x"0000",              -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7",                 -- 8/16/32-bit port granularity
+    sdb_component => (
+      addr_first  => x"0000000000000000",
+      addr_last   => x"000000000000007f",
+      product     => (
+        vendor_id => x"000000000000CE42",  -- CERN
+        device_id => x"de0d8ced",
+        version   => x"00000001",
+        date      => x"20241030",
+        name      => "WR-Timecode-Master ")));
+
+  component wr_timecodes is
+    generic (
+      g_interface_mode        : t_wishbone_interface_mode      := PIPELINED;
+      g_address_granularity   : t_wishbone_address_granularity := BYTE;
+      g_ref_clock_rate        : integer := 62500000;
+      g_serdes_data_width     : integer := 8;
+      g_timecode_config      : t_wr_timecode_config := c_WR_TIMECODE_NONE
+    );
+    port (
+
+      clk_sys_i   : in std_logic;
+      clk_ref_i   : in std_logic;
+      rst_sys_n_i : in std_logic;
+      rst_ref_n_i : in std_logic;
+
+      wb_i  : in t_wishbone_slave_in;
+      wb_o  : out t_wishbone_slave_out;
+
+      pps_valid_i         : in std_logic;
+      pps_pre_i           : in std_logic;
+      pps_i               : in std_logic;
+      pll_serdes_locked_i : in std_logic;
+
+      utc_o               : out t_utc_out;
+      aux_timing_o        : out t_aux_timing_out
+    );
   end component;
 
   -----------------------------------------------------------------------------
@@ -430,7 +479,8 @@ package wrcore_pkg is
       g_diag_ro_size              : integer                        := 0;
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
-      g_with_clock_freq_monitor   : boolean                        := true);
+      g_with_clock_freq_monitor   : boolean                        := true;
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE);
     port(
       clk_sys_i            : in std_logic;
       clk_dmtd_i           : in std_logic := '0';
@@ -541,6 +591,10 @@ package wrcore_pkg is
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
 
+      utc_o                : out t_utc_out;
+      aux_timing_o         : out t_aux_timing_out;
+      pll_serdes_locked_i  : in std_logic := '0';
+
       rst_aux_n_o : out std_logic;
 
       link_ok_o : out std_logic;
@@ -587,7 +641,11 @@ package wrcore_pkg is
       g_diag_ro_size              : integer                        := 0;
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
-      g_with_clock_freq_monitor   : boolean                        := true);
+      g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
+      g_with_clock_freq_monitor   : boolean                        := true;
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
+      g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
+      );
     port(
       ---------------------------------------------------------------------------
       -- Clocks/resets
@@ -802,6 +860,27 @@ package wrcore_pkg is
       pps_valid_o          : out std_logic;
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
+
+      aux_timing_serdes_locked_i  : in std_logic := '0';  --pll locked indicator from pll for platform specific serdes.  can be left unconnected if aux timing is not used
+
+      --Aux Timing outputs
+      utc_year_o           : out std_logic_vector(11 downto 0);
+      utc_diy_o            : out std_logic_vector(8 downto 0);
+      utc_month_o          : out std_logic_vector(3 downto 0);
+      utc_day_o            : out std_logic_vector(4 downto 0);
+      utc_hour_o           : out std_logic_vector(5 downto 0);
+      utc_min_o            : out std_logic_vector(5 downto 0);
+      utc_sec_o            : out std_logic_vector(5 downto 0);
+      utc_sbs_o            : out std_logic_vector(16 downto 0);
+      utc_valid_o          : out std_logic;
+      ls_val_o             : out std_logic_vector(7 downto 0);
+      ls_flag_o            : out std_logic_vector(1 downto 0);
+      ls_valid_o           : out std_logic;
+      irig_o               : out std_logic;
+      irig_valid_o         : out std_logic;
+      nmea_o               : out std_logic;
+      nmea_valid_o         : out std_logic;
+      serdes_dat_o         : out std_logic_vector(7 downto 0);
 
       rst_aux_n_o : out std_logic;
 

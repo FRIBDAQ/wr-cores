@@ -49,6 +49,7 @@ use work.wr_xilinx_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_spec_pkg.all;
 use work.softpll_pkg.all;
+use work.wr_timecode_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -83,7 +84,8 @@ entity xwrc_board_spec is
     -- User-defined PLL_BASE outputs config
     g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
     g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
-    g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config);
+    g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
+    g_aux_timing_config          : t_wr_timecode_config := c_WR_TIMECODE_NONE);
   port (
     ---------------------------------------------------------------------------
     -- Clocks/resets
@@ -263,6 +265,9 @@ entity xwrc_board_spec is
     pps_csync_o : out std_logic;
     pps_valid_o : out std_logic;
     pps_led_o  : out std_logic;
+
+    utc_o         : out t_utc_out;
+    aux_timing_o  : out t_aux_timing_out;
     -- Link ok indication
     link_ok_o  : out std_logic
     );
@@ -315,6 +320,11 @@ architecture struct of xwrc_board_spec is
   signal ext_ref_mul_stopped : std_logic;
   signal ext_ref_rst         : std_logic;
 
+  -- Auxclock serdes word
+  signal aux_timing_serdes_locked : std_logic;
+  signal aux_timing_out : t_aux_timing_out;
+  signal serdes_out     : std_logic;
+
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -338,34 +348,38 @@ begin  -- architecture struct
       g_use_default_plls          => TRUE,
       g_aux_pll_cfg               => g_aux_pll_cfg,
       g_phy_refclk_sel            => 4,
+      g_aux_timing_config         => g_aux_timing_config,
       g_simulation                => g_simulation)
     port map (
-      areset_n_i            => areset_n_i,
-      clk_10m_ext_i         => clk_10m_ext_i,
-      clk_20m_vcxo_i        => clk_20m_vcxo_i,
-      clk_125m_pllref_i     => clk_125m_pllref_buf,
-      clk_125m_gtp_p_i      => clk_125m_gtp_p_i,
-      clk_125m_gtp_n_i      => clk_125m_gtp_n_i,
-      sfp_txn_o             => sfp_txn_o,
-      sfp_txp_o             => sfp_txp_o,
-      sfp_rxn_i             => sfp_rxn_i,
-      sfp_rxp_i             => sfp_rxp_i,
-      sfp_tx_fault_i        => sfp_tx_fault_i,
-      sfp_los_i             => sfp_los_i,
-      sfp_tx_disable_o      => sfp_tx_disable_o,
-      clk_pll_aux_o         => clk_pll_aux,
-      clk_62m5_sys_o        => clk_pll_62m5,
-      clk_125m_ref_o        => clk_pll_125m,
-      clk_62m5_dmtd_o       => clk_pll_dmtd,
-      clk_250m_dmtd_over_o  => clk_pll_dmtd_over,
-      pll_locked_o          => pll_locked,
-      clk_10m_ext_o         => clk_10m_ext,
-      phy8_o                => phy8_to_wrc,
-      phy8_i                => phy8_from_wrc,
-      ext_ref_mul_o         => ext_ref_mul,
-      ext_ref_mul_locked_o  => ext_ref_mul_locked,
-      ext_ref_mul_stopped_o => ext_ref_mul_stopped,
-      ext_ref_rst_i         => ext_ref_rst);
+      areset_n_i                  => areset_n_i,
+      clk_10m_ext_i               => clk_10m_ext_i,
+      clk_20m_vcxo_i              => clk_20m_vcxo_i,
+      clk_125m_pllref_i           => clk_125m_pllref_buf,
+      clk_125m_gtp_p_i            => clk_125m_gtp_p_i,
+      clk_125m_gtp_n_i            => clk_125m_gtp_n_i,
+      sfp_txn_o                   => sfp_txn_o,
+      sfp_txp_o                   => sfp_txp_o,
+      sfp_rxn_i                   => sfp_rxn_i,
+      sfp_rxp_i                   => sfp_rxp_i,
+      sfp_tx_fault_i              => sfp_tx_fault_i,
+      sfp_los_i                   => sfp_los_i,
+      sfp_tx_disable_o            => sfp_tx_disable_o,
+      clk_pll_aux_o               => clk_pll_aux,
+      clk_62m5_sys_o              => clk_pll_62m5,
+      clk_125m_ref_o              => clk_pll_125m,
+      clk_62m5_dmtd_o             => clk_pll_dmtd,
+      clk_250m_dmtd_over_o        => clk_pll_dmtd_over,
+      pll_locked_o                => pll_locked,
+      clk_10m_ext_o               => clk_10m_ext,
+      phy8_o                      => phy8_to_wrc,
+      phy8_i                      => phy8_from_wrc,
+      ext_ref_mul_o               => ext_ref_mul,
+      ext_ref_mul_locked_o        => ext_ref_mul_locked,
+      ext_ref_mul_stopped_o       => ext_ref_mul_stopped,
+      ext_ref_rst_i               => ext_ref_rst,
+      aux_timing_serdes_locked_o  => aux_timing_serdes_locked,
+      serdes_i                    => aux_timing_out.serdes_in,
+      serdes_o                    => serdes_out);
 
   clk_sys_62m5_o <= clk_pll_62m5;
   clk_ref_125m_o <= clk_pll_125m;
@@ -465,7 +479,8 @@ begin  -- architecture struct
       g_tx_streamer_params        => g_tx_streamer_params,
       g_rx_streamer_params        => g_rx_streamer_params,
       g_fabric_iface              => g_fabric_iface,
-      g_softpll_aux_channel_config => g_softpll_aux_channel_config
+      g_softpll_aux_channel_config => g_softpll_aux_channel_config,
+      g_aux_timing_config          => g_aux_timing_config
       )
     port map (
       clk_sys_i            => clk_pll_62m5,
@@ -551,13 +566,18 @@ begin  -- architecture struct
       pps_csync_o          => pps_csync_o,
       pps_valid_o          => pps_valid_o,
       pps_led_o            => pps_led_o,
-      link_ok_o            => link_ok_o);
+      link_ok_o            => link_ok_o,
+      aux_timing_serdes_locked_i  => aux_timing_serdes_locked,
+      utc_o                => utc_o,
+      aux_timing_o         => aux_timing_out);
 
   sfp_rate_select_o <= '1';
 
   onewire_oen_o <= onewire_en(0);
   onewire_in(0) <= onewire_i;
   onewire_in(1) <= '1';
+
+  aux_timing_o <= f_aux_timing_assign_serdes_out(aux_timing_out, serdes_out);
 
   clk_dmtd_125m_o <= clk_pll_dmtd;
 

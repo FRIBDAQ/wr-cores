@@ -56,6 +56,7 @@ use work.wishbone_pkg.all;
 use work.gn4124_core_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_spec_pkg.all;
+use work.wr_timecode_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -66,7 +67,8 @@ entity spec_wr_ref_top is
     -- Simulation-mode enable parameter. Set by default (synthesis) to 0, and
     -- changed to non-zero in the instantiation of the top level DUT in the testbench.
     -- Its purpose is to reduce some internal counters/timeouts to speed up simulations.
-    g_SIMULATION : integer := 0
+    g_SIMULATION : integer := 0;
+    g_AUX_TIMING_CONFIG : t_wr_timecode_config := (c_WITH_AUXCLK_IDX=>FALSE, c_WITH_IRIG_IDX=>TRUE, c_WITH_NMEA_IDX=>TRUE)
   );
   port (
     ---------------------------------------------------------------------------
@@ -286,6 +288,10 @@ architecture top of spec_wr_ref_top is
   signal wrc_pps_in  : std_logic;
   signal svec_led    : std_logic_vector(15 downto 0);
 
+  signal utc_out        : t_utc_out;
+  signal aux_timing_out : t_aux_timing_out;
+  signal dio_output     : std_logic;
+
   -- DIO Mezzanine
   signal dio_in  : std_logic_vector(4 downto 0);
   signal dio_out : std_logic_vector(4 downto 0);
@@ -375,7 +381,10 @@ begin  -- architecture top
       g_simulation                => g_simulation,
       g_with_external_clock_input => TRUE,
       g_dpram_initf               => g_dpram_initf,
-      g_fabric_iface              => LOOPBACK)
+      g_fabric_iface              => LOOPBACK,
+      g_aux_timing_config         => g_AUX_TIMING_CONFIG,
+      g_with_serdes               => TRUE
+    )
     port map (
       areset_n_i          => button1_i,
       areset_edge_n_i     => gn_rst_n,
@@ -430,15 +439,18 @@ begin  -- architecture top
 
       wb_eth_master_o     => cnx_master_out(c_WB_MASTER_ETHBONE),
       wb_eth_master_i     => cnx_master_in(c_WB_MASTER_ETHBONE),
-      
+
       abscal_txts_o       => wrc_abscal_txts_out,
       abscal_rxts_o       => wrc_abscal_rxts_out,
 
       pps_ext_i           => wrc_pps_in,
       pps_p_o             => wrc_pps_out,
       pps_led_o           => wrc_pps_led,
+      utc_o               => utc_out,
+      aux_timing_o        => aux_timing_out,
       led_link_o          => led_link_o,
-      led_act_o           => led_act_o);
+      led_act_o           => led_act_o
+      );
 
   -- Tristates for SFP EEPROM
   sfp_mod_def1_b <= '0' when sfp_scl_out = '0' else 'Z';
@@ -453,7 +465,7 @@ begin  -- architecture top
   ------------------------------------------------------------------------------
   -- Digital I/O FMC Mezzanine connections
   ------------------------------------------------------------------------------
-  gen_dio_iobufs: for I in 0 to 4 generate
+  gen_dio_ibufs: for I in 0 to 4 generate
     U_ibuf: IBUFDS
       generic map (
         DIFF_TERM => true)
@@ -462,16 +474,20 @@ begin  -- architecture top
         I  => dio_p_i(i),
         IB => dio_n_i(i));
 
+  end generate;
+
+  gen_dio_obufs: for I in 0 to 4 generate
     U_obuf : OBUFDS
       port map (
         I  => dio_out(i),
         O  => dio_p_o(i),
         OB => dio_n_o(i));
   end generate;
-  -- Configure Digital I/Os 0 to 3 as outputs
-  dio_oe_n_o(2 downto 0) <= (others => '0');
+
+  -- Configure Digital I/Os 0 to 4 as outputs
+  dio_oe_n_o(3 downto 0) <= (others => '0');
   -- Configure Digital I/Os 3 and 4 as inputs for external reference
-  dio_oe_n_o(3)          <= '1';  -- for external 1-PPS
+  --dio_oe_n_o(3)          <= '1';  -- for external 1-PPS
   dio_oe_n_o(4)          <= '1';  -- for external 10MHz clock
   -- All DIO connectors are not terminated
   dio_term_en_o          <= (others => '0');
@@ -500,8 +516,11 @@ begin  -- architecture top
 
   wrc_pps_in    <= dio_in(3);
   dio_out(0)    <= wrc_pps_out;
-  dio_out(1)    <= wrc_abscal_rxts_out;
-  dio_out(2)    <= wrc_abscal_txts_out;
+  --dio_out(1)    <= wrc_abscal_rxts_out;
+
+  dio_out(1)    <= aux_timing_out.irig;
+  dio_out(2)    <= aux_timing_out.nmea;
+  dio_out(3)    <= aux_timing_out.serdes_out;
 
   -- LEDs
   U_Extend_PPS : gc_extend_pulse

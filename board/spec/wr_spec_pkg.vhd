@@ -43,6 +43,7 @@ use work.endpoint_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_xilinx_pkg.all;
 use work.streamers_pkg.all;
+use work.wr_timecode_pkg.all;
 
 package wr_spec_pkg is
 
@@ -62,7 +63,9 @@ package wr_spec_pkg is
       g_diag_ro_size              : integer              := 0;
       g_diag_rw_size              : integer              := 0;
       g_aux_pll_cfg               : t_auxpll_cfg_array   := c_AUXPLL_CFG_ARRAY_DEFAULT;
-      g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb
+      g_aux_sdb                   : t_sdb_device         := c_wrc_periph3_sdb;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
+      g_with_serdes               : boolean              := false
     );
     port (
       areset_n_i           : in  std_logic;
@@ -158,6 +161,8 @@ package wr_spec_pkg is
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
       pps_led_o            : out std_logic;
+      utc_o                : out t_utc_out;
+      aux_timing_o         : out t_aux_timing_out;
       link_ok_o            : out std_logic);
   end component xwrc_board_spec;
 
@@ -177,7 +182,9 @@ package wr_spec_pkg is
       g_diag_ver                  : integer := 0;
       g_diag_ro_vector_width      : integer := 0;
       g_diag_rw_vector_width      : integer := 0;
-      g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb
+      g_aux_sdb                   : t_sdb_device := c_wrc_periph3_sdb;
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
+      g_with_serdes               : boolean := false
     );
     port (
       areset_n_i           : in  std_logic;
@@ -321,6 +328,23 @@ package wr_spec_pkg is
       pps_csync_o          : out std_logic;
       pps_valid_o          : out std_logic;
       pps_led_o            : out std_logic;
+      utc_year_o           : out std_logic_vector(11 downto 0);
+      utc_diy_o            : out std_logic_vector(8 downto 0);
+      utc_month_o          : out std_logic_vector(3 downto 0);
+      utc_day_o            : out std_logic_vector(4 downto 0);
+      utc_hour_o           : out std_logic_vector(5 downto 0);
+      utc_min_o            : out std_logic_vector(5 downto 0);
+      utc_sec_o            : out std_logic_vector(5 downto 0);
+      utc_sbs_o            : out std_logic_vector(16 downto 0);
+      utc_valid_o          : out std_logic;
+      ls_val_o             : out std_logic_vector(7 downto 0);
+      ls_flag_o            : out std_logic_vector(1 downto 0);
+      ls_valid_o           : out std_logic;
+      irig_o               : out std_logic;
+      irig_valid_o         : out std_logic;
+      nmea_o               : out std_logic;
+      nmea_valid_o         : out std_logic;
+      serdes_dat_o         : out std_logic_vector(7 downto 0);
       link_ok_o            : out std_logic);
   end component wrc_board_spec;
 

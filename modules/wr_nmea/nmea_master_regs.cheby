@@ -1,0 +1,116 @@
+##############################################################################;
+## Title      : NMEA Register Block (master)
+## Project    : White Rabbit
+##############################################################################;
+## File       : nmea_master_regs.cheby
+## Author     : Harvey Leicester
+## Company    : CERN BE-CEM-EDL
+## Created    : 2024-11-26
+## Last update: 2024-11-26
+##############################################################################
+## Description: register interface for nmea master
+##############################################################################
+##
+## Copyright (c) 2024 CERN / BE-CEM-EDL
+##
+## This source file is free software; you can redistribute it
+## and/or modify it under the terms of the GNU Lesser General
+## Public License as published by the Free Software Foundation;
+## either version 2.1 of the License, or (at your option) any
+## later version.
+##
+## This source is distributed in the hope that it will be
+## useful, but WITHOUT ANY WARRANTY; without even the implied
+## warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+## PURPOSE.  See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General
+## Public License along with this source; if not, download it
+## from http://www.gnu.org/licenses/lgpl-2.1l.html
+##
+##############################################################################-
+
+memory-map:
+  name: nmea_master
+  description: IRIG-B master register block
+  bus: wb-32-be
+  x-hdl:
+    iogroup: nmea_regs
+    name-suffix: _regs
+  schema-version:
+    core: 2.0.0
+    x-conversions: 1.0.0
+    x-hdl: 1.0.0
+    x-map-info: 1.0.0
+    x-wbgen: 1.0.0
+  children:
+  - reg:
+      name: CR
+      description: Control Register
+      width: 32
+      access: rw
+      children:
+      - field:
+          name: baud_div
+          description: Baudrate setting. The value can be calculated using the following equation BRATE = ((Baudrate * 8) << 9 + (ClockFreq >> 8)) / (ClockFreq >> 7)
+          range: 16-0
+          preset: 0x3c6
+      - field:
+          name: invert
+          description: Invert output. Useful if interfacing directly with RS232 device.  0 output non-inverted (UART), 1 output inverted (RS232)
+          range: 17
+  - reg:
+      name: SR
+      description: Status Register
+      width: 32
+      access: ro
+      children:
+      - field:
+          name: tip
+          description: transfer in progress
+          range: 0
+      - field:
+          name: valid
+          description: time ro registers valid
+          range: 1
+      - field:
+          name: clk_freq
+          description: clk_ref frequency, used to calculate baud rate divider
+          range: 31-2
+  - reg:
+      name: TOD
+      description: Time of day hr:min:sec being sent on nmea port, fields in bcd format
+      width: 32
+      access: ro
+      children:
+      - field:
+          name: second
+          description: nmea frame seconds
+          range: 7-0
+      - field:
+          name: minute
+          description: nmea frame minutes
+          range: 15-8
+      - field:
+          name: hour
+          description: nmea frame hours
+          range: 23-16
+  - reg:
+      name: DATE
+      description: Date, Years / Days being sent on nmea port, fields in bcd format
+      width: 32
+      access: ro
+      children:
+      - field:
+          name: day
+          description: nmea frame days
+          range: 7-0
+      - field:
+          name: month
+          description: nmea frame month
+          range: 15-8
+      - field:
+          name: year
+          description: nmea frame years
+          range: 31-16

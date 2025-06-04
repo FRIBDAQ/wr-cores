@@ -73,7 +73,7 @@ entity xwr_pps_gen is
     pps_csync_o : out std_logic;
     pps_out_o   : out std_logic;
     pps_led_o   : out std_logic;
-
+    pps_pre_o   : out std_logic;
     pps_valid_o : out std_logic;
 
     tm_utc_o        : out std_logic_vector(39 downto 0);
@@ -113,6 +113,7 @@ architecture behavioral of xwr_pps_gen is
       pps_csync_o     : out std_logic;
       pps_out_o       : out std_logic;
       pps_led_o       : out std_logic;
+      pps_pre_o       : out std_logic;
       pps_valid_o     : out std_logic;
       tm_utc_o        : out std_logic_vector(39 downto 0);
       tm_cycles_o     : out std_logic_vector(27 downto 0);
@@ -151,6 +152,7 @@ begin  -- behavioral
       pps_csync_o     => pps_csync_o,
       pps_out_o       => pps_out_o,
       pps_led_o       => pps_led_o,
+      pps_pre_o       => pps_pre_o,
       pps_valid_o     => pps_valid_o,
       tm_utc_o        => tm_utc_o,
       tm_cycles_o     => tm_cycles_o,

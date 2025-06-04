@@ -49,6 +49,7 @@ library work;
 use work.endpoint_pkg.all;
 use work.gencores_pkg.all;
 use work.wr_xilinx_pkg.all;
+use work.wr_timecode_pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -73,6 +74,8 @@ entity xwrc_platform_xilinx is
       -- default value of 4 selects CLK10 / CLK11 (see UG386, Fig 2-3, page 41)
       g_phy_refclk_sel            : integer range 0 to 7 := 4;
       g_gtp_mux_enable            : boolean := FALSE;
+      -- Enables serdes for auxclk, irig or nmea
+      g_aux_timing_config         : t_wr_timecode_config := c_WR_TIMECODE_NONE;
       -- Set to TRUE will speed up some initialization processes
       g_simulation                : integer := 0);
   port (
@@ -169,7 +172,11 @@ entity xwrc_platform_xilinx is
     ext_ref_mul_o         : out std_logic;
     ext_ref_mul_locked_o  : out std_logic;
     ext_ref_mul_stopped_o : out std_logic;
-    ext_ref_rst_i         : in  std_logic             := '0'
+    ext_ref_rst_i         : in  std_logic             := '0';
+    -- Aux clock generation, can be left unconnecting if aux timing is not used
+    serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
+    aux_timing_serdes_locked_o  : out std_logic;  --serdes pll locked indicator to wr_timecodes
+    serdes_o              : out std_logic
     );
 
 end entity xwrc_platform_xilinx;
@@ -182,7 +189,10 @@ architecture rtl of xwrc_platform_xilinx is
 
   signal pll_arst            : std_logic := '0';
   signal clk_125m_pllref_buf : std_logic;
+  signal clk_ref             : std_logic;
   signal clk_sys             : std_logic;
+  signal clk_sys_out         : std_logic;
+  constant c_WITH_SERDES     : boolean := f_aux_timing_enabled(g_aux_timing_config);
 
 begin  -- architecture rtl
 
@@ -241,7 +251,6 @@ begin  -- architecture rtl
     ---------------------------------------------------------------------------
     gen_kintex7_artix7_default_plls : if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
 
-      signal clk_sys_out      : std_logic;
       signal clk_sys_fb       : std_logic;
       signal pll_sys_locked   : std_logic;
       signal clk_dmtd         : std_logic := '0'; -- initialize for simulation
@@ -616,7 +625,7 @@ begin  -- architecture rtl
     end generate gen_zynqus_si5341_plls;
 
     ---------------------------------------------------------------------------
-    
+
     gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
       clk_10m_ext_o         <= '0';
       ext_ref_mul_o         <= '0';
@@ -653,7 +662,6 @@ begin  -- architecture rtl
 
   gen_phy_kintex7 : if (g_fpga_family = "kintex7") generate
 
-    signal clk_ref          : std_logic;
     signal clk_125m_gtx_buf : std_logic;
     signal clk_ref_locked   : std_logic;
 
@@ -729,7 +737,6 @@ begin  -- architecture rtl
 
   gen_phy_artix7 : if (g_fpga_family = "artix7") generate
 
-    signal clk_ref          : std_logic;
     signal clk_125m_gtp_buf : std_logic;
     signal clk_ref_locked   : std_logic;
 
@@ -806,7 +813,6 @@ begin  -- architecture rtl
   gen_phy_zynqus : if (g_fpga_family = "zynqus" or g_fpga_family = "zynqus_epll") generate
 
     signal clk_125m_gth_buf  : std_logic;
-    signal clk_ref : std_logic;
 
   begin
     U_Ref_Clock_Buffer : IBUFDS_GTE4
@@ -861,5 +867,40 @@ begin  -- architecture rtl
   end generate gen_phy_zynqus;
 
   ---------------------------------------------------------------------------
+
+  gen_serdes : if c_WITH_SERDES generate
+  begin
+
+    gen_kintex7_artix7_serdes: if (g_fpga_family = "kintex7" or g_fpga_family = "artix7") generate
+    begin
+
+        cmp_serdes: xoserdes_8_to_1_7series
+        port map
+        (
+          clk_i     => clk_ref,
+          rst_i     => pll_arst,
+          serdes_i  => serdes_i,
+          serdes_o  => serdes_o,
+          pll_serdes_locked_o => aux_timing_serdes_locked_o
+        );
+
+    end generate gen_kintex7_artix7_serdes;
+
+    gen_zynqus_serdes: if (g_fpga_family = "zynqus" or g_fpga_family = "zynqus_epll") generate
+    begin
+
+        cmp_serdes: xoserdes_8_to_1_ultrascale
+        port map
+        (
+          clk_i     => clk_ref,
+          rst_i     => pll_arst,
+          serdes_i  => serdes_i,
+          serdes_o  => serdes_o,
+          pll_serdes_locked_o => aux_timing_serdes_locked_o
+        );
+
+    end generate gen_zynqus_serdes;
+
+  end generate gen_serdes;
 
 end architecture rtl;
