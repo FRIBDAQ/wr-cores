@@ -435,7 +435,7 @@ begin
       rst_n_i => rst_n,
 
       clk_dmtd_i => clk_62m5,
-      clk_ref_i => clk_62m5,
+      clk_ref_i => phy16_in.ref_clk,
 
       clk_dmtd_over_i => open,
       clk_aux_i => open,
@@ -570,9 +570,8 @@ begin
           if mpll_load = '1' then
             --  Reformat.
             --  According to 73205, only LSB are significant.
-            mpll_data(24) <= '0';
-            mpll_data(23 downto 8) <= mpll_data_out;
-            mpll_data(7 downto 0) <= (others => '0');
+            mpll_data <= (others => '0');
+            mpll_data(19 downto 4) <= mpll_data_out;
             mpll_cnt <= (others => '1');
           end if;
         else
@@ -628,7 +627,7 @@ begin
       gtrefclk00_in(0) => refclk_156m25,
       sdm0data_in => mpll_data,
       sdm0toggle_in(0) => mpll_toggle,
-      sdm0width_in => "00",  -- 16b
+      sdm0width_in => "00",  -- 00:24b, 10:16b
       sdm0reset_in(0) => '0',
 --      sdm1data_in => hpll_data,
 --      sdm1toggle_in(0) => hpll_toggle,
