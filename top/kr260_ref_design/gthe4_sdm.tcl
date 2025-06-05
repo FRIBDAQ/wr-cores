@@ -25,7 +25,7 @@ set_property -dict [list \
   CONFIG.SECONDARY_QPLL_ENABLE {true} \
   CONFIG.SECONDARY_QPLL_FRACN_NUMERATOR {6871} \
   CONFIG.SECONDARY_QPLL_LINE_RATE {1.25} \
- CONFIG.ENABLE_OPTIONAL_PORTS {} \
+  CONFIG.ENABLE_OPTIONAL_PORTS {txpllclksel_in} \
   CONFIG.LOCATE_COMMON {EXAMPLE_DESIGN} \
 ] [get_ips gthe4_sdm]
 generate_target {instantiation_template} [get_files /home/tgingold/Repositories/ohwr/wr-cores-kria/syn/kr260_ref_design/kr260_ref_top.srcs/sources_1/ip/gthe4_sdm/gthe4_sdm.xci]
