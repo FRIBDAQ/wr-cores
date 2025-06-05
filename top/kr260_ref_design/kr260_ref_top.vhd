@@ -753,7 +753,7 @@ begin
             --  Reformat.
             --  According to 73205, only LSB are significant.
             hpll_data <= (others => '0');
-            hpll_data(23 downto 0) <= x"ff" & hpll_data_out;
+            hpll_data(23 downto 0) <= b"1111_111" & hpll_data_out & '0';
             hpll_cnt <= (others => '1');
           end if;
         else
