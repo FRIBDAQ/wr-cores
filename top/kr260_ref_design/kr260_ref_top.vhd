@@ -154,70 +154,7 @@ architecture top of kr260_ref_top is
     txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-    gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-    rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-    rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
-  );
-END COMPONENT;
-
-COMPONENT gthe4_sdm_helper
-  PORT (
-    gtwiz_userclk_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_tx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_tx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_tx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_tx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_rx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_tx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_buffbypass_rx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll1lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll1reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-    gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll0clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll0refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll1clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll1refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxslide_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    tx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-    txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-    txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    txpllclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -914,6 +851,7 @@ begin
       qpll1clk_in(0) => qpll1_outclk,
       qpll1refclk_in(0) => qpll1_outrefclk,
     
+      txpllclksel_in => "11", --  11: QPLL0
 --      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
 --      txoutclkfabric_out(0) => clk_dmtd,
       rx8b10ben_in(0) => '1',
@@ -979,7 +917,7 @@ begin
       gth_tx_clk_i => phy16_in.ref_clk
     );
 
-  inst_gth_helper: gthe4_sdm_helper
+  inst_gth_helper: gthe4_sdm
     port map (
       gthrxn_in(0)  => helper_rxn_i,
       gthrxp_in(0)  => helper_rxp_i,
@@ -1005,8 +943,8 @@ begin
       gtwiz_buffbypass_rx_done_out => open,
       gtwiz_buffbypass_rx_error_out => open,
   
-      gtwiz_reset_qpll1reset_out => open,
-      gtwiz_reset_qpll1lock_in(0) => qpll_lock,
+      gtwiz_reset_qpll0reset_out => open,
+      gtwiz_reset_qpll0lock_in(0) => qpll_lock,
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
       gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
       gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
@@ -1023,7 +961,8 @@ begin
       qpll0refclk_in(0) => qpll0_outrefclk,
       qpll1clk_in(0) => qpll1_outclk,
       qpll1refclk_in(0) => qpll1_outrefclk,
-    
+      txpllclksel_in => "10", --  10: QPLL1
+
 --      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
 --      txoutclkfabric_out(0) => clk_dmtd,
       rx8b10ben_in(0) => '1',
