@@ -51,9 +51,13 @@ entity kr260_ref_top is
     
     pad_txn_o : out std_logic;
     pad_txp_o : out std_logic;
-
     pad_rxn_i : in std_logic;
     pad_rxp_i : in std_logic;
+
+    helper_txn_o : out std_logic;
+    helper_txp_o : out std_logic;
+    helper_rxn_i : in std_logic;
+    helper_rxp_i : in std_logic;
 
     led1_o : out std_logic;
     led2_o : out std_logic;
@@ -133,6 +137,70 @@ architecture top of kr260_ref_top is
     gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll1clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll1refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxslide_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    tx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
+  );
+END COMPONENT;
+
+COMPONENT gthe4_sdm_helper
+  PORT (
+    gtwiz_userclk_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_tx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_srcclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_usrclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_usrclk2_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_userclk_rx_active_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_tx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_qpll1lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_qpll1reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -685,7 +753,7 @@ begin
             --  Reformat.
             --  According to 73205, only LSB are significant.
             hpll_data <= (others => '0');
-            hpll_data(19 downto 4) <= hpll_data_out;
+            hpll_data(23 downto 0) <= x"ff" & hpll_data_out;
             hpll_cnt <= (others => '1');
           end if;
         else
@@ -910,6 +978,74 @@ begin
       gth_rx_clk_i => phy16_in.rx_clk,
       gth_tx_clk_i => phy16_in.ref_clk
     );
+
+  inst_gth_helper: gthe4_sdm_helper
+    port map (
+      gthrxn_in(0)  => helper_rxn_i,
+      gthrxp_in(0)  => helper_rxp_i,
+      gthtxn_out(0) => helper_txn_o,
+      gthtxp_out(0) => helper_txp_o,
+
+      gtwiz_userclk_tx_reset_in(0) => gtwiz_userclk_tx_reset_out,
+      gtwiz_userclk_tx_srcclk_out => open,
+      gtwiz_userclk_tx_usrclk_out => open,
+      gtwiz_userclk_tx_usrclk2_out(0) => clk_dmtd,
+      gtwiz_userclk_tx_active_out => open,
+      gtwiz_userclk_rx_reset_in(0) => gtwiz_userclk_rx_reset_out,
+      gtwiz_userclk_rx_srcclk_out => open,
+      gtwiz_userclk_rx_usrclk_out => open,
+      gtwiz_userclk_rx_usrclk2_out => open,
+      gtwiz_userclk_rx_active_out => open,
+      gtwiz_buffbypass_tx_reset_in(0) => gtwiz_buffbypass_tx_reset_out,
+      gtwiz_buffbypass_tx_start_user_in(0) => '0',
+      gtwiz_buffbypass_tx_done_out => open,
+      gtwiz_buffbypass_tx_error_out => open,
+      gtwiz_buffbypass_rx_reset_in(0) => gtwiz_buffbypass_rx_reset_out,
+      gtwiz_buffbypass_rx_start_user_in => "0",
+      gtwiz_buffbypass_rx_done_out => open,
+      gtwiz_buffbypass_rx_error_out => open,
+  
+      gtwiz_reset_qpll1reset_out => open,
+      gtwiz_reset_qpll1lock_in(0) => qpll_lock,
+      gtwiz_reset_clk_freerun_in(0) => clk_62m5,
+      gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
+      gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
+      gtwiz_reset_tx_datapath_in(0) => '0',
+      gtwiz_reset_rx_pll_and_datapath_in(0) => '0',
+      gtwiz_reset_rx_datapath_in(0) => '0',
+      gtwiz_reset_rx_cdr_stable_out => open,
+      gtwiz_reset_tx_done_out => open,
+      gtwiz_reset_rx_done_out => open,
+      gtwiz_userdata_tx_in => (others => '0'),
+      gtwiz_userdata_rx_out => open,
+
+      qpll0clk_in(0) => qpll0_outclk,
+      qpll0refclk_in(0) => qpll0_outrefclk,
+      qpll1clk_in(0) => qpll1_outclk,
+      qpll1refclk_in(0) => qpll1_outrefclk,
+    
+--      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
+--      txoutclkfabric_out(0) => clk_dmtd,
+      rx8b10ben_in(0) => '1',
+      rxcommadeten_in(0) => '1',
+      rxmcommaalignen_in(0) => '0',
+      rxpcommaalignen_in(0) => '0',
+      rxslide_in(0) => '0',
+      tx8b10ben_in(0) => '1',
+      txctrl0_in => x"0000",
+      txctrl1_in => x"0000",
+      txctrl2_in => x"00",
+      gtpowergood_out => open,
+      rxbyteisaligned_out => open,
+      rxbyterealign_out => open,
+      rxcommadet_out => open,
+      rxctrl0_out => open,
+      rxctrl1_out => open,
+      rxctrl2_out => open,
+      rxctrl3_out => open,
+      rxpmaresetdone_out => open,
+      txpmaresetdone_out => open,
+      txprgdivresetdone_out => open);
 
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
