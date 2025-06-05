@@ -128,24 +128,19 @@ architecture top of kr260_ref_top is
     gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_qpll0lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    gtrefclk00_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sdm0data_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-    sdm0reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sdm0toggle_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sdm0width_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-    sdm1data_in : IN STD_LOGIC_VECTOR(24 DOWNTO 0);
-    sdm1toggle_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    sdm1width_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
-    qpll0lock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll0outclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    qpll0outrefclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll0refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll1clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    qpll1refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -155,7 +150,6 @@ architecture top of kr260_ref_top is
     txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-    txsysclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -167,16 +161,110 @@ architecture top of kr260_ref_top is
     rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txoutclkfabric_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
+
+component gthe4_sdm_gthe4_common_wrapper
+  port (
+    GTHE4_COMMON_BGBYPASSB: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_BGMONITORENB: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_BGPDB: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_BGRCALOVRD: in std_logic_vector (4 downto 0);
+    GTHE4_COMMON_BGRCALOVRDENB: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_DRPADDR: in std_logic_vector (15 downto 0);
+    GTHE4_COMMON_DRPCLK: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_DRPDI: in std_logic_vector (15 downto 0);
+    GTHE4_COMMON_DRPEN: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_DRPWE: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTGREFCLK0: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTGREFCLK1: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTNORTHREFCLK00: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTNORTHREFCLK01: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTNORTHREFCLK10: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTNORTHREFCLK11: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTREFCLK00: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTREFCLK01: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTREFCLK10: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTREFCLK11: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTSOUTHREFCLK00: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTSOUTHREFCLK01: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTSOUTHREFCLK10: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_GTSOUTHREFCLK11: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_PCIERATEQPLL0: in std_logic_vector (2 downto 0);
+    GTHE4_COMMON_PCIERATEQPLL1: in std_logic_vector (2 downto 0);
+    GTHE4_COMMON_PMARSVD0: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_PMARSVD1: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLL0CLKRSVD0: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0CLKRSVD1: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0FBDIV: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLL0LOCKDETCLK: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0LOCKEN: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0PD: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0REFCLKSEL: in std_logic_vector (2 downto 0);
+    GTHE4_COMMON_QPLL0RESET: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1CLKRSVD0: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1CLKRSVD1: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1FBDIV: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLL1LOCKDETCLK: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1LOCKEN: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1PD: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1REFCLKSEL: in std_logic_vector (2 downto 0);
+    GTHE4_COMMON_QPLL1RESET: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLLRSVD1: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLLRSVD2: in std_logic_vector (4 downto 0);
+    GTHE4_COMMON_QPLLRSVD3: in std_logic_vector (4 downto 0);
+    GTHE4_COMMON_QPLLRSVD4: in std_logic_vector (7 downto 0);
+    GTHE4_COMMON_RCALENB: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_SDM0DATA: in std_logic_vector (24 downto 0);
+    GTHE4_COMMON_SDM0RESET: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_SDM0TOGGLE: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_SDM0WIDTH: in std_logic_vector (1 downto 0);
+    GTHE4_COMMON_SDM1DATA: in std_logic_vector (24 downto 0);
+    GTHE4_COMMON_SDM1RESET: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_SDM1TOGGLE: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_SDM1WIDTH: in std_logic_vector (1 downto 0);
+    GTHE4_COMMON_TCONGPI: in std_logic_vector (9 downto 0);
+    GTHE4_COMMON_TCONPOWERUP: in std_logic_vector (0 downto 0);
+    GTHE4_COMMON_TCONRESET: in std_logic_vector (1 downto 0);
+    GTHE4_COMMON_TCONRSVDIN1: in std_logic_vector (1 downto 0);
+    GTHE4_COMMON_DRPDO: out std_logic_vector (15 downto 0);
+    GTHE4_COMMON_DRPRDY: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_PMARSVDOUT0: out std_logic_vector (7 downto 0);
+    GTHE4_COMMON_PMARSVDOUT1: out std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLL0FBCLKLOST: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0LOCK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0OUTCLK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0OUTREFCLK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL0REFCLKLOST: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1FBCLKLOST: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1LOCK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1OUTCLK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1OUTREFCLK: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLL1REFCLKLOST: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_QPLLDMONITOR0: out std_logic_vector (7 downto 0);
+    GTHE4_COMMON_QPLLDMONITOR1: out std_logic_vector (7 downto 0);
+    GTHE4_COMMON_REFCLKOUTMONITOR0: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_REFCLKOUTMONITOR1: out std_logic_vector (0 downto 0);
+    GTHE4_COMMON_RXRECCLK0SEL: out std_logic_vector (1 downto 0);
+    GTHE4_COMMON_RXRECCLK1SEL: out std_logic_vector (1 downto 0);
+    GTHE4_COMMON_SDM0FINALOUT: out std_logic_vector (3 downto 0);
+    GTHE4_COMMON_SDM0TESTDATA: out std_logic_vector (14 downto 0);
+    GTHE4_COMMON_SDM1FINALOUT: out std_logic_vector (3 downto 0);
+    GTHE4_COMMON_SDM1TESTDATA: out std_logic_vector (14 downto 0);
+    GTHE4_COMMON_TCONGPO: out std_logic_vector (9 downto 0);
+    GTHE4_COMMON_TCONRSVDOUT0: out std_logic_vector (0 downto 0)
+  );
+end component;
+
   signal refclk_156m25, refclk_156m25_int : std_logic;
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
 
-  signal qpll0_lock : std_logic;
+  signal qpll_reset, qpll_lock, qpll0_lock, qpll1_lock : std_logic;
+  signal qpll0_outclk, qpll0_outrefclk : std_logic;
+  signal qpll1_outclk, qpll1_outrefclk : std_logic;
   signal clk_25m : std_logic;
 
   signal count : natural range 0 to 156_250_000 - 1;
@@ -613,6 +701,106 @@ begin
     end if;
   end process;
 
+  --  The common part of the gthe4.
+  --  The values can be found in the top-level module generated when the common
+  --  part is included.
+  inst_common_wrapper: gthe4_sdm_gthe4_common_wrapper
+    port map (
+      GTHE4_COMMON_BGBYPASSB(0) => '1',
+      GTHE4_COMMON_BGMONITORENB(0) => '1',
+      GTHE4_COMMON_BGPDB(0) => '1',
+      GTHE4_COMMON_BGRCALOVRD => "11111",
+      GTHE4_COMMON_BGRCALOVRDENB(0) => '1',
+
+      GTHE4_COMMON_DRPADDR => x"0000",
+      GTHE4_COMMON_DRPCLK(0) => '0',
+      GTHE4_COMMON_DRPDI => x"0000",
+      GTHE4_COMMON_DRPEN(0) => '0',
+      GTHE4_COMMON_DRPWE(0) => '0',
+
+      GTHE4_COMMON_GTGREFCLK0(0) => '0',
+      GTHE4_COMMON_GTGREFCLK1(0) => '0',
+      GTHE4_COMMON_GTNORTHREFCLK00(0) => '0',
+      GTHE4_COMMON_GTNORTHREFCLK01(0) => '0',
+      GTHE4_COMMON_GTNORTHREFCLK10(0) => '0',
+      GTHE4_COMMON_GTNORTHREFCLK11(0) => '0',
+      GTHE4_COMMON_GTREFCLK00 (0) => refclk_156m25,
+      GTHE4_COMMON_GTREFCLK01 (0) => refclk_156m25,
+      GTHE4_COMMON_GTREFCLK10 (0) => '0',
+      GTHE4_COMMON_GTREFCLK11 (0) => '0',
+      GTHE4_COMMON_GTSOUTHREFCLK00(0) => '0',
+      GTHE4_COMMON_GTSOUTHREFCLK01(0) => '0',
+      GTHE4_COMMON_GTSOUTHREFCLK10(0) => '0',
+      GTHE4_COMMON_GTSOUTHREFCLK11(0) => '0',
+
+      GTHE4_COMMON_PCIERATEQPLL0 => "000",
+      GTHE4_COMMON_PCIERATEQPLL1 => "000",
+      GTHE4_COMMON_PMARSVD0 => x"00",
+      GTHE4_COMMON_PMARSVD1 => x"00",
+
+      GTHE4_COMMON_QPLL0CLKRSVD0(0) => '0',
+      GTHE4_COMMON_QPLL0CLKRSVD1(0) => '0',
+      GTHE4_COMMON_QPLL0FBDIV => x"40",
+      GTHE4_COMMON_QPLL0LOCKDETCLK(0) => '0',
+      GTHE4_COMMON_QPLL0LOCKEN(0) => '1',
+      GTHE4_COMMON_QPLL0PD(0) => '0',
+      GTHE4_COMMON_QPLL0REFCLKSEL => "001", -- gtrefclk0
+      GTHE4_COMMON_QPLL0RESET(0) => qpll_reset,
+      GTHE4_COMMON_QPLL1CLKRSVD0(0) => '0',
+      GTHE4_COMMON_QPLL1CLKRSVD1(0) => '0',
+      GTHE4_COMMON_QPLL1FBDIV => x"40",
+      GTHE4_COMMON_QPLL1LOCKDETCLK(0) => '0',
+      GTHE4_COMMON_QPLL1LOCKEN(0) => '1',
+      GTHE4_COMMON_QPLL1PD (0) => '0',
+      GTHE4_COMMON_QPLL1REFCLKSEL => "001",
+      GTHE4_COMMON_QPLL1RESET(0) => qpll_reset,
+      GTHE4_COMMON_QPLLRSVD1 => x"00",
+      GTHE4_COMMON_QPLLRSVD2 => "00000",
+      GTHE4_COMMON_QPLLRSVD3 => "00000",
+      GTHE4_COMMON_QPLLRSVD4 => x"00",
+      GTHE4_COMMON_RCALENB(0) => '1',
+      GTHE4_COMMON_SDM0DATA => mpll_data,
+      GTHE4_COMMON_SDM0RESET(0) => '0',
+      GTHE4_COMMON_SDM0TOGGLE(0) => mpll_toggle,
+      GTHE4_COMMON_SDM0WIDTH => "00",  -- 00:24b
+      GTHE4_COMMON_SDM1DATA => hpll_data,
+      GTHE4_COMMON_SDM1RESET(0) => '0',
+      GTHE4_COMMON_SDM1TOGGLE(0) => hpll_toggle,
+      GTHE4_COMMON_SDM1WIDTH => "00",  -- 00:24b
+      GTHE4_COMMON_TCONGPI => b"00_0000_0000",
+      GTHE4_COMMON_TCONPOWERUP(0) => '0',
+      GTHE4_COMMON_TCONRESET => "00",
+      GTHE4_COMMON_TCONRSVDIN1 => "00",
+      GTHE4_COMMON_DRPDO => open,
+      GTHE4_COMMON_DRPRDY => open,
+      GTHE4_COMMON_PMARSVDOUT0 => open,
+      GTHE4_COMMON_PMARSVDOUT1 => open,
+      GTHE4_COMMON_QPLL0FBCLKLOST => open,
+      GTHE4_COMMON_QPLL0LOCK (0) => qpll0_lock,
+      GTHE4_COMMON_QPLL0OUTCLK(0) => qpll0_outclk,
+      GTHE4_COMMON_QPLL0OUTREFCLK (0) => qpll0_outrefclk,
+      GTHE4_COMMON_QPLL0REFCLKLOST => open,
+      GTHE4_COMMON_QPLL1FBCLKLOST => open,
+      GTHE4_COMMON_QPLL1LOCK(0) => qpll1_lock,
+      GTHE4_COMMON_QPLL1OUTCLK(0) => qpll1_outclk,
+      GTHE4_COMMON_QPLL1OUTREFCLK(0) => qpll1_outrefclk,
+      GTHE4_COMMON_QPLL1REFCLKLOST => open,
+      GTHE4_COMMON_QPLLDMONITOR0 => open,
+      GTHE4_COMMON_QPLLDMONITOR1 => open,
+      GTHE4_COMMON_REFCLKOUTMONITOR0 => open,
+      GTHE4_COMMON_REFCLKOUTMONITOR1 => open,
+      GTHE4_COMMON_RXRECCLK0SEL => open,
+      GTHE4_COMMON_RXRECCLK1SEL => open,
+      GTHE4_COMMON_SDM0FINALOUT => open,
+      GTHE4_COMMON_SDM0TESTDATA => open,
+      GTHE4_COMMON_SDM1FINALOUT => open,
+      GTHE4_COMMON_SDM1TESTDATA => open,
+      GTHE4_COMMON_TCONGPO => open,
+      GTHE4_COMMON_TCONRSVDOUT0 => open
+  );
+
+  qpll_lock <= qpll0_lock; --  and qpll0_lock;
+
   inst_gth: gthe4_sdm
     port map (
       gthrxn_in(0)  => pad_rxn_i,
@@ -639,6 +827,8 @@ begin
       gtwiz_buffbypass_rx_done_out(0) => gtwiz_buffbypass_rx_done_in,
       gtwiz_buffbypass_rx_error_out(0) => gtwiz_buffbypass_rx_error_in,
   
+      gtwiz_reset_qpll0reset_out(0) => qpll_reset,
+      gtwiz_reset_qpll0lock_in(0) => qpll_lock,
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
       gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
       gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
@@ -650,19 +840,14 @@ begin
       gtwiz_reset_rx_done_out(0) => gtwiz_reset_rx_done_in, -- gth_status_a(4),
       gtwiz_userdata_tx_in => gth_tx_data_out,
       gtwiz_userdata_rx_out => gth_rx_data_in,
-      gtrefclk00_in(0) => refclk_156m25,
-      sdm0data_in => mpll_data,
-      sdm0toggle_in(0) => mpll_toggle,
-      sdm0width_in => "00",  -- 00:24b, 10:16b
-      sdm0reset_in(0) => '0',
-      sdm1data_in => hpll_data,
-      sdm1toggle_in(0) => hpll_toggle,
-      sdm1width_in => "00",  -- 00:24b
-      qpll0lock_out(0) => qpll0_lock,
-      qpll0outclk_out => open,
-      qpll0outrefclk_out => open,
-      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
-      txoutclkfabric_out(0) => clk_dmtd,
+
+      qpll0clk_in(0) => qpll0_outclk,
+      qpll0refclk_in(0) => qpll0_outrefclk,
+      qpll1clk_in(0) => qpll1_outclk,
+      qpll1refclk_in(0) => qpll1_outrefclk,
+    
+--      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
+--      txoutclkfabric_out(0) => clk_dmtd,
       rx8b10ben_in(0) => '1',
       rxcommadeten_in(0) => '1',
       rxmcommaalignen_in(0) => '0',
@@ -747,7 +932,7 @@ begin
   gth_status_a(12) <= phy16_in.rdy;
   gth_status_a(13) <= gth_tx_prg_div_reset_done;
   gth_status_a(14) <= qpll0_lock;
-  gth_status_a(15) <= phy_rst;
+  gth_status_a(15) <= qpll1_lock; -- phy_rst;
 
   gen_sync: for i in gth_status'range generate
     inst_sync: entity work.gc_sync
