@@ -40,10 +40,34 @@ memory-map:
       x-hdl:
         type: const
   - reg:
-      name: const_b
-      comment: constant
+      name: txpi
       width: 32
-      access: ro
-      preset: 0xaabbccdd
-      x-hdl:
-        type: const
+      access: rw
+      children:
+      - field:
+         name: en
+         range: 0
+      - field:
+         name: ovrden
+         range: 1
+      - field:
+         name: sel
+         range: 2
+      - field:
+         name: pd
+         range: 3
+      - field:
+         name: stepsize
+         range: 12-8
+  - submap:
+      name: common_drp
+      comment: access to gthe4 common DRP
+      filename: drp_map.cheby
+  - submap:
+      name: gth_drp
+      comment: access to wr gthe4 channel DRP
+      filename: drp_map.cheby
+  - submap:
+      name: helper_drp
+      comment: access to helper gthe4 channel DRP
+      filename: drp_map.cheby
