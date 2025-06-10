@@ -48,7 +48,7 @@ entity kr260_ref_top is
     refclk0_p_i : in std_logic;
 
     clk_25m_i   : in std_logic;
-    
+
     pad_txn_o : out std_logic;
     pad_txp_o : out std_logic;
     pad_rxn_i : in std_logic;
@@ -179,100 +179,9 @@ architecture top of kr260_ref_top is
     rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
+    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0)
   );
 END COMPONENT;
-component gthe4_sdm_gthe4_common_wrapper
-  port (
-    GTHE4_COMMON_BGBYPASSB: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_BGMONITORENB: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_BGPDB: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_BGRCALOVRD: in std_logic_vector (4 downto 0);
-    GTHE4_COMMON_BGRCALOVRDENB: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_DRPADDR: in std_logic_vector (15 downto 0);
-    GTHE4_COMMON_DRPCLK: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_DRPDI: in std_logic_vector (15 downto 0);
-    GTHE4_COMMON_DRPEN: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_DRPWE: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTGREFCLK0: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTGREFCLK1: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTNORTHREFCLK00: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTNORTHREFCLK01: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTNORTHREFCLK10: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTNORTHREFCLK11: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTREFCLK00: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTREFCLK01: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTREFCLK10: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTREFCLK11: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTSOUTHREFCLK00: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTSOUTHREFCLK01: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTSOUTHREFCLK10: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_GTSOUTHREFCLK11: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_PCIERATEQPLL0: in std_logic_vector (2 downto 0);
-    GTHE4_COMMON_PCIERATEQPLL1: in std_logic_vector (2 downto 0);
-    GTHE4_COMMON_PMARSVD0: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_PMARSVD1: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLL0CLKRSVD0: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0CLKRSVD1: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0FBDIV: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLL0LOCKDETCLK: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0LOCKEN: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0PD: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0REFCLKSEL: in std_logic_vector (2 downto 0);
-    GTHE4_COMMON_QPLL0RESET: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1CLKRSVD0: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1CLKRSVD1: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1FBDIV: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLL1LOCKDETCLK: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1LOCKEN: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1PD: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1REFCLKSEL: in std_logic_vector (2 downto 0);
-    GTHE4_COMMON_QPLL1RESET: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLLRSVD1: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLLRSVD2: in std_logic_vector (4 downto 0);
-    GTHE4_COMMON_QPLLRSVD3: in std_logic_vector (4 downto 0);
-    GTHE4_COMMON_QPLLRSVD4: in std_logic_vector (7 downto 0);
-    GTHE4_COMMON_RCALENB: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_SDM0DATA: in std_logic_vector (24 downto 0);
-    GTHE4_COMMON_SDM0RESET: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_SDM0TOGGLE: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_SDM0WIDTH: in std_logic_vector (1 downto 0);
-    GTHE4_COMMON_SDM1DATA: in std_logic_vector (24 downto 0);
-    GTHE4_COMMON_SDM1RESET: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_SDM1TOGGLE: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_SDM1WIDTH: in std_logic_vector (1 downto 0);
-    GTHE4_COMMON_TCONGPI: in std_logic_vector (9 downto 0);
-    GTHE4_COMMON_TCONPOWERUP: in std_logic_vector (0 downto 0);
-    GTHE4_COMMON_TCONRESET: in std_logic_vector (1 downto 0);
-    GTHE4_COMMON_TCONRSVDIN1: in std_logic_vector (1 downto 0);
-    GTHE4_COMMON_DRPDO: out std_logic_vector (15 downto 0);
-    GTHE4_COMMON_DRPRDY: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_PMARSVDOUT0: out std_logic_vector (7 downto 0);
-    GTHE4_COMMON_PMARSVDOUT1: out std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLL0FBCLKLOST: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0LOCK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0OUTCLK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0OUTREFCLK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL0REFCLKLOST: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1FBCLKLOST: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1LOCK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1OUTCLK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1OUTREFCLK: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLL1REFCLKLOST: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_QPLLDMONITOR0: out std_logic_vector (7 downto 0);
-    GTHE4_COMMON_QPLLDMONITOR1: out std_logic_vector (7 downto 0);
-    GTHE4_COMMON_REFCLKOUTMONITOR0: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_REFCLKOUTMONITOR1: out std_logic_vector (0 downto 0);
-    GTHE4_COMMON_RXRECCLK0SEL: out std_logic_vector (1 downto 0);
-    GTHE4_COMMON_RXRECCLK1SEL: out std_logic_vector (1 downto 0);
-    GTHE4_COMMON_SDM0FINALOUT: out std_logic_vector (3 downto 0);
-    GTHE4_COMMON_SDM0TESTDATA: out std_logic_vector (14 downto 0);
-    GTHE4_COMMON_SDM1FINALOUT: out std_logic_vector (3 downto 0);
-    GTHE4_COMMON_SDM1TESTDATA: out std_logic_vector (14 downto 0);
-    GTHE4_COMMON_TCONGPO: out std_logic_vector (9 downto 0);
-    GTHE4_COMMON_TCONRSVDOUT0: out std_logic_vector (0 downto 0)
-  );
-end component;
 
   signal refclk_156m25, refclk_156m25_int : std_logic;
   signal rst_n, rst : std_logic := '0';
@@ -749,99 +658,181 @@ begin
   --  The common part of the gthe4.
   --  The values can be found in the top-level module generated when the common
   --  part is included.
-  inst_common_wrapper: gthe4_sdm_gthe4_common_wrapper
+  inst_common_wrapper: gthe4_common
+    generic map (
+      AEN_QPLL0_FBDIV       =>          '1',
+      AEN_QPLL1_FBDIV       =>          '1',
+      AEN_SDM0TOGGLE        =>          '0',
+      AEN_SDM1TOGGLE        =>          '0',
+      A_SDM0TOGGLE          =>          '0',
+      A_SDM1DATA_HIGH       =>          "000000000",
+      A_SDM1DATA_LOW        =>          "0000000000000000",
+      A_SDM1TOGGLE          =>          '0',
+      BIAS_CFG0             =>          "0000000000000000",
+      BIAS_CFG1             =>          "0000000000000000",
+      BIAS_CFG2             =>          "0000000100100100",
+      BIAS_CFG3             =>          "0000000001000001",
+      BIAS_CFG4             =>          "0000000000010000",
+      BIAS_CFG_RSVD         =>          "0000000000000000",
+      COMMON_CFG0           =>          "0000000000000000",
+      COMMON_CFG1           =>          "0000000000000000",
+      POR_CFG               =>          "0000000000000000",
+      PPF0_CFG              =>          "0000011000000000",
+      PPF1_CFG              =>          "0000011000000000",
+      QPLL0CLKOUT_RATE      =>          "HALF",
+      QPLL0_CFG0            =>          "0011001100011100",
+      QPLL0_CFG1            =>          "1101000000111000",
+      QPLL0_CFG1_G3         =>          "1101000000111000",
+      QPLL0_CFG2            =>          "0000111111000000",
+      QPLL0_CFG2_G3         =>          "0000111111000000",
+      QPLL0_CFG3            =>          "0000000100100000",
+      QPLL0_CFG4            =>          "0000000000000011",
+      QPLL0_CP              =>          "0011111111",
+      QPLL0_CP_G3           =>          "0000001111",
+      QPLL0_FBDIV           =>          64,
+      QPLL0_FBDIV_G3        =>          160,
+      QPLL0_INIT_CFG0       =>          "0000001010110010",
+      QPLL0_INIT_CFG1       =>          "00000000",
+      QPLL0_LOCK_CFG        =>          "0010010111101000",
+      QPLL0_LOCK_CFG_G3     =>          "0010010111101000",
+      QPLL0_LPF             =>          "1000111111",
+      QPLL0_LPF_G3          =>          "0111010101",
+      QPLL0_PCI_EN          =>          '0',
+      QPLL0_RATE_SW_USE_DRP =>          '1',
+      QPLL0_REFCLK_DIV      =>          1,
+      QPLL0_SDM_CFG0        =>          "0000000000000000",
+      QPLL0_SDM_CFG1        =>          "0000000000000000",
+      QPLL0_SDM_CFG2        =>          "0000000000000000",
+      QPLL1CLKOUT_RATE      =>          "HALF",
+      QPLL1_CFG0            =>          "0011001100011100",
+      QPLL1_CFG1            =>          "1101000000111000",
+      QPLL1_CFG1_G3         =>          "1101000000111000",
+      QPLL1_CFG2            =>          "0000111111000011",
+      QPLL1_CFG2_G3         =>          "0000111111000011",
+      QPLL1_CFG3            =>          "0000000100100000",
+      QPLL1_CFG4            =>          "0000000000000011",
+      QPLL1_CP              =>          "0011111111",
+      QPLL1_CP_G3           =>          "0001111111",
+      QPLL1_FBDIV           =>          63,
+      QPLL1_FBDIV_G3        =>          80,
+      QPLL1_INIT_CFG0       =>          "0000001010110010",
+      QPLL1_INIT_CFG1       =>          "00000000",
+      QPLL1_LOCK_CFG        =>          "0010010111101000",
+      QPLL1_LOCK_CFG_G3     =>          "0010010111101000",
+      QPLL1_LPF             =>          "1000011111",
+      QPLL1_LPF_G3          =>          "0111010100",
+      QPLL1_PCI_EN          =>          '0',
+      QPLL1_RATE_SW_USE_DRP =>          '1',
+      QPLL1_REFCLK_DIV      =>          1,
+      QPLL1_SDM_CFG0        =>          "0000000000000000",
+      QPLL1_SDM_CFG1        =>          "0000000000000000",
+      QPLL1_SDM_CFG2        =>          "0000000000000000",
+      RSVD_ATTR0            =>          "0000000000000000",
+      RSVD_ATTR1            =>          "0000000000000000",
+      RSVD_ATTR2            =>          "0000000000000000",
+      RSVD_ATTR3            =>          "0000000000000000",
+      RXRECCLKOUT0_SEL      =>          "00",
+      RXRECCLKOUT1_SEL      =>          "00",
+      SARC_ENB              =>          '0',
+      SARC_SEL              =>          '0',
+      SDM0INITSEED0_0       =>          "0000000100010001",
+      SDM0INITSEED0_1       =>          "000010001",
+      SIM_DEVICE            =>          "ULTRASCALE_PLUS",
+      SIM_MODE              =>          "FAST",
+      SIM_RESET_SPEEDUP     =>          "TRUE"
+    )
     port map (
-      GTHE4_COMMON_BGBYPASSB(0) => '1',
-      GTHE4_COMMON_BGMONITORENB(0) => '1',
-      GTHE4_COMMON_BGPDB(0) => '1',
-      GTHE4_COMMON_BGRCALOVRD => "11111",
-      GTHE4_COMMON_BGRCALOVRDENB(0) => '1',
+      BGBYPASSB => '1',
+      BGMONITORENB => '1',
+      BGPDB => '1',
+      BGRCALOVRD => "11111",
+      BGRCALOVRDENB => '1',
 
-      GTHE4_COMMON_DRPADDR => common_drpaddr(15 downto 0),
-      GTHE4_COMMON_DRPCLK(0) => clk_62m5,
-      GTHE4_COMMON_DRPDI => common_drpdi,
-      GTHE4_COMMON_DRPEN(0) => common_drpen,
-      GTHE4_COMMON_DRPWE(0) => common_drpwe,
-      GTHE4_COMMON_DRPDO => common_drpdo,
-      GTHE4_COMMON_DRPRDY(0) => common_drprdy,
+      DRPADDR => common_drpaddr(15 downto 0),
+      DRPCLK => clk_62m5,
+      DRPDI => common_drpdi,
+      DRPEN => common_drpen,
+      DRPWE => common_drpwe,
+      DRPDO => common_drpdo,
+      DRPRDY => common_drprdy,
 
-      GTHE4_COMMON_GTGREFCLK0(0) => '0',
-      GTHE4_COMMON_GTGREFCLK1(0) => '0',
-      GTHE4_COMMON_GTNORTHREFCLK00(0) => '0',
-      GTHE4_COMMON_GTNORTHREFCLK01(0) => '0',
-      GTHE4_COMMON_GTNORTHREFCLK10(0) => '0',
-      GTHE4_COMMON_GTNORTHREFCLK11(0) => '0',
-      GTHE4_COMMON_GTREFCLK00 (0) => refclk_156m25,
-      GTHE4_COMMON_GTREFCLK01 (0) => refclk_156m25,
-      GTHE4_COMMON_GTREFCLK10 (0) => '0',
-      GTHE4_COMMON_GTREFCLK11 (0) => '0',
-      GTHE4_COMMON_GTSOUTHREFCLK00(0) => '0',
-      GTHE4_COMMON_GTSOUTHREFCLK01(0) => '0',
-      GTHE4_COMMON_GTSOUTHREFCLK10(0) => '0',
-      GTHE4_COMMON_GTSOUTHREFCLK11(0) => '0',
+      GTGREFCLK0 => '0',
+      GTGREFCLK1 => '0',
+      GTNORTHREFCLK00 => '0',
+      GTNORTHREFCLK01 => '0',
+      GTNORTHREFCLK10 => '0',
+      GTNORTHREFCLK11 => '0',
+      GTREFCLK00 => refclk_156m25,
+      GTREFCLK01 => refclk_156m25,
+      GTREFCLK10 => '0',
+      GTREFCLK11 => '0',
+      GTSOUTHREFCLK00 => '0',
+      GTSOUTHREFCLK01 => '0',
+      GTSOUTHREFCLK10 => '0',
+      GTSOUTHREFCLK11 => '0',
 
-      GTHE4_COMMON_PCIERATEQPLL0 => "000",
-      GTHE4_COMMON_PCIERATEQPLL1 => "000",
-      GTHE4_COMMON_PMARSVD0 => x"00",
-      GTHE4_COMMON_PMARSVD1 => x"00",
+      PCIERATEQPLL0 => "000",
+      PCIERATEQPLL1 => "000",
+      PMARSVD0 => x"00",
+      PMARSVD1 => x"00",
 
-      GTHE4_COMMON_QPLL0CLKRSVD0(0) => '0',
-      GTHE4_COMMON_QPLL0CLKRSVD1(0) => '0',
-      GTHE4_COMMON_QPLL0FBDIV => x"40",
-      GTHE4_COMMON_QPLL0LOCKDETCLK(0) => '0',
-      GTHE4_COMMON_QPLL0LOCKEN(0) => '1',
-      GTHE4_COMMON_QPLL0PD(0) => '0',
-      GTHE4_COMMON_QPLL0REFCLKSEL => "001", -- gtrefclk0
-      GTHE4_COMMON_QPLL0RESET(0) => qpll_reset,
-      GTHE4_COMMON_QPLL1CLKRSVD0(0) => '0',
-      GTHE4_COMMON_QPLL1CLKRSVD1(0) => '0',
-      GTHE4_COMMON_QPLL1FBDIV => x"40",
-      GTHE4_COMMON_QPLL1LOCKDETCLK(0) => '0',
-      GTHE4_COMMON_QPLL1LOCKEN(0) => '1',
-      GTHE4_COMMON_QPLL1PD (0) => '0',
-      GTHE4_COMMON_QPLL1REFCLKSEL => "001",
-      GTHE4_COMMON_QPLL1RESET(0) => qpll_reset,
-      GTHE4_COMMON_QPLLRSVD1 => x"00",
-      GTHE4_COMMON_QPLLRSVD2 => "00000",
-      GTHE4_COMMON_QPLLRSVD3 => "00000",
-      GTHE4_COMMON_QPLLRSVD4 => x"00",
-      GTHE4_COMMON_RCALENB(0) => '1',
-      GTHE4_COMMON_SDM0DATA => mpll_data,
-      GTHE4_COMMON_SDM0RESET(0) => '0',
-      GTHE4_COMMON_SDM0TOGGLE(0) => mpll_toggle,
-      GTHE4_COMMON_SDM0WIDTH => "00",  -- 00:24b
-      GTHE4_COMMON_SDM1DATA => hpll_data,
-      GTHE4_COMMON_SDM1RESET(0) => '0',
-      GTHE4_COMMON_SDM1TOGGLE(0) => hpll_toggle,
-      GTHE4_COMMON_SDM1WIDTH => "00",  -- 00:24b
-      GTHE4_COMMON_TCONGPI => b"00_0000_0000",
-      GTHE4_COMMON_TCONPOWERUP(0) => '0',
-      GTHE4_COMMON_TCONRESET => "00",
-      GTHE4_COMMON_TCONRSVDIN1 => "00",
-      GTHE4_COMMON_PMARSVDOUT0 => open,
-      GTHE4_COMMON_PMARSVDOUT1 => open,
-      GTHE4_COMMON_QPLL0FBCLKLOST => open,
-      GTHE4_COMMON_QPLL0LOCK (0) => qpll0_lock,
-      GTHE4_COMMON_QPLL0OUTCLK(0) => qpll0_outclk,
-      GTHE4_COMMON_QPLL0OUTREFCLK (0) => qpll0_outrefclk,
-      GTHE4_COMMON_QPLL0REFCLKLOST => open,
-      GTHE4_COMMON_QPLL1FBCLKLOST => open,
-      GTHE4_COMMON_QPLL1LOCK(0) => qpll1_lock,
-      GTHE4_COMMON_QPLL1OUTCLK(0) => qpll1_outclk,
-      GTHE4_COMMON_QPLL1OUTREFCLK(0) => qpll1_outrefclk,
-      GTHE4_COMMON_QPLL1REFCLKLOST => open,
-      GTHE4_COMMON_QPLLDMONITOR0 => open,
-      GTHE4_COMMON_QPLLDMONITOR1 => open,
-      GTHE4_COMMON_REFCLKOUTMONITOR0 => open,
-      GTHE4_COMMON_REFCLKOUTMONITOR1 => open,
-      GTHE4_COMMON_RXRECCLK0SEL => open,
-      GTHE4_COMMON_RXRECCLK1SEL => open,
-      GTHE4_COMMON_SDM0FINALOUT => open,
-      GTHE4_COMMON_SDM0TESTDATA => open,
-      GTHE4_COMMON_SDM1FINALOUT => open,
-      GTHE4_COMMON_SDM1TESTDATA => open,
-      GTHE4_COMMON_TCONGPO => open,
-      GTHE4_COMMON_TCONRSVDOUT0 => open
+      QPLL0CLKRSVD0 => '0',
+      QPLL0CLKRSVD1 => '0',
+      QPLL0FBDIV => x"40",
+      QPLL0LOCKDETCLK => '0',
+      QPLL0LOCKEN => '1',
+      QPLL0PD => '0',
+      QPLL0REFCLKSEL => "001", -- gtrefclk0
+      QPLL0RESET => qpll_reset,
+      QPLL1CLKRSVD0 => '0',
+      QPLL1CLKRSVD1 => '0',
+      QPLL1FBDIV => x"40",
+      QPLL1LOCKDETCLK => '0',
+      QPLL1LOCKEN => '1',
+      QPLL1PD => '0',
+      QPLL1REFCLKSEL => "001",
+      QPLL1RESET => qpll_reset,
+      QPLLRSVD1 => x"00",
+      QPLLRSVD2 => "00000",
+      QPLLRSVD3 => "00000",
+      QPLLRSVD4 => x"00",
+      RCALENB => '1',
+      SDM0DATA => mpll_data,
+      SDM0RESET => '0',
+      SDM0TOGGLE => mpll_toggle,
+      SDM0WIDTH => "00",  -- 00:24b
+      SDM1DATA => hpll_data,
+      SDM1RESET => '0',
+      SDM1TOGGLE => hpll_toggle,
+      SDM1WIDTH => "00",  -- 00:24b
+      TCONGPI => b"00_0000_0000",
+      TCONPOWERUP => '0',
+      TCONRESET => "00",
+      TCONRSVDIN1 => "00",
+      PMARSVDOUT0 => open,
+      PMARSVDOUT1 => open,
+      QPLL0FBCLKLOST => open,
+      QPLL0LOCK => qpll0_lock,
+      QPLL0OUTCLK => qpll0_outclk,
+      QPLL0OUTREFCLK => qpll0_outrefclk,
+      QPLL0REFCLKLOST => open,
+      QPLL1FBCLKLOST => open,
+      QPLL1LOCK => qpll1_lock,
+      QPLL1OUTCLK => qpll1_outclk,
+      QPLL1OUTREFCLK => qpll1_outrefclk,
+      QPLL1REFCLKLOST => open,
+      QPLLDMONITOR0 => open,
+      QPLLDMONITOR1 => open,
+      REFCLKOUTMONITOR0 => open,
+      REFCLKOUTMONITOR1 => open,
+      RXRECCLK0SEL => open,
+      RXRECCLK1SEL => open,
+      SDM0FINALOUT => open,
+      SDM0TESTDATA => open,
+      SDM1FINALOUT => open,
+      SDM1TESTDATA => open,
+      TCONGPO => open,
+      TCONRSVDOUT0 => open
   );
 
   qpll_lock <= qpll0_lock; --  and qpll0_lock;
@@ -871,7 +862,7 @@ begin
       gtwiz_buffbypass_rx_start_user_in(0) => gtwiz_buffbypass_rx_start_user_out,
       gtwiz_buffbypass_rx_done_out(0) => gtwiz_buffbypass_rx_done_in,
       gtwiz_buffbypass_rx_error_out(0) => gtwiz_buffbypass_rx_error_in,
-  
+
       gtwiz_reset_qpll0reset_out(0) => qpll_reset,
       gtwiz_reset_qpll0lock_in(0) => qpll_lock,
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
@@ -890,7 +881,7 @@ begin
       qpll0refclk_in(0) => qpll0_outrefclk,
       qpll1clk_in(0) => qpll1_outclk,
       qpll1refclk_in(0) => qpll1_outrefclk,
-    
+
       txpllclksel_in => "11", --  11: QPLL0
 --      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
 --      txoutclkfabric_out(0) => clk_dmtd,
@@ -914,13 +905,13 @@ begin
       rxpmaresetdone_out(0) => gth_rx_pma_reset_done_in,
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
       txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
-      
+
       txpippmen_in(0) => txpippmen,
       txpippmovrden_in(0) => txpippmovrden,
       txpippmpd_in(0) => txpippmpd,
       txpippmsel_in(0) => txpippmsel,
       txpippmstepsize_in => txpippmstepsize,
-  
+
       drpaddr_in => gth_drpaddr(9 downto 0),
       drpclk_in(0) => clk_62m5,
       drpdi_in => gth_drpdi,
@@ -929,7 +920,7 @@ begin
       drpwe_in(0) => gth_drpwe,
       drprdy_out(0) => gth_drprdy
   );
-  
+
   phy_rst <= gth_rst or phy16_out.rst;
   inst_gthe4_adapter: entity work.wr_gthe4_adapter
     port map (
@@ -997,7 +988,7 @@ begin
       gtwiz_buffbypass_rx_start_user_in => "0",
       gtwiz_buffbypass_rx_done_out => open,
       gtwiz_buffbypass_rx_error_out => open,
-  
+
       gtwiz_reset_qpll0reset_out => open,
       gtwiz_reset_qpll0lock_in(0) => qpll_lock,
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
@@ -1040,7 +1031,7 @@ begin
       rxpmaresetdone_out => open,
       txpmaresetdone_out => open,
       txprgdivresetdone_out => open,
-      
+
       txpippmen_in(0) => '0',
       txpippmovrden_in(0) => '0',
       txpippmpd_in(0) => '1',
