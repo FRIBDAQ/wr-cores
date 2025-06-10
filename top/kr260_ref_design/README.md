@@ -1,3 +1,17 @@
+Build
+=====
+
+Use vivado 2024.2
+
+$ hdlmake
+$ make project
+$ vivado
+
+Open the kr260_ref_top project
+In TCL console, build the gthe4:
+ source ../../top/kr260_ref_design/gthe4_sdm.tcl
+
+
 HW notes
 ========
 
