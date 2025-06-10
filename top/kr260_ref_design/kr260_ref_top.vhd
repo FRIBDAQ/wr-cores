@@ -139,6 +139,11 @@ architecture top of kr260_ref_top is
     gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    drpaddr_in : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+    drpclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    drpdi_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+    drpen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    drpwe_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -154,7 +159,14 @@ architecture top of kr260_ref_top is
     txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    txpippmen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpippmovrden_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpippmpd_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpippmsel_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpippmstepsize_in : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
     txpllclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    drpdo_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    drprdy_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -170,7 +182,6 @@ architecture top of kr260_ref_top is
     txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
-
 component gthe4_sdm_gthe4_common_wrapper
   port (
     GTHE4_COMMON_BGBYPASSB: in std_logic_vector (0 downto 0);
@@ -329,6 +340,22 @@ end component;
   signal hpll_toggle, mpll_toggle : std_logic;
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
+  signal common_drp_in, gth_drp_in, helper_drp_in : t_wishbone_master_in;
+  signal common_drp_out, gth_drp_out, helper_drp_out : t_wishbone_master_out;
+
+  signal common_drpaddr, gth_drpaddr, helper_drpaddr: std_logic_vector (15 downto 0);
+  signal common_drpdi,   gth_drpdi,   helper_drpdi: std_logic_vector (15 downto 0);
+  signal common_drpdo,   gth_drpdo,   helper_drpdo: std_logic_vector (15 downto 0);
+  signal common_drpen,   gth_drpen,   helper_drpen: std_logic;
+  signal common_drpwe,   gth_drpwe,   helper_drpwe: std_logic;
+  signal common_drprdy,  gth_drprdy,  helper_drprdy: std_logic;
+
+  signal txpippmen : std_logic;
+  signal txpippmovrden : std_logic;
+  signal txpippmpd : std_logic;
+  signal txpippmsel : std_logic;
+  signal txpippmstepsize : std_logic_vector(4 downto 0);
+
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -486,7 +513,7 @@ begin
       rst_axi_n => rst_n,
       clk_axi => clk_62m5
     );
-  inst_map: entity work.mpsoc_map
+  inst_mpsoc_map: entity work.mpsoc_map
   port map (
     aclk => clk_62m5,
     areset_n => rst_n,
@@ -517,7 +544,20 @@ begin
     ctrl_led2_o => sfp_led2_o,
     ctrl_gth_rst_o => gth_rst,
     status_i (gth_status'range) => gth_status,
-    status_i (31 downto gth_status'left + 1) => (others => '1')
+    status_i (31 downto gth_status'left + 1) => (others => '1'),
+
+    common_drp_i => common_drp_in,
+    common_drp_o => common_drp_out,
+    gth_drp_i => gth_drp_in,
+    gth_drp_o => gth_drp_out,
+    helper_drp_i => helper_drp_in,
+    helper_drp_o => helper_drp_out,
+
+    txpi_en_o => txpippmen,
+    txpi_stepsize_o => txpippmstepsize,
+    txpi_pd_o => txpippmpd,
+    txpi_ovrden_o => txpippmovrden,
+    txpi_sel_o => txpippmsel
   );
 
   inst_wrcore : entity work.xwr_core
@@ -717,11 +757,13 @@ begin
       GTHE4_COMMON_BGRCALOVRD => "11111",
       GTHE4_COMMON_BGRCALOVRDENB(0) => '1',
 
-      GTHE4_COMMON_DRPADDR => x"0000",
-      GTHE4_COMMON_DRPCLK(0) => '0',
-      GTHE4_COMMON_DRPDI => x"0000",
-      GTHE4_COMMON_DRPEN(0) => '0',
-      GTHE4_COMMON_DRPWE(0) => '0',
+      GTHE4_COMMON_DRPADDR => common_drpaddr(15 downto 0),
+      GTHE4_COMMON_DRPCLK(0) => clk_62m5,
+      GTHE4_COMMON_DRPDI => common_drpdi,
+      GTHE4_COMMON_DRPEN(0) => common_drpen,
+      GTHE4_COMMON_DRPWE(0) => common_drpwe,
+      GTHE4_COMMON_DRPDO => common_drpdo,
+      GTHE4_COMMON_DRPRDY(0) => common_drprdy,
 
       GTHE4_COMMON_GTGREFCLK0(0) => '0',
       GTHE4_COMMON_GTGREFCLK1(0) => '0',
@@ -776,8 +818,6 @@ begin
       GTHE4_COMMON_TCONPOWERUP(0) => '0',
       GTHE4_COMMON_TCONRESET => "00",
       GTHE4_COMMON_TCONRSVDIN1 => "00",
-      GTHE4_COMMON_DRPDO => open,
-      GTHE4_COMMON_DRPRDY => open,
       GTHE4_COMMON_PMARSVDOUT0 => open,
       GTHE4_COMMON_PMARSVDOUT1 => open,
       GTHE4_COMMON_QPLL0FBCLKLOST => open,
@@ -873,7 +913,22 @@ begin
       rxctrl3_out => open,
       rxpmaresetdone_out(0) => gth_rx_pma_reset_done_in,
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
-      txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done);
+      txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
+      
+      txpippmen_in(0) => txpippmen,
+      txpippmovrden_in(0) => txpippmovrden,
+      txpippmpd_in(0) => txpippmpd,
+      txpippmsel_in(0) => txpippmsel,
+      txpippmstepsize_in => txpippmstepsize,
+  
+      drpaddr_in => gth_drpaddr(9 downto 0),
+      drpclk_in(0) => clk_62m5,
+      drpdi_in => gth_drpdi,
+      drpdo_out   => gth_drpdo,
+      drpen_in(0) => gth_drpen,
+      drpwe_in(0) => gth_drpwe,
+      drprdy_out(0) => gth_drprdy
+  );
   
   phy_rst <= gth_rst or phy16_out.rst;
   inst_gthe4_adapter: entity work.wr_gthe4_adapter
@@ -984,7 +1039,22 @@ begin
       rxctrl3_out => open,
       rxpmaresetdone_out => open,
       txpmaresetdone_out => open,
-      txprgdivresetdone_out => open);
+      txprgdivresetdone_out => open,
+      
+      txpippmen_in(0) => '0',
+      txpippmovrden_in(0) => '0',
+      txpippmpd_in(0) => '1',
+      txpippmsel_in(0) => '0',
+      txpippmstepsize_in => "00000",
+
+      drpaddr_in  => helper_drpaddr(9 downto 0),
+      drpclk_in(0) => clk_62m5,
+      drpdi_in    => helper_drpdi,
+      drpdo_out   => helper_drpdo,
+      drpen_in(0) => helper_drpen,
+      drpwe_in(0) => helper_drpwe,
+      drprdy_out(0) => helper_drprdy
+  );
 
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
@@ -1019,7 +1089,7 @@ begin
     );
   end generate;
 
-  gen_ila: if true generate
+  gen_ila: if false generate
     component ila_0
       port (
         clk    : in STD_LOGIC;
@@ -1030,13 +1100,14 @@ begin
     inst_ila: ila_0
       port map (
         clk => clk_62m5,
-        probe0(15 downto 0) => gth_status(15 downto 0),
-        probe0(31 downto 16) => gth_rx_data_in,
+        probe0(15 downto 0) => common_drpdo,
+        probe0(31 downto 16) => common_drpdi,
 --        probe0(47 downto 32) => gth_tx_data_out,
-        probe0(56 downto 32) => mpll_data,
-        probe0(57) => mpll_toggle,
-        probe0(58) => mpll_load,
-        probe0(63 downto 59) => (others => '0')
+        probe0(47 downto 32) => common_drpaddr,
+        probe0(48) => common_drpen,
+        probe0(49) => common_drpwe,
+        probe0(50) => common_drprdy,
+        probe0(63 downto 51) => (others => '0')
       );
   end generate;
 
@@ -1071,4 +1142,49 @@ begin
   end if;
 end process;
 
-end top;
+  inst_common_drp: entity work.drp_core
+    generic map (true)
+    port map (
+      clk_i => clk_62m5,
+      rst_n_i => rst_n,
+      wb_i => common_drp_out,
+      wb_o => common_drp_in,
+      drp_addr_o => common_drpaddr,
+      drp_en_o  => common_drpen,
+      drp_we_o  => common_drpwe,
+      drp_rst_o => open,
+      drp_di_o  => common_drpdi,
+      drp_do_i  => common_drpdo,
+      drp_rdy_i => common_drprdy
+    );
+
+    inst_gth_drp: entity work.drp_core
+    port map (
+      clk_i => clk_62m5,
+      rst_n_i => rst_n,
+      wb_i => gth_drp_out,
+      wb_o => gth_drp_in,
+      drp_rst_o => open,
+      drp_addr_o => gth_drpaddr,
+      drp_en_o   => gth_drpen,
+      drp_we_o   => gth_drpwe,
+      drp_di_o   => gth_drpdi,
+      drp_do_i   => gth_drpdo,
+      drp_rdy_i  => gth_drprdy
+    );
+
+    inst_helper_drp: entity work.drp_core
+    port map (
+      clk_i => clk_62m5,
+      rst_n_i => rst_n,
+      wb_i => helper_drp_out,
+      wb_o => helper_drp_in,
+      drp_rst_o => open,
+      drp_addr_o => helper_drpaddr,
+      drp_en_o   => helper_drpen,
+      drp_we_o   => helper_drpwe,
+      drp_di_o   => helper_drpdi,
+      drp_do_i   => helper_drpdo,
+      drp_rdy_i  => helper_drprdy
+    );
+  end top;
