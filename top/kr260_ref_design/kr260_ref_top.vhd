@@ -264,7 +264,6 @@ END COMPONENT;
   signal txpippmpd : std_logic;
   signal txpippmsel : std_logic;
   signal txpippmstepsize : std_logic_vector(4 downto 0);
-
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -658,7 +657,7 @@ begin
   --  The common part of the gthe4.
   --  The values can be found in the top-level module generated when the common
   --  part is included.
-  inst_common_wrapper: gthe4_common
+  inst_common: gthe4_common
     generic map (
       AEN_QPLL0_FBDIV       =>          '1',
       AEN_QPLL1_FBDIV       =>          '1',
