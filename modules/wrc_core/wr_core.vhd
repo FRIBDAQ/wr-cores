@@ -583,50 +583,50 @@ begin
 
   rst_aux_n_o <= rst_net_n;
 
-  U_Sync_reset_refclk : gc_sync_ffs
+  U_Sync_reset_refclk : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
       clk_i    => clk_ref_i,
-      rst_n_i  => '1',
-      data_i   => rst_net_n,
-      synced_o => rst_net_resync_ref_n);
+      rst_n_a_i  => '1',
+      d_i   => rst_net_n,
+      q_o => rst_net_resync_ref_n);
 
-  U_sync_reset_dmtd : gc_sync_ffs
+  U_sync_reset_dmtd : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => clk_dmtd_i,
-      rst_n_i  => '1',
-      data_i   => rst_net_n,
-      synced_o => rst_net_resync_dmtd_n);
+      clk_i     => clk_dmtd_i,
+      rst_n_a_i => '1',
+      d_i       => rst_net_n,
+      q_o       => rst_net_resync_dmtd_n);
 
-  U_sync_reset_ext : gc_sync_ffs
+  U_sync_reset_ext : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => clk_ext_i,
-      rst_n_i  => '1',
-      data_i   => rst_net_n,
-      synced_o => rst_net_resync_ext_n);
+      clk_i     => clk_ext_i,
+      rst_n_a_i => '1',
+      d_i       => rst_net_n,
+      q_o       => rst_net_resync_ext_n);
 
-  U_sync_reset_rxclk : gc_sync_ffs
+  U_sync_reset_rxclk : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => phy_rx_clk,
-      rst_n_i  => '1',
-      data_i   => rst_net_n,
-      synced_o => rst_net_resync_rxclk_n);
+      clk_i     => phy_rx_clk,
+      rst_n_a_i => '1',
+      d_i       => rst_net_n,
+      q_o       => rst_net_resync_rxclk_n);
 
-  U_sync_reset_txclk : gc_sync_ffs
+  U_sync_reset_txclk : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => phy_tx_clk,
-      rst_n_i  => '1',
-      data_i   => rst_net_n,
-      synced_o => rst_net_resync_txclk_n);
+      clk_i     => phy_tx_clk,
+      rst_n_a_i => '1',
+      d_i       => rst_net_n,
+      q_o       => rst_net_resync_txclk_n);
 
   -----------------------------------------------------------------------------
   -- PPS generator
@@ -954,7 +954,8 @@ begin
       txtsu_ack_o         => mnic_txtsu_ack,
 
       wb_i => minic_wb_in,
-      wb_o => minic_wb_out
+      wb_o => minic_wb_out,
+      int_o => open
       );
 
   U_CPU: entity work.wrc_urv_wrapper
