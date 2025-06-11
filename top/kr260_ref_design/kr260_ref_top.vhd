@@ -910,7 +910,7 @@ begin
       txpippmovrden_in(0) => '0',
       txpippmsel_in(0) => '1',
       txpippmpd_in(0) => '0',
-      txpippmstepsize_in => txpippmstepsize, -- b"1_0000",
+      txpippmstepsize_in => b"1_0001", -- txpippmstepsize, -- b"1_0000",
 
       drpaddr_in => gth_drpaddr(9 downto 0),
       drpclk_in(0) => clk_62m5,
