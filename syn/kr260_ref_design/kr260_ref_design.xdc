@@ -75,4 +75,4 @@ set_property IOSTANDARD LVCMOS33 [get_ports sfp_scl_b]
 
 # Very important: use POSTPI
 set_property TX_PROGCLK_SEL POSTPI [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property TXPI_SYNFREQ_PPM "010" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property TXPI_SYNFREQ_PPM "110" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
