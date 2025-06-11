@@ -906,11 +906,11 @@ begin
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
       txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
 
-      txpippmen_in(0) => txpippmen,
-      txpippmovrden_in(0) => txpippmovrden,
-      txpippmpd_in(0) => txpippmpd,
-      txpippmsel_in(0) => txpippmsel,
-      txpippmstepsize_in => txpippmstepsize,
+      txpippmen_in(0) => '1',
+      txpippmovrden_in(0) => '0',
+      txpippmsel_in(0) => '1',
+      txpippmpd_in(0) => '0',
+      txpippmstepsize_in => txpippmstepsize, -- b"1_0000",
 
       drpaddr_in => gth_drpaddr(9 downto 0),
       drpclk_in(0) => clk_62m5,
