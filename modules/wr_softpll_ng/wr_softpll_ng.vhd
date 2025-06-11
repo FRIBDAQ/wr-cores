@@ -106,11 +106,11 @@ entity wr_softpll_ng is
 -- Reference inputs (i.e. the RX clocks recovered by the PHYs), externally sampled
     clk_ref_sampled_i : in std_logic_vector(g_num_ref_inputs-1 downto 0);
 
--- Feedback clocks (i.e. the outputs of the main or auxillary oscillator)
--- Note: clk_fb_i(0) must be always connected to the primary board's oscillator
+-- Output clocks (i.e. main or auxillary oscillator)
+-- Note: clk_out_i(0) must be always connected to the primary board's oscillator
 -- (i.e. the one driving the PTP and Ethernet PHY) to ensure correct operation
 -- of the PTP core.
-    clk_fb_i : in std_logic_vector(g_num_outputs-1 downto 0);
+    clk_out_i : in std_logic_vector(g_num_outputs-1 downto 0);
 
 -- DMTD Offset clock
     clk_dmtd_i : in std_logic;
@@ -126,7 +126,7 @@ entity wr_softpll_ng is
     clk_ext_stopped_i : in std_logic := '0';
     clk_ext_rst_o : out std_logic;
 	 
--- External clock sync/alignment singnal. SoftPLL will align clk_ext_i/clk_fb_i(0)
+-- External clock sync/alignment signal. SoftPLL will align clk_ext_i/clk_fb_i(0)
 -- to match the edges immediately following the rising edge in sync_p_i.
     pps_csync_p1_i : in std_logic;
     pps_ext_a_i    : in std_logic;
@@ -158,7 +158,6 @@ entity wr_softpll_ng is
     wb_ack_o   : out std_logic;
     wb_stall_o : out std_logic;
     irq_o      : out std_logic;
-    debug_o    : out std_logic_vector(5 downto 0);
 
 -- Debug FIFO readout interrupt
     dbg_fifo_irq_o : out std_logic
@@ -333,7 +332,7 @@ begin  -- rtl
         clk_dmtd_over_i => clk_dmtd_over_i,
 
         clk_sys_i => clk_sys_i,
-        clk_in_i  => clk_fb_i(i),
+        clk_in_i  => clk_out_i(i),
 
         resync_p_a_i     => resync_p,
         resync_p_o       => fb_resync_out(i),
@@ -343,18 +342,15 @@ begin  -- rtl
 
         r_deglitch_threshold_i => deglitch_thr_slv,
         dbg_dmtdout_o        => open,
-        dbg_clk_d3_o         => debug_o(i),
+        dbg_clk_d3_o         => open,
         r_low_o => r_stat_low_fb(i),
         r_high_o => r_stat_high_fb(i),
         r_samples_i => regs_in.dmtd_stat_cr_samples_o,
         r_minmax_sel_i => regs_in.dmtd_stat_cr_minmax_sel_o,
         r_stat_reset_i => regs_in.dmtd_stat_cr_rst_o,
         r_stat_ready_o => r_stat_valid_fb(i)
-        ); --debug_o(4));
+        );
   end generate gen_feedback_dmtds;
-
-  -- drive unused debug output
---  debug_o(4) <= '0';
 
   gen_ext_dmtds: for I in 0 to g_num_exts-1 generate
 
@@ -383,10 +379,6 @@ begin  -- rtl
   end generate gen_ext_dmtds;
 
   gen_with_ext_clock_input: if g_num_exts > 0 generate
---    debug_o(0) <= fb_resync_out(0);
---    debug_o(1) <= tags_p(g_num_ref_inputs + g_num_outputs);
---    debug_o(2) <= tags_p(g_num_ref_inputs);
-    
     U_Aligner_EXT : entity work.spll_aligner
       generic map (
         g_counter_width  => 28,
@@ -396,7 +388,7 @@ begin  -- rtl
       port map (
         clk_sys_i      => clk_sys_i,
         clk_in_i       => clk_ext_i,
-        clk_ref_i      => clk_fb_i(0),
+        clk_ref_i      => clk_out_i(0),
         rst_n_sys_i    => rst_n_i,
         rst_n_ref_i    => rst_ref_n_i,
         rst_n_ext_i    => rst_ext_n_i,
@@ -429,12 +421,6 @@ begin  -- rtl
     regs_out.eccr_ext_ref_locked_i           <= '0';
     regs_out.eccr_ext_ref_stopped_i          <= '0';
     clk_ext_rst_o <= '0';
-    -- drive unused debug outputs
---    debug_o(0) <= '0';
---    debug_o(1) <= '0';
---    debug_o(2) <= '0';
---    debug_o(3) <= '0';
---    debug_o(5) <= '0';
   end generate gen_without_ext_clock_input;
 
 

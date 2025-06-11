@@ -526,7 +526,7 @@ architecture struct of wr_core is
   signal dac_dpll_sel     : std_logic_vector(3 downto 0);
   signal dac_dpll_load_p1 : std_logic;
 
-  signal clk_fb     : std_logic_vector(g_aux_clks downto 0);
+  signal clk_out    : std_logic_vector(g_aux_clks downto 0);
   signal out_enable : std_logic_vector(g_aux_clks downto 0);
 
   function f_count_freqmon_clocks return integer is
@@ -631,7 +631,7 @@ begin
   -----------------------------------------------------------------------------
   -- PPS generator
   -----------------------------------------------------------------------------
-  PPS_GEN : xwr_pps_gen
+  PPS_GEN : entity work.xwr_pps_gen
     generic map(
       g_interface_mode       => PIPELINED,
       g_address_granularity  => BYTE,
@@ -658,6 +658,8 @@ begin
       pps_led_o   => pps_led_o,
       pps_pre_o   => pps_pre,
       pps_valid_o => pps_valid,
+
+      ppsin_term_o => open,
 
       tm_utc_o        => tm_tai_o,
       tm_cycles_o     => tm_cycles_o,
@@ -762,8 +764,8 @@ begin
       -- Reference inputs (i.e. the RX clocks recovered by the PHYs)
       clk_ref_i(0) => phy_rx_clk,
       clk_ref_sampled_i(0) => clk_rx_sampled,
-      -- Feedback clocks (i.e. the outputs of the main or aux oscillator)
-      clk_fb_i     => clk_fb,
+      -- Output clocks (i.e. main or aux oscillator)
+      clk_out_i    => clk_out,
       -- DMTD Offset clock
       clk_dmtd_i   => clk_dmtd_i,
       clk_dmtd_over_i => clk_dmtd_over_i,
@@ -796,11 +798,10 @@ begin
 
       int_o => softpll_irq,
 
-      dbg_fifo_irq_o => open,
-      debug_o => open);
+      dbg_fifo_irq_o => open);
 
-  clk_fb(0)                       <= clk_ref_i;
-  clk_fb(g_aux_clks downto 1)     <= clk_aux_i;
+  clk_out(0)                      <= clk_ref_i;
+  clk_out(g_aux_clks downto 1)    <= clk_aux_i;
   out_enable(0)                   <= '1';
   out_enable(g_aux_clks downto 1) <= tm_clk_aux_lock_en_i;
 

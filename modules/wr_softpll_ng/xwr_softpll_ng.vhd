@@ -98,8 +98,8 @@ entity xwr_softpll_ng is
 -- Reference inputs (i.e. the RX clocks recovered by the PHYs), externally sampled
     clk_ref_sampled_i : in std_logic_vector(g_num_ref_inputs-1 downto 0) := (others => '0');
     
--- Feedback clocks (i.e. the outputs of the main or aux oscillator)
-    clk_fb_i   : in std_logic_vector(g_num_outputs-1 downto 0);
+-- Output clocks (i.e. main or aux oscillator)
+    clk_out_i   : in std_logic_vector(g_num_outputs-1 downto 0);
 -- DMTD Offset clock
     clk_dmtd_i : in std_logic;
     clk_dmtd_over_i : in std_logic := '0';
@@ -137,7 +137,6 @@ entity xwr_softpll_ng is
 
     int_o: out std_logic;
 
-    debug_o        : out std_logic_vector(5 downto 0);
     dbg_fifo_irq_o : out std_logic
     );
 
@@ -172,7 +171,7 @@ begin  -- behavioral
       rst_dmtd_n_i    => rst_dmtd_n_i,
       clk_ref_i       => clk_ref_i,
       clk_ref_sampled_i => clk_ref_sampled_i,
-      clk_fb_i        => clk_fb_i,
+      clk_out_i       => clk_out_i,
       clk_dmtd_i      => clk_dmtd_i,
       clk_dmtd_over_i => clk_dmtd_over_i,
       clk_ext_i       => clk_ext_i,
@@ -199,7 +198,6 @@ begin  -- behavioral
       wb_ack_o        => slave_o.ack,
       wb_stall_o      => slave_o.stall,
       irq_o           => int_o,
-      debug_o         => debug_o,
       dbg_fifo_irq_o  => dbg_fifo_irq_o);
 
   slave_o.err <= '0';
