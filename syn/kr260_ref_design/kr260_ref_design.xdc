@@ -74,5 +74,13 @@ set_property IOSTANDARD LVCMOS33 [get_ports sfp_scl_b]
 
 
 # Very important: use POSTPI
-set_property TX_PROGCLK_SEL POSTPI [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property TXPI_SYNFREQ_PPM "110" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+#set_property TX_PROGCLK_SEL POSTPI [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+#set_property TXPI_SYNFREQ_PPM "110" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+
+# For dmonitor
+# Cf xapp1252
+set_property ADAPT_CFG1 "1101100000000010" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property DMONITOR_CFG1 "00000001" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG0 "0000010000100110" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG2 "0000000011000101" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG5 "0011010001111011" [get_cells {inst_gth/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]

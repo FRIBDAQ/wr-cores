@@ -139,6 +139,7 @@ architecture top of kr260_ref_top is
     gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    dmonitorclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     drpaddr_in : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
     drpclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     drpdi_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -165,6 +166,8 @@ architecture top of kr260_ref_top is
     txpippmsel_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmstepsize_in : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
     txpllclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    dmonitorout_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    dmonitoroutclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     drpdo_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     drprdy_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -179,10 +182,9 @@ architecture top of kr260_ref_top is
     rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0)
+    txprgdivresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
-
   signal refclk_156m25, refclk_156m25_int : std_logic;
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
@@ -248,6 +250,8 @@ END COMPONENT;
   signal hpll_toggle, mpll_toggle : std_logic;
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
+  signal dmonitorout : std_logic_vector(15 downto 0);
+  signal gth_dmon_clk, gth_dmon_clk_out : std_logic;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -872,7 +876,7 @@ begin
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
       txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
 
-      txpippmen_in(0) => '1',
+      txpippmen_in(0) => '0',
       txpippmovrden_in(0) => '0',
       txpippmsel_in(0) => '1',
       txpippmpd_in(0) => '0',
@@ -884,7 +888,11 @@ begin
       drpdo_out   => open,
       drpen_in(0) => '0',
       drpwe_in(0) => '0',
-      drprdy_out => open
+      drprdy_out => open,
+
+      dmonitorout_out => dmonitorout,
+      dmonitoroutclk_out(0) => gth_dmon_clk_out,
+      dmonitorclk_in(0) => gth_dmon_clk
   );
 
   phy_rst <= gth_rst or phy16_out.rst;
@@ -1010,8 +1018,23 @@ begin
       drpdo_out   => open,
       drpen_in(0) => '0',
       drpwe_in(0) => '0',
-      drprdy_out  => open
+      drprdy_out  => open,
+
+      dmonitorout_out => open,
+      dmonitorclk_in => "0",
+      dmonitoroutclk_out => open
   );
+
+  inst_gth_dmon_bufg: BUFG_GT
+    port map (
+      I => gth_dmon_clk_out,
+      O => gth_dmon_clk,
+      DIV => "000",
+      CE => '1',
+      CEMASK => '1',
+      CLR => '0',
+      CLRMASK => '1'
+    );
 
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
@@ -1033,18 +1056,36 @@ begin
     end if;
   end process;
 
-  process(phy16_in.rx_clk)
-    variable cnt : natural range 0 to 4 := 0;
-    variable v   : std_logic            := '0';
+  -- process(phy16_in.rx_clk)
+  --   variable cnt : natural range 0 to 4 := 0;
+  --   variable v   : std_logic            := '0';
+  -- begin
+  --   if rising_edge(phy16_in.rx_clk) then
+  --     if cnt = 4 then
+  --       cnt := 0;
+  --       pmod4_4_b <= v;
+  --       v := not v;
+  --     else
+  --       cnt := cnt + 1;
+  --     end if;
+  --   end if;
+  -- end process;
+
+  pmod4_4_b <= gth_dmon_clk;
+
+  gen_ila: if true generate
+    component ila_0
+      port (
+        clk    : in STD_LOGIC;
+        probe0 : in STD_LOGIC_VECTOR(63 downto 0)
+      );
+    end component  ;
   begin
-    if rising_edge(phy16_in.rx_clk) then
-      if cnt = 4 then
-        cnt := 0;
-        pmod4_4_b <= v;
-        v := not v;
-      else
-        cnt := cnt + 1;
-      end if;
-    end if;
-  end process;
+    inst_ila: ila_0
+      port map (
+        clk => gth_dmon_clk,
+        probe0(6 downto 0) => dmonitorout(6 downto 0),
+        probe0(63 downto 7) => (others => '0')
+        );
+  end generate;
 end top;
