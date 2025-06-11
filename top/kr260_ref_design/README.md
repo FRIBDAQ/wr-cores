@@ -113,3 +113,10 @@ QPLL0 is used for the main gthe4 while QPLL1 is used for the helper frequency
 (through a second gthe4).
 
 As the fractional PLL can only increase the frequency, a negative offset is added to the frequency through TXPIPPM.
+
+
+TODO
+====
+
+Phase determinism has not been tested.
+Create a platform file.
