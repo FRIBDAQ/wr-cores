@@ -2,7 +2,6 @@ create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 
 set_property CONFIG.preset {GTH-Gigabit_Ethernet} [get_ips gthe4_sdm]
 set_property -dict [list \
   CONFIG.CHANNEL_ENABLE {X0Y6} \
-  CONFIG.ENABLE_OPTIONAL_PORTS {sdm0data_in sdm0toggle_in sdm0width_in} \
   CONFIG.LOCATE_RX_USER_CLOCKING {CORE} \
   CONFIG.LOCATE_TX_USER_CLOCKING {CORE} \
   CONFIG.RX_MASTER_CHANNEL {X0Y6} \
@@ -17,16 +16,12 @@ set_property -dict [list \
   CONFIG.TX_REFCLK_SOURCE {} \
   CONFIG.RX_BUFFER_MODE {0} \
   CONFIG.TX_BUFFER_MODE {0} \
-  CONFIG.ENABLE_OPTIONAL_PORTS {sdm0data_in sdm0reset_in sdm0toggle_in sdm0width_in qpll0lock_out} \
   CONFIG.RX_REFCLK_FREQUENCY {156.2495001} \
-  CONFIG.RX_REFCLK_SOURCE {} \
   CONFIG.TX_REFCLK_FREQUENCY {156.2495001} \
-  CONFIG.ENABLE_OPTIONAL_PORTS {sdm0data_in sdm0reset_in sdm0toggle_in sdm0width_in sdm1data_in sdm1toggle_in sdm1width_in txsysclksel_in qpll0lock_out txoutclkfabric_out} \
   CONFIG.SECONDARY_QPLL_ENABLE {true} \
   CONFIG.SECONDARY_QPLL_FRACN_NUMERATOR {6871} \
   CONFIG.SECONDARY_QPLL_LINE_RATE {1.25} \
-  CONFIG.ENABLE_OPTIONAL_PORTS {txpllclksel_in} \
   CONFIG.LOCATE_COMMON {EXAMPLE_DESIGN} \
   CONFIG.ENABLE_OPTIONAL_PORTS {drpaddr_in drpclk_in drpdi_in drpen_in drpwe_in txpippmen_in txpippmovrden_in txpippmpd_in txpippmsel_in txpippmstepsize_in txpllclksel_in drpdo_out drprdy_out} \
 ] [get_ips gthe4_sdm]
-generate_target {instantiation_template} [get_files /home/tgingold/Repositories/ohwr/wr-cores-kria/syn/kr260_ref_design/kr260_ref_top.srcs/sources_1/ip/gthe4_sdm/gthe4_sdm.xci]
+generate_target {instantiation_template} [get_files gthe4_sdm.xci]

@@ -1,15 +1,18 @@
+KR260 demo board
+================
+
 Build
 =====
+
+Install Ubuntu 22.04.4 LTS on the kria board.
 
 Use vivado 2024.2
 
 $ hdlmake
 $ make project
 $ vivado
-
-Open the kr260_ref_top project
-In TCL console, build the gthe4:
- source ../../top/kr260_ref_design/gthe4_sdm.tcl
+Generate the bitstream, program the board
+Compile wrpc-sw tools on the board, and load firmware
 
 
 HW notes
@@ -76,13 +79,10 @@ eth1 is top right.
 
 TODO: xmutil
 
-JTAG probe
-==========
-
-Boot with server disconnected ?
-
 wrpc tool
 =========
+
+They should be built on the board.
 
 $ sudo ./wrpc info -b host -b 0x80000000
 hwfr=00000000:  memsize: 16kB,  storage: 0, storage sector size: 0kB
@@ -109,11 +109,7 @@ QPLL
 
 According to ug576 v1.7.1 p 51, both QPLL are fractional PLLs
 
+QPLL0 is used for the main gthe4 while QPLL1 is used for the helper frequency
+(through a second gthe4).
 
-Plan
-====
-
-Get lock (validate link, hw...) using QPLL0
-
-Instantiate a second GT on QPLL1, connect OUTCLKTX to a pin.
-Use SDM fractional to change freq
+As the fractional PLL can only increase the frequency, a negative offset is added to the frequency through TXPIPPM.
