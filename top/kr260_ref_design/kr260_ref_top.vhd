@@ -202,7 +202,6 @@ END COMPONENT;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst, phy_rst : std_logic;
-  signal gth_status_a, gth_status : std_logic_vector(23 downto 0) := (others => '0');
   signal uart_rx, uart_tx : std_logic;
   signal sfp_scl_out, sfp_sda_out : std_logic;
 
@@ -249,21 +248,6 @@ END COMPONENT;
   signal hpll_toggle, mpll_toggle : std_logic;
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
-  signal common_drp_in, gth_drp_in, helper_drp_in : t_wishbone_master_in;
-  signal common_drp_out, gth_drp_out, helper_drp_out : t_wishbone_master_out;
-
-  signal common_drpaddr, gth_drpaddr, helper_drpaddr: std_logic_vector (15 downto 0);
-  signal common_drpdi,   gth_drpdi,   helper_drpdi: std_logic_vector (15 downto 0);
-  signal common_drpdo,   gth_drpdo,   helper_drpdo: std_logic_vector (15 downto 0);
-  signal common_drpen,   gth_drpen,   helper_drpen: std_logic;
-  signal common_drpwe,   gth_drpwe,   helper_drpwe: std_logic;
-  signal common_drprdy,  gth_drprdy,  helper_drprdy: std_logic;
-
-  signal txpippmen : std_logic;
-  signal txpippmovrden : std_logic;
-  signal txpippmpd : std_logic;
-  signal txpippmsel : std_logic;
-  signal txpippmstepsize : std_logic_vector(4 downto 0);
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -450,22 +434,7 @@ begin
 
     ctrl_led1_o => open,
     ctrl_led2_o => sfp_led2_o,
-    ctrl_gth_rst_o => gth_rst,
-    status_i (gth_status'range) => gth_status,
-    status_i (31 downto gth_status'left + 1) => (others => '1'),
-
-    common_drp_i => common_drp_in,
-    common_drp_o => common_drp_out,
-    gth_drp_i => gth_drp_in,
-    gth_drp_o => gth_drp_out,
-    helper_drp_i => helper_drp_in,
-    helper_drp_o => helper_drp_out,
-
-    txpi_en_o => txpippmen,
-    txpi_stepsize_o => txpippmstepsize,
-    txpi_pd_o => txpippmpd,
-    txpi_ovrden_o => txpippmovrden,
-    txpi_sel_o => txpippmsel
+    ctrl_gth_rst_o => gth_rst
   );
 
   inst_wrcore : entity work.xwr_core
@@ -747,13 +716,13 @@ begin
       BGRCALOVRD => "11111",
       BGRCALOVRDENB => '1',
 
-      DRPADDR => common_drpaddr(15 downto 0),
+      DRPADDR => (others => '0'),
       DRPCLK => clk_62m5,
-      DRPDI => common_drpdi,
-      DRPEN => common_drpen,
-      DRPWE => common_drpwe,
-      DRPDO => common_drpdo,
-      DRPRDY => common_drprdy,
+      DRPDI => (others => '0'),
+      DRPEN => '0',
+      DRPWE => '0',
+      DRPDO => open,
+      DRPRDY => open,
 
       GTGREFCLK0 => '0',
       GTGREFCLK1 => '0',
@@ -882,8 +851,6 @@ begin
       qpll1refclk_in(0) => qpll1_outrefclk,
 
       txpllclksel_in => "11", --  11: QPLL0
---      txsysclksel_in => "10", -- 10: QPLL0REFCLK 11:QPLL1REFCLK
---      txoutclkfabric_out(0) => clk_dmtd,
       rx8b10ben_in(0) => '1',
       rxcommadeten_in(0) => '1',
       rxmcommaalignen_in(0) => '0',
@@ -911,13 +878,13 @@ begin
       txpippmpd_in(0) => '0',
       txpippmstepsize_in => b"1_0001", -- txpippmstepsize, -- b"1_0000",
 
-      drpaddr_in => gth_drpaddr(9 downto 0),
+      drpaddr_in => (others => '0'),
       drpclk_in(0) => clk_62m5,
-      drpdi_in => gth_drpdi,
-      drpdo_out   => gth_drpdo,
-      drpen_in(0) => gth_drpen,
-      drpwe_in(0) => gth_drpwe,
-      drprdy_out(0) => gth_drprdy
+      drpdi_in => (others => '0'),
+      drpdo_out   => open,
+      drpen_in(0) => '0',
+      drpwe_in(0) => '0',
+      drprdy_out => open
   );
 
   phy_rst <= gth_rst or phy16_out.rst;
@@ -1037,69 +1004,19 @@ begin
       txpippmsel_in(0) => '0',
       txpippmstepsize_in => "00000",
 
-      drpaddr_in  => helper_drpaddr(9 downto 0),
+      drpaddr_in  => (others => '0'),
       drpclk_in(0) => clk_62m5,
-      drpdi_in    => helper_drpdi,
-      drpdo_out   => helper_drpdo,
-      drpen_in(0) => helper_drpen,
-      drpwe_in(0) => helper_drpwe,
-      drprdy_out(0) => helper_drprdy
+      drpdi_in    => (others => '0'),
+      drpdo_out   => open,
+      drpen_in(0) => '0',
+      drpwe_in(0) => '0',
+      drprdy_out  => open
   );
 
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
 
-  gth_status_a(0) <= gth_powergood;
-  gth_status_a(1) <= gtwiz_reset_rx_cdr_stable_out;
-  gth_status_a(2) <= gtwiz_reset_tx_done_in;
-  gth_status_a(3) <= gtwiz_reset_rx_done_in;
-
-  gth_status_a(4) <= gtwiz_buffbypass_rx_done_in;
-  gth_status_a(5) <= gtwiz_buffbypass_tx_done_in;
-  gth_status_a(6) <= gtwiz_userclk_tx_active_in;
-  gth_status_a(7) <= gtwiz_userclk_rx_reset_out;
-
-  gth_status_a(8) <= gtwiz_userclk_rx_active_in;
-  gth_status_a(9) <= gth_rx_byte_aligned_in;
-  gth_status_a(10) <= gth_rx_comma_det_in;
-  gth_status_a(11) <= gth_rx_slide_out; -- gth_rx_pma_reset_done_in;
-
-  gth_status_a(12) <= phy16_in.rdy;
-  gth_status_a(13) <= gth_tx_prg_div_reset_done;
-  gth_status_a(14) <= qpll0_lock;
-  gth_status_a(15) <= qpll1_lock; -- phy_rst;
-
-  gen_sync: for i in gth_status'range generate
-    inst_sync: entity work.gc_sync
-    port map (
-      clk_i => clk_62m5,
-      rst_n_a_i => rst_n,
-      d_i => gth_status_a(i),
-      q_o => gth_status(i)
-    );
-  end generate;
-
-  gen_ila: if false generate
-    component ila_0
-      port (
-        clk    : in STD_LOGIC;
-        probe0 : in STD_LOGIC_VECTOR(63 downto 0)
-      );
-    end component  ;
-  begin
-    inst_ila: ila_0
-      port map (
-        clk => clk_62m5,
-        probe0(15 downto 0) => common_drpdo,
-        probe0(31 downto 16) => common_drpdi,
---        probe0(47 downto 32) => gth_tx_data_out,
-        probe0(47 downto 32) => common_drpaddr,
-        probe0(48) => common_drpen,
-        probe0(49) => common_drpwe,
-        probe0(50) => common_drprdy,
-        probe0(63 downto 51) => (others => '0')
-      );
-  end generate;
+  --  Generate some outputs on PMOD
 
   process(phy16_in.ref_clk)
     variable cnt : natural range 0 to 4 := 0;
@@ -1115,66 +1032,19 @@ begin
       end if;
     end if;
   end process;
-  --pmod4_2_b <= phy16_in.ref_clk;
 
- process(phy16_in.rx_clk)
-  variable cnt : natural range 0 to 4 := 0;
-  variable v : std_logic := '0';
-begin
-  if rising_edge(phy16_in.rx_clk) then
-    if cnt = 4 then
-      cnt := 0;
-      pmod4_4_b <= v;
-      v := not v;
-    else
-      cnt := cnt + 1;
+  process(phy16_in.rx_clk)
+    variable cnt : natural range 0 to 4 := 0;
+    variable v   : std_logic            := '0';
+  begin
+    if rising_edge(phy16_in.rx_clk) then
+      if cnt = 4 then
+        cnt := 0;
+        pmod4_4_b <= v;
+        v := not v;
+      else
+        cnt := cnt + 1;
+      end if;
     end if;
-  end if;
-end process;
-
-  inst_common_drp: entity work.drp_core
-    generic map (true)
-    port map (
-      clk_i => clk_62m5,
-      rst_n_i => rst_n,
-      wb_i => common_drp_out,
-      wb_o => common_drp_in,
-      drp_addr_o => common_drpaddr,
-      drp_en_o  => common_drpen,
-      drp_we_o  => common_drpwe,
-      drp_rst_o => open,
-      drp_di_o  => common_drpdi,
-      drp_do_i  => common_drpdo,
-      drp_rdy_i => common_drprdy
-    );
-
-    inst_gth_drp: entity work.drp_core
-    port map (
-      clk_i => clk_62m5,
-      rst_n_i => rst_n,
-      wb_i => gth_drp_out,
-      wb_o => gth_drp_in,
-      drp_rst_o => open,
-      drp_addr_o => gth_drpaddr,
-      drp_en_o   => gth_drpen,
-      drp_we_o   => gth_drpwe,
-      drp_di_o   => gth_drpdi,
-      drp_do_i   => gth_drpdo,
-      drp_rdy_i  => gth_drprdy
-    );
-
-    inst_helper_drp: entity work.drp_core
-    port map (
-      clk_i => clk_62m5,
-      rst_n_i => rst_n,
-      wb_i => helper_drp_out,
-      wb_o => helper_drp_in,
-      drp_rst_o => open,
-      drp_addr_o => helper_drpaddr,
-      drp_en_o   => helper_drpen,
-      drp_we_o   => helper_drpwe,
-      drp_di_o   => helper_drpdi,
-      drp_do_i   => helper_drpdo,
-      drp_rdy_i  => helper_drprdy
-    );
-  end top;
+  end process;
+end top;
