@@ -203,7 +203,7 @@ END COMPONENT;
   signal m_axi4_in : t_axi4_lite_master_in_32;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
-  signal gth_rst, phy_rst : std_logic;
+  signal gth_rst, gth_rst_n, phy_rst : std_logic;
   signal uart_rx, uart_tx : std_logic;
   signal sfp_scl_out, sfp_sda_out : std_logic;
 
@@ -243,7 +243,8 @@ END COMPONENT;
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
 
-  signal hpll_data_out, mpll_data_out : std_logic_vector(15 downto 0);
+  signal mpll_data_out : std_logic_vector(15 downto 0);
+  signal hpll_data_out : std_logic_vector(31 downto 0);
   signal hpll_load, mpll_load : std_logic;
 
   signal hpll_data, mpll_data : std_logic_vector(24 downto 0);
@@ -255,7 +256,11 @@ END COMPONENT;
   signal rxpi_ext : std_logic_vector(31 downto 0);
   alias rxpi_d is rxpi_ext(rxpi'range);
   signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
-  signal gth_dmon_clk, gth_dmon_clk_out : std_logic;
+  signal gth_dmon_clk, gth_dmon_clk_out, gth_dmon_rst_n : std_logic;
+
+  signal rxpi_fifo_en, rxpi_fifo_rd, rxpi_fifo_nfull_wr : std_logic;
+  signal rxpi_fifo_samp , rxpi_fifo_nfull, rxpi_fifo_dout : std_logic_vector(31 downto 0);
+  signal rxpi_fifo_rdcount: std_logic_vector(31 downto 0) := (others => '0');
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -442,8 +447,20 @@ begin
 
     ctrl_led1_o => open,
     ctrl_led2_o => sfp_led2_o,
-    ctrl_gth_rst_o => gth_rst
+    ctrl_gth_rst_o => gth_rst,
+    qpll1_sdm_o => hpll_data_out,
+    qpll1_sdm_wr_o => hpll_load,
+    fifo_rdcount_i => rxpi_fifo_rdcount,
+    fifo_nfull_i => rxpi_fifo_nfull,
+    fifo_nfull_o => open,
+    fifo_nfull_wr_o => rxpi_fifo_nfull_wr,
+    fifo_data_i => rxpi_fifo_dout,
+    fifo_data_rd_o => rxpi_fifo_rd,
+    rxpi_samp_o => rxpi_fifo_samp,
+    fifo_ctrl_en_o => rxpi_fifo_en
   );
+
+  gth_rst_n <= not gth_rst;
 
   inst_wrcore : entity work.xwr_core
     generic map (
@@ -474,8 +491,8 @@ begin
       rxpi_clk_i => gth_dmon_clk,
       rxpi_i => rxpi_ext(13 downto 0),
 
-      dac_hpll_load_p1_o => hpll_load,
-      dac_hpll_data_o => hpll_data_out,
+      dac_hpll_load_p1_o => open,
+      dac_hpll_data_o => open,
       dac_dpll_load_p1_o => mpll_load,
       dac_dpll_data_o => mpll_data_out,
 
@@ -619,7 +636,7 @@ begin
             --  Reformat.
             --  According to 73205, only LSB are significant.
             hpll_data <= (others => '0');
-            hpll_data(23 downto 0) <= b"1111_111" & hpll_data_out & '0';
+            hpll_data(23 downto 0) <= hpll_data_out(23 downto 0); -- b"1111_111" & hpll_data_out & '0';
             hpll_cnt <= (others => '1');
           end if;
         else
@@ -1081,10 +1098,18 @@ begin
 
   pmod4_4_b <= gth_dmon_clk;
 
+  inst_gth_rst_sync: entity work.gc_sync
+    port map (
+      clk_i => gth_dmon_clk,
+      rst_n_a_i => '1',
+      d_i => gth_rst_n,
+      q_o => gth_dmon_rst_n
+    );
+  
   process(gth_dmon_clk)
   begin
     if rising_edge(gth_dmon_clk) then
-      if gth_rst = '1' then
+      if gth_dmon_rst_n = '0' then
         rxpi_ext_0 <= (others => '0');
         rxpi_ext_1 <= (others => '0');
       else
@@ -1119,6 +1144,86 @@ begin
       end if;
     end if;
   end process;
+
+  b_fifo: block
+    signal rxpi_fifo_cnt : unsigned(31 downto 0);
+    signal rxpi_fifo_odd, rxpi_fifo_we, rxpi_fifo_full : std_logic;
+    signal rxpi_fifo_din : std_logic_vector(31 downto 0);
+  begin
+    process (gth_dmon_clk)
+    begin
+      if rising_edge(gth_dmon_clk) then
+        rxpi_fifo_we <= '0';
+        if gth_dmon_rst_n = '0' then
+          rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+          rxpi_fifo_odd <= '0';
+          rxpi_fifo_nfull <= (others => '0');
+        else
+          if rxpi_fifo_en = '1' then
+            if rxpi_fifo_cnt = 0 then
+              if rxpi_fifo_odd = '0' then
+                rxpi_fifo_din(15 downto 0) <= rxpi_ext(15 downto 0);
+                rxpi_fifo_odd <= '1';
+              else
+                rxpi_fifo_din(31 downto 16) <= rxpi_ext(15 downto 0);
+                rxpi_fifo_odd <= '0';
+                if rxpi_fifo_full = '0' then
+                  rxpi_fifo_we <= '1';
+                else
+                  rxpi_fifo_nfull <= std_logic_vector(unsigned(rxpi_fifo_nfull) + 1);
+                end if;
+              end if;
+              rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+            else
+              rxpi_fifo_cnt <= rxpi_fifo_cnt - 1;
+            end if;
+          end if;
+          if rxpi_fifo_nfull_wr = '1' then
+            rxpi_fifo_nfull <= (others => '0');
+          end if;
+        end if;
+      end if;
+    end process;
+
+  inst_rxpi_fifo: entity work.inferred_async_fifo
+    generic map (
+      g_data_width => 32,
+      g_size => 4 * 1024,
+      g_show_ahead => True,
+      g_with_rd_empty => True,
+      g_with_rd_full => True,
+      g_with_rd_almost_empty => False,
+      g_with_rd_almost_full => False,
+      g_with_rd_count => True,
+      g_with_wr_empty => False,
+      g_with_wr_full => True,
+      g_with_wr_almost_empty => False,
+      g_with_wr_almost_full => False,
+      g_with_wr_count => False,
+      g_almost_empty_threshold => 0,
+      g_almost_full_threshold => 1,
+      g_memory_implementation_hint => open
+    )
+    port map (
+      rst_n_i => gth_dmon_rst_n,
+      clk_wr_i => gth_dmon_clk,
+      d_i => rxpi_fifo_din,
+      we_i => rxpi_fifo_we,
+      wr_empty_o => open,
+      wr_full_o => rxpi_fifo_full,
+      wr_almost_empty_o => open,
+      wr_almost_full_o => open,
+      wr_count_o => open,
+      clk_rd_i => clk_62m5,
+      q_o => rxpi_fifo_dout,
+      rd_i => rxpi_fifo_rd,
+      rd_empty_o => open,
+      rd_full_o => rxpi_fifo_rdcount(12),  --  When the fifo is full, rd_count_o = 0.
+      rd_almost_empty_o => open,
+      rd_almost_full_o => open,
+      rd_count_o => rxpi_fifo_rdcount(11 downto 0)
+    );
+  end block;
 
   gen_ila: if true generate
     component ila_0

@@ -26,3 +26,39 @@ memory-map:
       - field:
           name: gth_rst
           range: 2
+  - reg:
+     name: qpll1_sdm
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+  - reg:
+     name: rxpi_samp
+     width: 32
+     access: rw
+  - reg:
+     name: fifo_ctrl
+     width: 32
+     access: rw
+     children:
+     - field:
+        name: en
+        range: 0
+  - reg:
+     name: fifo_rdcount
+     width: 32
+     access: ro
+  - reg:
+     name: fifo_nfull
+     comment: number of samples discarded because fifo was full, write to clear
+     width: 32
+     access: rw
+     x-hdl:
+       type: wire
+       write-strobe: True
+  - reg:
+     name: fifo_data
+     width: 32
+     access: ro
+     x-hdl:
+       read-strobe: True
