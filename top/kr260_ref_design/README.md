@@ -110,10 +110,16 @@ QPLL
 According to ug576 v1.7.1 p 51, both QPLL are fractional PLLs
 
 QPLL0 is used for the main gthe4 while QPLL1 is used for the helper frequency
-(through a second gthe4).
+(tQPLL0_REFCLK_DIVhrough a second gthe4).
 
 As the fractional PLL can only increase the frequency, a negative offset is added to the frequency through TXPIPPM.
 
+QPLL0 parameters:
+REFCLK_DIV=1
+FBDIV=64
+Fpllclkout = 156.25*64/2 = 10000/2 Mhz
+Max SDMDATA=0x00ffff, so FractionalPart=0.00390619
+Max Fpllclkout = 156.25*64.0030619/2 = 10000.6103/2 Mhz so +61ppm
 
 TODO
 ====

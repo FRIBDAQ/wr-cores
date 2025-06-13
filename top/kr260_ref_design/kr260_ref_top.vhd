@@ -251,6 +251,10 @@ END COMPONENT;
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
   signal dmonitorout : std_logic_vector(15 downto 0);
+  alias rxpi is dmonitorout(6 downto 0);
+  signal rxpi_ext : std_logic_vector(31 downto 0);
+  alias rxpi_d is rxpi_ext(rxpi'range);
+  signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
   signal gth_dmon_clk, gth_dmon_clk_out : std_logic;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
@@ -448,7 +452,8 @@ begin
       g_dpram_initf => "",
       g_dpram_size => 192 * 1024 / 4,
       g_pcs_16bit => true,
-      g_records_for_phy => true
+      g_records_for_phy => true,
+      g_softpll_enable_debugger => true
     )
     port map (
       clk_sys_i => clk_62m5,
@@ -465,6 +470,9 @@ begin
       clk_ext_stopped_i => open,
       clk_ext_rst_o => open,
       pps_ext_i => open,
+
+      rxpi_clk_i => gth_dmon_clk,
+      rxpi_i => rxpi_ext(13 downto 0),
 
       dac_hpll_load_p1_o => hpll_load,
       dac_hpll_data_o => hpll_data_out,
@@ -1073,19 +1081,57 @@ begin
 
   pmod4_4_b <= gth_dmon_clk;
 
+  process(gth_dmon_clk)
+  begin
+    if rising_edge(gth_dmon_clk) then
+      if gth_rst = '1' then
+        rxpi_ext_0 <= (others => '0');
+        rxpi_ext_1 <= (others => '0');
+      else
+        --  Extend rxpi
+        if rxpi(rxpi'high) = '1' then
+          rxpi_ext(rxpi_ext_1'range) <= rxpi_ext_1;
+        else
+          rxpi_ext(rxpi_ext_0'range) <= rxpi_ext_0;
+        end if;
+        rxpi_ext(rxpi'range) <= rxpi;
+
+        --  Update extensions.
+        --  When rxpi increases:
+        if rxpi_d(6 downto 3) = "0100" and rxpi(6 downto 3) = "0101" then
+          --  Moving towards 1.
+          rxpi_ext_1 <= rxpi_ext_0;
+        end if;
+        if rxpi_d(6 downto 3) = "1100" and rxpi(6 downto 3) = "1101" then
+          --  Moving towards 0.
+          rxpi_ext_0 <= std_logic_vector(unsigned(rxpi_ext_1) + 1);
+        end if;
+
+        --  When rxpi decreases:
+        if rxpi_d(6 downto 3) = "1011" and rxpi(6 downto 3) = "1010" then
+          --  Moving away from 1.
+          rxpi_ext_0 <= rxpi_ext_1;
+        end if;
+        if rxpi_d(6 downto 3) = "0011" and rxpi(6 downto 3) = "0010" then
+          --  Moving towards 0.
+          rxpi_ext_1 <= std_logic_vector(unsigned(rxpi_ext_0) - 1);
+        end if;
+      end if;
+    end if;
+  end process;
+
   gen_ila: if true generate
     component ila_0
       port (
         clk    : in STD_LOGIC;
-        probe0 : in STD_LOGIC_VECTOR(63 downto 0)
+        probe0 : in STD_LOGIC_VECTOR(31 downto 0)
       );
     end component  ;
   begin
     inst_ila: ila_0
       port map (
         clk => gth_dmon_clk,
-        probe0(6 downto 0) => dmonitorout(6 downto 0),
-        probe0(63 downto 7) => (others => '0')
+        probe0 => rxpi_ext
         );
   end generate;
 end top;
