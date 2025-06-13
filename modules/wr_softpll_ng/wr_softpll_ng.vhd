@@ -175,19 +175,6 @@ architecture rtl of wr_softpll_ng is
 
   function f_pick (
     cond     : boolean;
-    if_true  : std_logic;
-    if_false : std_logic
-    ) return std_logic is
-  begin
-    if(cond) then
-      return if_true;
-    else
-      return if_false;
-    end if;
-  end f_pick;
-
-  function f_pick (
-    cond     : boolean;
     if_true  : integer;
     if_false : integer
     ) return integer is
