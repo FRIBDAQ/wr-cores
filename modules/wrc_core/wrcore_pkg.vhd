@@ -480,6 +480,8 @@ package wrcore_pkg is
       g_diag_rw_size              : integer                        := 0;
       g_dac_bits                  : integer                        := 16;
       g_with_clock_freq_monitor   : boolean                        := true;
+      g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+      g_direct_tag                : boolean                        := false;
       g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE);
     port(
       clk_sys_i            : in std_logic;
@@ -493,6 +495,9 @@ package wrcore_pkg is
       clk_ext_i            : in std_logic := '0';
       pps_ext_i            : in std_logic := '0';
       rst_n_i              : in std_logic;
+
+      direct_tag0_i       : in std_logic_vector(23 downto 0) := (others => '0');
+      direct_tag0_valid_i : in std_logic := '0';
 
       dac_hpll_load_p1_o   : out std_logic;
       dac_hpll_data_o      : out std_logic_vector(g_dac_bits-1 downto 0);
@@ -643,8 +648,9 @@ package wrcore_pkg is
       g_dac_bits                  : integer                        := 16;
       g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
       g_with_clock_freq_monitor   : boolean                        := true;
-      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
-      g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
+      g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+      g_direct_tag                : boolean                        := false;
+      g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE
       );
     port(
       ---------------------------------------------------------------------------
@@ -675,6 +681,9 @@ package wrcore_pkg is
       pps_ext_i : in std_logic := '0';
 
       rst_n_i : in std_logic;
+
+      direct_tag0_i       : in std_logic_vector(23 downto 0) := (others => '0');
+      direct_tag0_valid_i : in std_logic := '0';
 
       -----------------------------------------
       --Timing system

@@ -112,6 +112,7 @@ entity wr_core is
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
     g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE;
+    g_direct_tag                : boolean                        := false;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X')
     );
   port(
@@ -154,6 +155,9 @@ entity wr_core is
 
     dac_dpll_load_p1_o : out std_logic;
     dac_dpll_data_o    : out std_logic_vector(g_dac_bits-1 downto 0);
+
+    direct_tag0_i       : in std_logic_vector(23 downto 0);
+    direct_tag0_valid_i : in std_logic;
 
     -- PHY I/f
     phy_ref_clk_i : in std_logic;
@@ -752,6 +756,7 @@ begin
       g_num_exts             => f_num_ext_clks,
       g_ref_clock_rate       => f_refclk_rate(g_pcs_16bit),
       g_use_sampled_ref_clocks => g_softpll_use_sampled_ref_clocks,
+      g_direct_tag           => g_direct_tag,
       g_ext_clock_rate       => 10000000,
       g_aux_config => g_softpll_aux_channel_config)
     port map(
@@ -778,6 +783,9 @@ begin
 
       pps_csync_p1_i => s_pps_csync,
       pps_ext_a_i => pps_ext_i,
+
+      direct_tag0_valid_i => direct_tag0_valid_i,
+      direct_tag0_i       => direct_tag0_i,
 
       -- DMTD oscillator drive
       dac_dmtd_data_o => dac_hpll_data_o,

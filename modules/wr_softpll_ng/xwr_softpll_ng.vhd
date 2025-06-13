@@ -6,7 +6,6 @@
 -- Author     : Tomasz Włostowski
 -- Company    : CERN BE-CO-HT
 -- Created    : 2011-01-29
--- Last update: 2022-01-28
 -- Platform   : FPGA-generic
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -79,6 +78,8 @@ entity xwr_softpll_ng is
 
     g_use_sampled_ref_clocks : boolean := false;
 
+    g_direct_tag             : boolean := false;
+
     g_aux_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
 
     g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
@@ -118,6 +119,9 @@ entity xwr_softpll_ng is
     pps_csync_p1_i : in std_logic;
 
     pps_ext_a_i : in std_logic;
+
+    direct_tag0_i       : in std_logic_vector(23 downto 0);
+    direct_tag0_valid_i : in std_logic;
 
 -- DMTD oscillator drive
     dac_dmtd_data_o : out std_logic_vector(g_dac_bits-1 downto 0);
@@ -159,6 +163,7 @@ begin  -- behavioral
       g_reverse_dmtds        => g_reverse_dmtds,
       g_divide_input_by_2    => g_divide_input_by_2,
       g_use_sampled_ref_clocks => g_use_sampled_ref_clocks,
+      g_direct_tag           => g_direct_tag,
       g_aux_config => g_aux_config,
       g_ref_clock_rate  => g_ref_clock_rate,
       g_ext_clock_rate  => g_ext_clock_rate
@@ -181,6 +186,8 @@ begin  -- behavioral
       clk_ext_rst_o     => clk_ext_rst_o,
       pps_csync_p1_i  => pps_csync_p1_i,
       pps_ext_a_i     => pps_ext_a_i,
+      direct_tag0_valid_i => direct_tag0_valid_i,
+      direct_tag0_i       => direct_tag0_i,
       dac_dmtd_data_o => dac_dmtd_data_o,
       dac_dmtd_load_o => dac_dmtd_load_o,
       dac_out_data_o  => dac_out_data_o,

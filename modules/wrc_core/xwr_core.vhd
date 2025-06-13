@@ -111,6 +111,7 @@ entity xwr_core is
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+    g_direct_tag                : boolean                        := false;
     g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE
     );
   port(
@@ -148,6 +149,11 @@ entity xwr_core is
     pps_ext_i : in std_logic := '0';
 
     rst_n_i : in std_logic;
+
+    --  Direct tag.
+    --  Used only if g_direct_tag is true
+    direct_tag0_i       : in std_logic_vector(23 downto 0) := (others => '0');
+    direct_tag0_valid_i : in std_logic := '0';
 
     -----------------------------------------
     -- Timing system
@@ -347,8 +353,9 @@ begin
       g_use_platform_specific_dpram => g_use_platform_specific_dpram,
       g_softpll_aux_channel_config => g_softpll_aux_channel_config,
       g_with_clock_freq_monitor   => g_with_clock_freq_monitor,
-      g_hwbld_date                => g_hwbld_date,
-      g_aux_timing_config         => g_aux_timing_config
+      g_aux_timing_config         => g_aux_timing_config,
+      g_direct_tag                => g_direct_tag,
+      g_hwbld_date                => g_hwbld_date
       )
     port map(
       clk_sys_i     => clk_sys_i,
@@ -363,6 +370,9 @@ begin
       clk_ext_rst_o     => clk_ext_rst_o,
       pps_ext_i     => pps_ext_i,
       rst_n_i       => rst_n_i,
+
+      direct_tag0_valid_i  => direct_tag0_valid_i,
+      direct_tag0_i        => direct_tag0_i,
 
       dac_hpll_load_p1_o   => dac_hpll_load_p1_o,
       dac_hpll_data_o      => dac_hpll_data_o,
