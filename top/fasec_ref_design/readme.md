@@ -7,7 +7,7 @@ Construct the project as follows:
 make
 ```
 
-The script was orignally created with Vivado v2016.4 and last tested with v2021.1.
+The script was orignally created with Vivado v2016.4 and tested with v2021.1 and v2024.1.
 
 The build has not been automated, proceed as follows:
 - open the Vivado project *.xpr
