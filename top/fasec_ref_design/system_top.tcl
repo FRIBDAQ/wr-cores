@@ -1232,7 +1232,7 @@ CONFIG.C_BUF_TYPE {OBUFDS} \
  ] $util_ds_buf_2
 
   # Create instance: wrc_board_fasec_0, and set properties
-  set wrc_board_fasec_0 [ create_bd_cell -type ip -vlnv CERN:white_rabbit:wrc_board_fasec:5.0 wrc_board_fasec_0 ]
+  set wrc_board_fasec_0 [ create_bd_cell -type ip -vlnv CERN:white_rabbit:wrc_board_fasec:5.* wrc_board_fasec_0 ]
 
   set_property -dict [ list \
 CONFIG.NUM_READ_OUTSTANDING {1} \
