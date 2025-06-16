@@ -31,6 +31,12 @@ memory-map:
      width: 32
      access: ro
   - reg:
+     name: qpll0_sdm
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+  - reg:
      name: qpll1_sdm
      width: 32
      access: rw

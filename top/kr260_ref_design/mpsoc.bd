@@ -304,7 +304,7 @@
         "vlnv": "xilinx.com:ip:zynq_ultra_ps_e:3.5",
         "ip_revision": "5",
         "xci_name": "mpsoc_zynq_ultra_ps_e_0_0",
-        "xci_path": "ip/mpsoc_zynq_ultra_ps_e_0_0_1/mpsoc_zynq_ultra_ps_e_0_0.xci",
+        "xci_path": "ip/mpsoc_zynq_ultra_ps_e_0_0/mpsoc_zynq_ultra_ps_e_0_0.xci",
         "inst_hier_path": "zynq_ultra_ps_e_0",
         "parameters": {
           "PSU_BANK_0_IO_STANDARD": {

@@ -20,7 +20,12 @@ static int
 parse_uint(unsigned *res, const char *s, const char *name)
 {
   char *e;
-  
+
+  if (s == NULL) {
+    printf("missing value for %s\n", name);
+    return -1;
+  }
+
   *res = strtoul(s, &e, 0);
   if (*e != 0) {
     printf("invalid value for %s: %s\n", name, s);
@@ -71,6 +76,7 @@ static int do_regs(int argc, char **argv)
 {
   printf ("ctrl:      %08x\n", (unsigned)mpsoc->ctrl);
   printf ("status:    %08x\n", (unsigned)mpsoc->status);
+  printf ("qpll0_sdm: %08x\n", (unsigned)mpsoc->qpll0_sdm);
   printf ("qpll1_sdm: %08x\n", (unsigned)mpsoc->qpll1_sdm);
   printf ("rxpi_samp: %08x\n", (unsigned)mpsoc->rxpi_samp);
   printf ("fifo_ctrl: %08x\n", (unsigned)mpsoc->fifo_ctrl);
@@ -93,7 +99,7 @@ static int do_read(int argc, char **argv)
     return 1;
 
   msize = (4 * cnt + PAGE_MASK) & ~PAGE_MASK;
-      
+
   fprintf(stderr, "reading %u values every %u samples\n", cnt, samp);
 
   buf = mmap(0, msize, PROT_READ | PROT_WRITE,
@@ -172,7 +178,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "cannot open /dev/mem: %m\n");
       return 1;
     }
-    
+
     mpsoc = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, paddr);
     if (mpsoc == (void *) -1) {
       fprintf(stderr, "cannot mmap /dev/mem: %m\n");

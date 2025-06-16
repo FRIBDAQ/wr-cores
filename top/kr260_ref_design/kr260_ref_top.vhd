@@ -176,6 +176,7 @@ architecture top of kr260_ref_top is
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
+
   signal refclk_156m25, refclk_156m25_int : std_logic;
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
@@ -222,7 +223,7 @@ END COMPONENT;
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
 
-  signal mpll_data_out : std_logic_vector(15 downto 0);
+  signal mpll_data_out : std_logic_vector(31 downto 0);
   signal hpll_data_out : std_logic_vector(31 downto 0);
   signal hpll_load, mpll_load : std_logic;
 
@@ -435,6 +436,8 @@ begin
     ctrl_gth_rst_o => gth_rst,
     status_i(31 downto 16) => (others => '0'),
     status_i(15 downto 0) => gth_status,
+    qpll0_sdm_o => mpll_data_out,
+    qpll0_sdm_wr_o => mpll_load,
     qpll1_sdm_o => hpll_data_out,
     qpll1_sdm_wr_o => hpll_load,
     fifo_rdcount_i => rxpi_fifo_rdcount,
@@ -471,7 +474,7 @@ begin
             --  Reformat.
             --  According to 73205, only LSB are significant.
             mpll_data <= (others => '0');
-            mpll_data(15 downto 0) <= mpll_data_out;
+            mpll_data(23 downto 0) <= mpll_data_out(23 downto 0);
             mpll_cnt <= (others => '1');
           end if;
         else
@@ -564,7 +567,7 @@ begin
       QPLL1_CFG4            =>          "0000000000000011",
       QPLL1_CP              =>          "0011111111",
       QPLL1_CP_G3           =>          "0001111111",
-      QPLL1_FBDIV           =>          63,
+      QPLL1_FBDIV           =>          64,
       QPLL1_FBDIV_G3        =>          80,
       QPLL1_INIT_CFG0       =>          "0000001010110010",
       QPLL1_INIT_CFG1       =>          "00000000",
@@ -804,9 +807,6 @@ begin
 
   gth_tx_data_out <= x"bcbc";
   gth_rx_k_in <= x"0001";
-
-  mpll_load <= '0';
-  mpll_data_out <= (others => '0');
 
   --  Generate some outputs on PMOD
 
