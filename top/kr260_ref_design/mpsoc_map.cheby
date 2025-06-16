@@ -27,6 +27,10 @@ memory-map:
           name: gth_rst
           range: 2
   - reg:
+     name: status
+     width: 32
+     access: ro
+  - reg:
      name: qpll1_sdm
      width: 32
      access: rw
