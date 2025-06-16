@@ -72,6 +72,17 @@ static int do_qpll1(int argc, char **argv)
   return 0;
 }
 
+static int do_samp(int argc, char **argv)
+{
+  unsigned int val;
+
+  if (parse_uint(&val, argv[2], "samp") < 0)
+    return 1;
+
+  mpsoc->rxpi_samp = val;
+  return 0;
+}
+
 static int do_regs(int argc, char **argv)
 {
   printf ("ctrl:      %08x\n", (unsigned)mpsoc->ctrl);
@@ -100,6 +111,12 @@ static int do_read(int argc, char **argv)
 
   msize = (4 * cnt + PAGE_MASK) & ~PAGE_MASK;
 
+  samp = mpsoc->rxpi_samp;
+  if (samp == 0) {
+    samp = 100;
+    mpsoc->rxpi_samp = samp;
+  }
+
   fprintf(stderr, "reading %u values every %u samples\n", cnt, samp);
 
   buf = mmap(0, msize, PROT_READ | PROT_WRITE,
@@ -112,8 +129,6 @@ static int do_read(int argc, char **argv)
     fprintf(stderr, "cannot mlock buffer: %m\n");
     return 1;
   }
-
-  mpsoc->rxpi_samp = samp;
 
   /* Flush */
   for (unsigned rdcnt = mpsoc->fifo_rdcount; rdcnt > 0; rdcnt--) {
@@ -165,6 +180,7 @@ static struct cmd_pair commands[] =
     {"qpll1", do_qpll1},
     {"regs", do_regs},
     {"read", do_read},
+    {"samp", do_samp},
     {NULL, NULL}
   };
 
