@@ -891,6 +891,7 @@ begin
 
   b_fifo: block
     signal rxpi_fifo_cnt : unsigned(31 downto 0);
+    signal rxpi_fifo_acc : std_logic_vector(15 downto 0);
     signal rxpi_fifo_odd, rxpi_fifo_we, rxpi_fifo_full : std_logic;
     signal rxpi_fifo_din : std_logic_vector(31 downto 0);
   begin
@@ -906,10 +907,10 @@ begin
           if rxpi_fifo_en = '1' then
             if rxpi_fifo_cnt = 0 then
               if rxpi_fifo_odd = '0' then
-                rxpi_fifo_din(15 downto 0) <= rxpi_ext(15 downto 0);
+                rxpi_fifo_din(15 downto 0) <= rxpi_fifo_acc(15 downto 0);
                 rxpi_fifo_odd <= '1';
               else
-                rxpi_fifo_din(31 downto 16) <= rxpi_ext(15 downto 0);
+                rxpi_fifo_din(31 downto 16) <= rxpi_fifo_acc(15 downto 0);
                 rxpi_fifo_odd <= '0';
                 if rxpi_fifo_full = '0' then
                   rxpi_fifo_we <= '1';
@@ -918,8 +919,10 @@ begin
                 end if;
               end if;
               rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+              rxpi_fifo_acc <= rxpi_ext(15 downto 0);
             else
               rxpi_fifo_cnt <= rxpi_fifo_cnt - 1;
+              rxpi_fifo_acc <= std_logic_vector(unsigned(rxpi_fifo_acc) + unsigned(rxpi_ext(15 downto 0)));
             end if;
           end if;
           if rxpi_fifo_nfull_wr = '1' then
