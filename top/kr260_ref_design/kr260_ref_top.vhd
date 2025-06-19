@@ -117,12 +117,10 @@ architecture top of kr260_ref_top is
     gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_qpll0lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll1lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll1reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     dmonitorclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -235,9 +233,6 @@ END COMPONENT;
   signal txoutclk_out, txoutclk : std_logic;
   
   signal dmonitorout : std_logic_vector(15 downto 0);
-  alias rxpi is dmonitorout(6 downto 0);
-  signal rxpi_ext : std_logic_vector(31 downto 0);
-  alias rxpi_d is rxpi_ext(rxpi'range);
   signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
   signal gth_dmon_clk, gth_dmon_clk_out, gth_dmon_rst_n : std_logic;
 
@@ -709,8 +704,8 @@ begin
       
       gtwiz_reset_qpll0reset_out(0) => qpll0_reset,
       gtwiz_reset_qpll0lock_in(0) => qpll0_lock,
-      gtwiz_reset_qpll1reset_out(0) => qpll1_reset,
-      gtwiz_reset_qpll1lock_in(0) => qpll1_lock,
+--      gtwiz_reset_qpll1reset_out(0) => qpll1_reset,
+--      gtwiz_reset_qpll1lock_in(0) => qpll1_lock,
       gtwiz_reset_clk_freerun_in(0) => clk_62m5,
       gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
       gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
@@ -850,79 +845,94 @@ begin
       q_o => gth_dmon_rst_n
     );
   
-  process(gth_dmon_clk)
+  b_rxpi: block
+    alias rxpi is dmonitorout(6 downto 0);
+    signal rxpi_ext : std_logic_vector(31 downto 0);
+    alias rxpi_d is rxpi_ext(rxpi'range);
+
+    signal rxpi_fifo_cnt : unsigned(31 downto 0);
+    signal rxpi_fifo_acc : unsigned(31 downto 0);
+    signal rxpi_fifo_res : std_logic_vector(31 downto 0);
+    signal rxpi_fifo_wr : std_logic;
+    signal rxpi_fifo_we, rxpi_fifo_full : std_logic;
   begin
-    if rising_edge(gth_dmon_clk) then
-      if gth_dmon_rst_n = '0' then
-        rxpi_ext_0 <= (others => '0');
-        rxpi_ext_1 <= (others => '0');
-      else
-        --  Extend rxpi
-        if rxpi(rxpi'high) = '1' then
-          rxpi_ext(rxpi_ext_1'range) <= rxpi_ext_1;
+    process(gth_dmon_clk)
+    begin
+      if rising_edge(gth_dmon_clk) then
+        rxpi_fifo_wr <= '0';
+
+        if gth_dmon_rst_n = '0' then
+          --  Start point
+          case rxpi(6 downto 5) is
+            when "00" =>
+              --  Might go below 0.
+              rxpi_ext_0 <= x"000000" & '0';
+              rxpi_ext_1 <= x"ffffff" & '1';
+            when "11" =>
+              --  Might go above 0x7f
+              rxpi_ext_0 <= x"000000" & '1';
+              rxpi_ext_1 <= x"000000" & '0';
+            when others =>
+              --  Safe
+              rxpi_ext_0 <= (others => '0');
+              rxpi_ext_1 <= (others => '0');
+          end case;
+          rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
         else
-          rxpi_ext(rxpi_ext_0'range) <= rxpi_ext_0;
-        end if;
-        rxpi_ext(rxpi'range) <= rxpi;
+          if rxpi_fifo_cnt = 0 then
+            rxpi_fifo_res <= std_logic_vector(rxpi_fifo_acc);
+            rxpi_fifo_acc <= unsigned(rxpi_ext);
+            rxpi_fifo_wr <= '1';
+            rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+          else
+            rxpi_fifo_acc <= rxpi_fifo_acc + unsigned(rxpi_ext);
+            rxpi_fifo_cnt <= rxpi_fifo_cnt - 1;
+          end if;
 
-        --  Update extensions.
-        --  When rxpi increases:
-        if rxpi_d(6 downto 3) = "0100" and rxpi(6 downto 3) = "0101" then
-          --  Moving towards 1.
-          rxpi_ext_1 <= rxpi_ext_0;
-        end if;
-        if rxpi_d(6 downto 3) = "1100" and rxpi(6 downto 3) = "1101" then
-          --  Moving towards 0.
-          rxpi_ext_0 <= std_logic_vector(unsigned(rxpi_ext_1) + 1);
-        end if;
+          --  Extend rxpi
+          if rxpi(rxpi'high) = '1' then
+            rxpi_ext(rxpi_ext_1'range) <= rxpi_ext_1;
+          else
+            rxpi_ext(rxpi_ext_0'range) <= rxpi_ext_0;
+          end if;
+          rxpi_ext(rxpi'range) <= rxpi;
 
-        --  When rxpi decreases:
-        if rxpi_d(6 downto 3) = "1011" and rxpi(6 downto 3) = "1010" then
-          --  Moving away from 1.
-          rxpi_ext_0 <= rxpi_ext_1;
-        end if;
-        if rxpi_d(6 downto 3) = "0011" and rxpi(6 downto 3) = "0010" then
-          --  Moving towards 0.
-          rxpi_ext_1 <= std_logic_vector(unsigned(rxpi_ext_0) - 1);
+          --  Update extensions.
+          --  When rxpi increases:
+          if rxpi_d(6 downto 3) = "0100" and rxpi(6 downto 3) = "0101" then
+            --  Moving towards 1.
+            rxpi_ext_1 <= rxpi_ext_0;
+          end if;
+          if rxpi_d(6 downto 3) = "1100" and rxpi(6 downto 3) = "1101" then
+            --  Moving towards 0.
+            rxpi_ext_0 <= std_logic_vector(unsigned(rxpi_ext_1) + 1);
+          end if;
+
+          --  When rxpi decreases:
+          if rxpi_d(6 downto 3) = "1011" and rxpi(6 downto 3) = "1010" then
+            --  Moving away from 1.
+            rxpi_ext_0 <= rxpi_ext_1;
+          end if;
+          if rxpi_d(6 downto 3) = "0011" and rxpi(6 downto 3) = "0010" then
+            --  Moving towards 0.
+            rxpi_ext_1 <= std_logic_vector(unsigned(rxpi_ext_0) - 1);
+          end if;
         end if;
       end if;
-    end if;
-  end process;
+    end process;
 
-  b_fifo: block
-    signal rxpi_fifo_cnt : unsigned(31 downto 0);
-    signal rxpi_fifo_acc : std_logic_vector(15 downto 0);
-    signal rxpi_fifo_odd, rxpi_fifo_we, rxpi_fifo_full : std_logic;
-    signal rxpi_fifo_din : std_logic_vector(31 downto 0);
-  begin
     process (gth_dmon_clk)
     begin
       if rising_edge(gth_dmon_clk) then
         rxpi_fifo_we <= '0';
         if gth_dmon_rst_n = '0' then
-          rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
-          rxpi_fifo_odd <= '0';
           rxpi_fifo_nfull <= (others => '0');
         else
-          if rxpi_fifo_en = '1' then
-            if rxpi_fifo_cnt = 0 then
-              if rxpi_fifo_odd = '0' then
-                rxpi_fifo_din(15 downto 0) <= rxpi_fifo_acc(15 downto 0);
-                rxpi_fifo_odd <= '1';
-              else
-                rxpi_fifo_din(31 downto 16) <= rxpi_fifo_acc(15 downto 0);
-                rxpi_fifo_odd <= '0';
-                if rxpi_fifo_full = '0' then
-                  rxpi_fifo_we <= '1';
-                else
-                  rxpi_fifo_nfull <= std_logic_vector(unsigned(rxpi_fifo_nfull) + 1);
-                end if;
-              end if;
-              rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
-              rxpi_fifo_acc <= rxpi_ext(15 downto 0);
+          if rxpi_fifo_en = '1' and rxpi_fifo_wr = '1' then
+            if rxpi_fifo_full = '0' then
+              rxpi_fifo_we <= '1';
             else
-              rxpi_fifo_cnt <= rxpi_fifo_cnt - 1;
-              rxpi_fifo_acc <= std_logic_vector(unsigned(rxpi_fifo_acc) + unsigned(rxpi_ext(15 downto 0)));
+              rxpi_fifo_nfull <= std_logic_vector(unsigned(rxpi_fifo_nfull) + 1);
             end if;
           end if;
           if rxpi_fifo_nfull_wr = '1' then
@@ -954,7 +964,7 @@ begin
     port map (
       rst_n_i => gth_dmon_rst_n,
       clk_wr_i => gth_dmon_clk,
-      d_i => rxpi_fifo_din,
+      d_i => rxpi_fifo_res,
       we_i => rxpi_fifo_we,
       wr_empty_o => open,
       wr_full_o => rxpi_fifo_full,
@@ -1016,7 +1026,7 @@ begin
     inst_ila: ila_0
       port map (
         clk => gth_dmon_clk,
-        probe0 (15 downto 0) => rxpi_ext(15 downto 0),
+        probe0 (15 downto 0) => (others => '0'),
         probe0 (31 downto 16) => gth_status(15 downto 0)
         );
   end generate;

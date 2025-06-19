@@ -44,8 +44,10 @@ memory-map:
        write-strobe: True
   - reg:
      name: rxpi_samp
+     comment: number of rxpi samples to accumulate
      width: 32
      access: rw
+     preset: 0x4000
   - reg:
      name: fifo_ctrl
      width: 32

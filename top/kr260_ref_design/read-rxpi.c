@@ -165,11 +165,23 @@ static int do_read(int argc, char **argv)
 
   for (i = 0; i < cnt; i++) {
     uint32_t val = buf[i];
-    printf ("%u\n", val & 0xffff);
-    printf ("%u\n", val >> 16);
+    uint32_t emean = (val * 10) / (samp + 1);
+    uint32_t mean = emean / 10;
+    printf ("%u (m=%u.%u, mm=%u)\n", val,
+	    mean, emean - mean * 10,
+	    mean & 0x7f);
   }
 
   fprintf(stderr, "nfull: %u\n", mpsoc->fifo_nfull);
+  return 0;
+}
+
+static int do_reset(int argc, char **argv)
+{
+  unsigned int val = mpsoc->ctrl;
+
+  mpsoc->ctrl = val | MPSOC_MAP_CTRL_GTH_RST;
+  mpsoc->ctrl = val & ~MPSOC_MAP_CTRL_GTH_RST;
   return 0;
 }
 
@@ -181,6 +193,7 @@ static struct cmd_pair commands[] =
     {"regs", do_regs},
     {"read", do_read},
     {"samp", do_samp},
+    {"reset", do_reset},
     {NULL, NULL}
   };
 
