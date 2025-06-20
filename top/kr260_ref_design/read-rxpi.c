@@ -167,7 +167,7 @@ static int do_read(int argc, char **argv)
     uint32_t val = buf[i];
     uint32_t emean = (val * 10) / (samp + 1);
     uint32_t mean = emean / 10;
-    printf ("%u (m=%u.%u, mm=%u)\n", val,
+    printf ("0x%08x (m=%u.%u, mm=%u)\n", val,
 	    mean, emean - mean * 10,
 	    mean & 0x7f);
   }
@@ -179,9 +179,32 @@ static int do_read(int argc, char **argv)
 static int do_reset(int argc, char **argv)
 {
   unsigned int val = mpsoc->ctrl;
+  unsigned int b;
 
-  mpsoc->ctrl = val | MPSOC_MAP_CTRL_GTH_RST;
-  mpsoc->ctrl = val & ~MPSOC_MAP_CTRL_GTH_RST;
+  if (argc == 2 || strcmp(argv[2], "all") == 0)
+    b = MPSOC_MAP_CTRL_GTH_RST;
+  else if (strcmp(argv[2], "tx") == 0)
+    b = MPSOC_MAP_CTRL_GTH_TX_RST;
+  else if (strcmp(argv[2], "rx") == 0)
+    b = MPSOC_MAP_CTRL_GTH_RX_RST;
+  else if (strcmp(argv[2], "tx-pcs") == 0)
+    b = MPSOC_MAP_CTRL_GTH_TX_PCS_RST;
+  else if (strcmp(argv[2], "tx-pma") == 0)
+    b = MPSOC_MAP_CTRL_GTH_TX_PMA_RST;
+  else if (strcmp(argv[2], "rx-pcs") == 0)
+    b = MPSOC_MAP_CTRL_GTH_RX_PCS_RST;
+  else if (strcmp(argv[2], "rx-pma") == 0)
+    b = MPSOC_MAP_CTRL_GTH_RX_PMA_RST;
+  else if (strcmp(argv[2], "rx-buf") == 0)
+    b = MPSOC_MAP_CTRL_GTH_RX_BUF_RST;
+  else {
+    printf("unknown bit %s\n", argv[2]);
+    return 1;
+  }
+
+  mpsoc->ctrl = val | b;
+  mpsoc->ctrl = val & ~b;
+
   return 0;
 }
 

@@ -101,7 +101,8 @@ loading bitstream
 
 'xmutil' is a wrapper, calls dfx-mgr-client for applications
 
-echo top.bit.bin > /sys/class/fpga_manager/fpga0/firmware
+sudo fpgautil -b kr260_ref_top.bit
+
 
 
 QPLL

@@ -110,17 +110,8 @@ architecture top of kr260_ref_top is
   PORT (
     gtwiz_userclk_tx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_clk_freerun_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_all_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_pll_and_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_datapath_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll0lock_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_cdr_stable_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_tx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    gtwiz_reset_qpll0reset_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_tx_done_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_reset_rx_done_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     dmonitorclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -131,27 +122,38 @@ architecture top of kr260_ref_top is
     drpwe_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxn_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthrxp_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtrxreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gttxreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll0refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll1clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll1refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxbufreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxpcsreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxpmareset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxprogdivreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxslide_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxuserrdy_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxusrclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxusrclk2_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     tx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txctrl0_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
+    txpcsreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmovrden_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmpd_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmsel_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmstepsize_in : IN STD_LOGIC_VECTOR(4 DOWNTO 0);
     txpllclksel_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    txpmareset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txprogdivreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txuserrdy_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txusrclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txusrclk2_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     dmonitorout_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -163,6 +165,7 @@ architecture top of kr260_ref_top is
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxcdrlock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
     rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -170,8 +173,10 @@ architecture top of kr260_ref_top is
     rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxoutclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txoutclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
+    txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
   );
 END COMPONENT;
 
@@ -193,6 +198,7 @@ END COMPONENT;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal gth_rst, gth_rst_n: std_logic;
+  signal gth_tx_rst, gth_rx_rst : std_logic;
   signal uart_rx, uart_tx : std_logic;
   signal sfp_scl_out, sfp_sda_out : std_logic;
 
@@ -202,11 +208,7 @@ END COMPONENT;
 --  signal phy16_out : t_phy_16bits_from_wrc;
 --  signal phy16_in : t_phy_16bits_to_wrc;
 
-  signal gtwiz_reset_all_out : std_logic;
-  signal gtwiz_reset_tx_done_in : std_logic;
-  signal gtwiz_reset_rx_done_in : std_logic;
-
-  signal gtwiz_reset_rx_cdr_stable_out : std_logic;
+  signal rx_cdr_stable_out : std_logic;
 
   signal gth_rx_data_in : std_logic_vector(15 downto 0);
   signal gth_tx_data_out : std_logic_vector(15 downto 0);
@@ -220,6 +222,12 @@ END COMPONENT;
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
+
+  signal gtrxreset, gttxreset : std_logic;
+  signal rx_reset_done, tx_reset_done : std_logic;
+  signal rxusrrdy, txusrrdy : std_logic;
+  signal rxbufreset, rxpcsreset, rxpmareset : std_logic;
+  signal txpcsreset, txpmareset : std_logic;
 
   signal mpll_data_out : std_logic_vector(31 downto 0);
   signal hpll_data_out : std_logic_vector(31 downto 0);
@@ -429,6 +437,13 @@ begin
     ctrl_led1_o => open,
     ctrl_led2_o => sfp_led2_o,
     ctrl_gth_rst_o => gth_rst,
+    ctrl_gth_tx_rst_o => gth_tx_rst,
+    ctrl_gth_tx_pcs_rst_o => txpcsreset,
+    ctrl_gth_tx_pma_rst_o => txpmareset,
+    ctrl_gth_rx_rst_o => gth_rx_rst,
+    ctrl_gth_rx_pcs_rst_o => rxpcsreset,
+    ctrl_gth_rx_pma_rst_o => rxpmareset,
+    ctrl_gth_rx_buf_rst_o => rxbufreset,
     status_i(31 downto 16) => (others => '0'),
     status_i(15 downto 0) => gth_status,
     qpll0_sdm_o => mpll_data_out,
@@ -692,6 +707,19 @@ begin
       gthtxn_out(0) => pad_txn_o,
       gthtxp_out(0) => pad_txp_o,
 
+      gtrxreset_in(0) => gtrxreset,
+      gttxreset_in(0) => gttxreset,
+      txuserrdy_in(0) => txusrrdy,
+      rxuserrdy_in(0) => rxusrrdy,
+
+      txprogdivreset_in(0) => '0',
+      rxprogdivreset_in(0) => '0',
+      rxbufreset_in(0) => rxbufreset,
+      rxpcsreset_in(0) => rxpcsreset,
+      rxpmareset_in(0) => rxpmareset,
+      txpmareset_in(0) => txpmareset,
+      txpcsreset_in(0) => txpcsreset,
+
       rxoutclk_out(0) => rxoutclk_out,
       rxusrclk_in(0) => rxoutclk,
       rxusrclk2_in(0) => rxoutclk,
@@ -699,22 +727,28 @@ begin
       txusrclk_in(0) => txoutclk,
       txusrclk2_in(0) => txoutclk,
 
+      rxcdrlock_out(0) => rx_cdr_stable_out,
+      rxresetdone_out(0) => rx_reset_done,
+      txresetdone_out(0) => tx_reset_done,
+
       gtwiz_userclk_tx_active_in(0) => '1',
       gtwiz_userclk_rx_active_in(0) => '1',
-      
-      gtwiz_reset_qpll0reset_out(0) => qpll0_reset,
-      gtwiz_reset_qpll0lock_in(0) => qpll0_lock,
+      gtwiz_reset_tx_done_in(0) => tx_reset_done,
+      gtwiz_reset_rx_done_in(0) => tx_reset_done,
+
+--      gtwiz_reset_qpll0reset_out(0) => qpll0_reset,
+--      gtwiz_reset_qpll0lock_in(0) => qpll0_lock,
 --      gtwiz_reset_qpll1reset_out(0) => qpll1_reset,
 --      gtwiz_reset_qpll1lock_in(0) => qpll1_lock,
-      gtwiz_reset_clk_freerun_in(0) => clk_62m5,
-      gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
-      gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
-      gtwiz_reset_tx_datapath_in(0) => '0',
-      gtwiz_reset_rx_pll_and_datapath_in(0) => '0',
-      gtwiz_reset_rx_datapath_in(0) => '0',
-      gtwiz_reset_rx_cdr_stable_out(0) => gtwiz_reset_rx_cdr_stable_out, --gth_status_a(2),
-      gtwiz_reset_tx_done_out(0) => gtwiz_reset_tx_done_in, --gth_status_a(3),
-      gtwiz_reset_rx_done_out(0) => gtwiz_reset_rx_done_in, -- gth_status_a(4),
+--      gtwiz_reset_clk_freerun_in(0) => clk_62m5,
+--      gtwiz_reset_all_in(0) => gtwiz_reset_all_out,
+--      gtwiz_reset_tx_pll_and_datapath_in(0) => '0',
+--      gtwiz_reset_tx_datapath_in(0) => '0',
+--      gtwiz_reset_rx_pll_and_datapath_in(0) => '0',
+--      gtwiz_reset_rx_datapath_in(0) => '0',
+--      gtwiz_reset_rx_cdr_stable_out(0) => gtwiz_reset_rx_cdr_stable_out, --gth_status_a(2),
+--      gtwiz_reset_tx_done_out(0) => gtwiz_reset_tx_done_in, --gth_status_a(3),
+--      gtwiz_reset_rx_done_out(0) => gtwiz_reset_rx_done_in, -- gth_status_a(4),
       gtwiz_userdata_tx_in => gth_tx_data_out,
       gtwiz_userdata_rx_out => gth_rx_data_in,
 
@@ -785,9 +819,6 @@ begin
       CLRMASK => '1',
       DIV => "000"
     );
-
-    gtwiz_reset_all_out <= gth_rst;
-
 
   inst_gth_dmon_bufg: BUFG_GT
     port map (
@@ -982,6 +1013,35 @@ begin
     );
   end block;
 
+  b_rst: block
+    signal powergood_dly : std_logic;
+    constant pg_dly_len : natural := 250_000 / 16; --  250us / clk_cyc
+    signal pg_dly_cnt : natural range 0 to pg_dly_len := 0;
+  begin
+    process (clk_62m5, gth_powergood)
+    begin
+      if gth_powergood = '0' then
+        powergood_dly <= '0';
+        pg_dly_cnt <= 0;
+      elsif rising_edge(clk_62m5) then
+        if pg_dly_cnt = pg_dly_len then
+          powergood_dly <= '1';
+        else
+          pg_dly_cnt <= pg_dly_cnt + 1;
+        end if;
+      end if;
+    end process;
+
+    qpll1_reset <= not powergood_dly;
+    qpll0_reset <= not powergood_dly;
+
+    rxusrrdy <= powergood_dly;
+    txusrrdy <= powergood_dly;
+
+    gttxreset <= not powergood_dly or not qpll0_lock or gth_rst or gth_rx_rst;
+    gtrxreset <= not powergood_dly or not qpll0_lock or gth_rst or gth_tx_rst;
+  end block;
+
   gth_rx_slide_out <= '0';
 
   gen_ila: if true generate
@@ -994,9 +1054,9 @@ begin
 
   begin
     gth_status_a(0) <= gth_powergood;
-    gth_status_a(1) <= gtwiz_reset_rx_cdr_stable_out;
-    gth_status_a(2) <= gtwiz_reset_tx_done_in;
-    gth_status_a(3) <= gtwiz_reset_rx_done_in;
+    gth_status_a(1) <= rx_cdr_stable_out;
+    gth_status_a(2) <= tx_reset_done;
+    gth_status_a(3) <= rx_reset_done;
 
     gth_status_a(4) <= qpll0_reset;
     gth_status_a(5) <= qpll0_lock;

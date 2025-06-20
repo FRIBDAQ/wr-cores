@@ -26,6 +26,27 @@ memory-map:
       - field:
           name: gth_rst
           range: 2
+      - field:
+          name: gth_tx_rst
+          range: 4
+      - field:
+          name: gth_tx_pcs_rst
+          range: 5
+      - field:
+          name: gth_tx_pma_rst
+          range: 6
+      - field:
+          name: gth_rx_rst
+          range: 8
+      - field:
+          name: gth_rx_pcs_rst
+          range: 9
+      - field:
+          name: gth_rx_pma_rst
+          range: 10
+      - field:
+          name: gth_rx_buf_rst
+          range: 11
   - reg:
      name: status
      width: 32
@@ -47,7 +68,7 @@ memory-map:
      comment: number of rxpi samples to accumulate
      width: 32
      access: rw
-     preset: 0x4000
+     preset: 0x3fff
   - reg:
      name: fifo_ctrl
      width: 32
