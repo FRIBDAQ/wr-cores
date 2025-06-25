@@ -176,14 +176,14 @@ architecture rtl of dmtd_with_deglitcher is
   
 begin  -- rtl
 
-  U_Sync_Resync_Pulse : gc_sync_ffs
+  U_Sync_Resync_Pulse : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => clk_dmtd_i,
-      rst_n_i  => rst_n_dmtdclk_i,
-      data_i   => resync_p_a_i,
-      synced_o => resync_p_dmtd);
+      clk_i     => clk_dmtd_i,
+      rst_n_a_i => rst_n_dmtdclk_i,
+      d_i       => resync_p_a_i,
+      q_o       => resync_p_dmtd);
 
   gen_builtin : if( g_use_sampled_clock = false )generate
 
@@ -281,23 +281,23 @@ begin  -- rtl
 
   gen_with_jitter_stats : if g_with_jitter_stats_regs generate
 
-    inst_sync_stat_ready : gc_sync_ffs
+    inst_sync_stat_ready : gc_sync
       generic map (
         g_sync_edge => "positive")
       port map (
-        clk_i    => clk_sys_i,
-        rst_n_i  => rst_n_sysclk_i,
-        data_i   => stat_ready_dmtd,
-        synced_o => r_stat_ready_o);
+        clk_i     => clk_sys_i,
+        rst_n_a_i => rst_n_sysclk_i,
+        d_i       => stat_ready_dmtd,
+        q_o       => r_stat_ready_o);
 
-    inst_sync_stat_reset : gc_sync_ffs
+    inst_sync_stat_reset : gc_sync
       generic map (
         g_sync_edge => "positive")
       port map (
-        clk_i    => clk_dmtd_i,
-        rst_n_i  => rst_n_dmtdclk_i,
-        data_i   => r_stat_reset_i,
-        synced_o => r_minmax_reset_dmtd);
+        clk_i     => clk_dmtd_i,
+        rst_n_a_i => rst_n_dmtdclk_i,
+        d_i       => r_stat_reset_i,
+        q_o       => r_minmax_reset_dmtd);
 
     p_stats : process(clk_dmtd_i)
     begin
