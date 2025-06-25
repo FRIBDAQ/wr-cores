@@ -62,11 +62,9 @@ entity wr_gthe4_adapter is
     gtwiz_userclk_rx_active_i : in std_logic;
     gtwiz_buffbypass_tx_reset_o : out std_logic;
     gtwiz_buffbypass_tx_done_i : in std_logic;
-    gtwiz_buffbypass_tx_error_i : in std_logic;
     gtwiz_buffbypass_rx_reset_o : out std_logic;
     gtwiz_buffbypass_rx_start_user_o : out std_logic;
     gtwiz_buffbypass_rx_done_i : in std_logic;
-    gtwiz_buffbypass_rx_error_i : in std_logic;
     gtwiz_reset_all_o : out std_logic;
     gtwiz_reset_tx_done_i : in std_logic;
     gtwiz_reset_rx_done_i : in std_logic;

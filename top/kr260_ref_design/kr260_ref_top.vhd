@@ -202,6 +202,9 @@ END COMPONENT;
   signal uart_rx, uart_tx : std_logic;
   signal sfp_scl_out, sfp_sda_out : std_logic;
 
+  signal phy16_out : t_phy_16bits_from_wrc;
+  signal phy16_in : t_phy_16bits_to_wrc;
+
   signal wb_wrpc_in: t_wishbone_master_in;
   signal wb_wrpc_out: t_wishbone_master_out;
 
@@ -228,8 +231,9 @@ END COMPONENT;
   signal rxusrrdy, txusrrdy : std_logic;
   signal rxbufreset, rxpcsreset, rxpmareset : std_logic;
   signal txpcsreset, txpmareset : std_logic;
+  signal phy_rst : std_logic;
 
-  signal mpll_data_out : std_logic_vector(31 downto 0);
+  signal mpll_data_out : std_logic_vector(15 downto 0);
   signal hpll_data_out : std_logic_vector(31 downto 0);
   signal hpll_load, mpll_load : std_logic;
 
@@ -244,9 +248,9 @@ END COMPONENT;
   signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
   signal gth_dmon_clk, gth_dmon_clk_out, gth_dmon_rst_n : std_logic;
 
-  signal rxpi_fifo_en, rxpi_fifo_rd, rxpi_fifo_nfull_wr : std_logic;
-  signal rxpi_fifo_samp , rxpi_fifo_nfull, rxpi_fifo_dout : std_logic_vector(31 downto 0);
-  signal rxpi_fifo_rdcount: std_logic_vector(31 downto 0) := (others => '0');
+  signal rxpi_fifo_samp, rxpi_data : std_logic_vector(31 downto 0);
+  signal rxpi_valid : std_logic;
+  signal rxpi_rdcount : unsigned(31 downto 0);
 
   signal gth_status_a, gth_status : std_logic_vector(15 downto 0) := (others => '0');
 
@@ -446,28 +450,27 @@ begin
     ctrl_gth_rx_buf_rst_o => rxbufreset,
     status_i(31 downto 16) => (others => '0'),
     status_i(15 downto 0) => gth_status,
-    qpll0_sdm_o => mpll_data_out,
-    qpll0_sdm_wr_o => mpll_load,
+    qpll0_sdm_o => open,
+    qpll0_sdm_wr_o => open,
     qpll1_sdm_o => hpll_data_out,
     qpll1_sdm_wr_o => hpll_load,
-    fifo_rdcount_i => rxpi_fifo_rdcount,
-    fifo_nfull_i => rxpi_fifo_nfull,
+    fifo_rdcount_i => std_logic_vector(rxpi_rdcount),
+    fifo_nfull_i => (others => '0'),
     fifo_nfull_o => open,
-    fifo_nfull_wr_o => rxpi_fifo_nfull_wr,
-    fifo_data_i => rxpi_fifo_dout,
-    fifo_data_rd_o => rxpi_fifo_rd,
+    fifo_nfull_wr_o => open,
+    fifo_data_i => rxpi_data,
+    fifo_data_rd_o => open,
     rxpi_samp_o => rxpi_fifo_samp,
-    fifo_ctrl_en_o => rxpi_fifo_en
+    fifo_ctrl_en_o => open
   );
 
   gth_rst_n <= not gth_rst;
 
-  wb_wrpc_in <= (dat => x"deadbeef", ack => '1', rty => '0', err => '0', stall => '0');
-
-  sfp_tx_disable_o <= '0';
-
-  sfp_sda_b <= 'Z';
-  sfp_scl_b <= 'Z';
+   sfp_tx_disable_o <= phy16_out.sfp_tx_disable;
+   phy16_in.sfp_tx_fault <= sfp_tx_fault_i;
+ 
+  sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
+  sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
 
   process(clk_62m5)
   begin
@@ -484,7 +487,7 @@ begin
             --  Reformat.
             --  According to 73205, only LSB are significant.
             mpll_data <= (others => '0');
-            mpll_data(23 downto 0) <= mpll_data_out(23 downto 0);
+            mpll_data(13 downto 0) <= mpll_data_out(15 downto 2);
             mpll_cnt <= (others => '1');
           end if;
         else
@@ -809,6 +812,8 @@ begin
       DIV => "000"
     );
 
+    phy16_in.ref_clk <= txoutclk;
+
   inst_bufg_gt_rx: BUFG_GT
     port map (
       I => rxoutclk_out,
@@ -820,6 +825,8 @@ begin
       DIV => "000"
     );
 
+    phy16_in.rx_clk <= rxoutclk;
+  
   inst_gth_dmon_bufg: BUFG_GT
     port map (
       I => gth_dmon_clk_out,
@@ -831,8 +838,153 @@ begin
       CLRMASK => '1'
     );
 
-  gth_tx_data_out <= x"bcbc";
-  gth_rx_k_in <= x"0001";
+  inst_wrcore : entity work.xwr_core
+    generic map (
+      g_board_name => "KR26",
+      --         g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
+      g_dpram_initf => "",
+      g_dpram_size => 192 * 1024 / 4,
+      g_pcs_16bit => true,
+      g_records_for_phy => true,
+      g_softpll_enable_debugger => true
+      )
+    port map (
+      clk_sys_i => clk_62m5,
+      rst_n_i => rst_n,
+      clk_dmtd_i => '0', -- open,
+      clk_ref_i => phy16_in.ref_clk,
+      clk_dmtd_over_i => open,
+      clk_aux_i => open,
+      clk_ext_i => open,
+      clk_ext_mul_i => open,
+      clk_ext_mul_locked_i => open,
+      clk_ext_stopped_i => open,
+      clk_ext_rst_o => open,
+      pps_ext_i => open,
+      rxpi_valid_i => rxpi_valid,
+      rxpi_i => rxpi_data(29 downto 8),
+      dac_hpll_load_p1_o => open,
+      dac_hpll_data_o => open,
+      dac_dpll_load_p1_o => mpll_load,
+      dac_dpll_data_o => mpll_data_out,
+      phy_ref_clk_i => open,
+      phy_tx_data_o => open,
+      phy_tx_k_o => open,
+      phy_tx_disparity_i => open,
+      phy_tx_enc_err_i => open,
+      phy_rx_data_i => open,
+      phy_rx_rbclk_i => open,
+      phy_rx_rbclk_sampled_i => open,
+      phy_rx_k_i => open,
+      phy_rx_enc_err_i => open,
+      phy_rx_bitslide_i => open,
+      phy_mdio_master_o => open,
+      phy_mdio_master_i => open,
+      phy_rst_o => open,
+      phy_rdy_i => open,
+      phy_loopen_o => open,
+      phy_loopen_vec_o => open,
+      phy_tx_prbs_sel_o => open,
+      phy_sfp_tx_fault_i => open,
+      phy_sfp_los_i => open,
+      phy_sfp_tx_disable_o => open,
+      phy8_i => open,
+      phy8_o => open,
+      phy16_o => phy16_out,
+      phy16_i => phy16_in,
+      led_act_o => open,
+      scl_o => open,
+      scl_i => open,
+      sda_o => open,
+      sda_i => open,
+      sfp_det_i => sfp_mod_abs_i,
+      sfp_scl_o => sfp_scl_out,
+      sfp_scl_i => sfp_scl_b,
+      sfp_sda_o => sfp_sda_out,
+      sfp_sda_i => sfp_sda_b,
+      spi_sclk_o => open,
+      spi_ncs_o => open,
+      spi_mosi_o => open,
+      spi_miso_i => open,
+      owr_pwren_o => open,
+      owr_en_o => open,
+      owr_i => open,
+      uart_rxd_i => uart_tx,
+      uart_txd_o => uart_rx,
+      slave_i => wb_wrpc_out,
+      slave_o => wb_wrpc_in,
+      aux_master_i => open,
+      aux_master_o => open,
+      wrf_src_o => open,
+      wrf_src_i => open,
+      wrf_snk_o => open,
+      wrf_snk_i => open,
+      timestamps_o => open,
+      timestamps_ack_i => open,
+      abscal_txts_o => open,
+      abscal_rxts_o => open,
+      fc_tx_pause_req_i => open,
+      fc_tx_pause_delay_i => open,
+      fc_tx_pause_ready_o => open,
+      tm_link_up_o => open,
+      tm_time_valid_o => open,
+      tm_tai_o => open,
+      tm_cycles_o => open,
+      tm_clk_aux_lock_en_i => open,
+      tm_clk_aux_locked_o => open,
+      tm_dac_value_o => open,
+      tm_dac_wr_o => open,
+      pps_csync_o => open,
+      pps_valid_o => open,
+      pps_p_o => open,
+      pps_led_o => open,
+      rst_aux_n_o => open,
+      led_link_o => open,
+      link_ok_o => open,
+      aux_diag_i => open,
+      aux_diag_o => open,
+      btn1_i => open,
+      btn2_i => open
+      );
+    
+  inst_gthe4_adapter: entity work.wr_gthe4_adapter
+    port map (
+      tx_locked_o => open,
+      tx_data_i => phy16_out.tx_data,
+      tx_k_i => phy16_out.tx_k,
+      tx_disparity_o => phy16_in.tx_disparity,
+      tx_enc_err_o => phy16_in.tx_enc_err,
+      rx_data_o => phy16_in.rx_data,
+      rx_k_o => phy16_in.rx_k,
+      rx_enc_err_o => phy16_in.rx_enc_err,
+      rx_bitslide_o => phy16_in.rx_bitslide,
+      rst_i => phy_rst,
+      loopen_i => phy16_out.loopen_vec,
+      rdy_o => phy16_in.rdy,
+      gtwiz_userclk_tx_reset_o => open,
+      gtwiz_userclk_tx_active_i => '1',
+      gtwiz_userclk_rx_reset_o => open,
+      gtwiz_userclk_rx_active_i => '1',
+      gtwiz_buffbypass_tx_reset_o => open,
+      gtwiz_buffbypass_tx_done_i => '1',
+      gtwiz_buffbypass_rx_reset_o => open,
+      gtwiz_buffbypass_rx_start_user_o => open,
+      gtwiz_buffbypass_rx_done_i => '1',
+      gtwiz_reset_all_o => open,  --  same as phy_rst
+      gtwiz_reset_tx_done_i => tx_reset_done,
+      gtwiz_reset_rx_done_i => rx_reset_done,
+      gth_rx_data_i => gth_rx_data_in,
+      gth_tx_data_o => gth_tx_data_out,
+      gth_rx_slide_o => gth_rx_slide_out,
+      gth_rx_k_i => gth_rx_k_in(1 downto 0),
+      gth_tx_k_o => gth_tx_k_out(1 downto 0),
+      gth_rx_byte_aligned_i => gth_rx_byte_aligned_in,
+      gth_rx_comma_det_i => gth_rx_comma_det_in,
+      gth_rx_pma_reset_done_i => gth_rx_pma_reset_done_in,
+      gth_tx_pma_reset_done_i => gth_tx_pma_reset_done_in,
+      gth_rx_clk_i => phy16_in.rx_clk,
+      gth_tx_clk_i => phy16_in.ref_clk
+      );
 
   --  Generate some outputs on PMOD
 
@@ -881,16 +1033,15 @@ begin
     signal rxpi_ext : std_logic_vector(31 downto 0);
     alias rxpi_d is rxpi_ext(rxpi'range);
 
-    signal rxpi_fifo_cnt : unsigned(31 downto 0);
-    signal rxpi_fifo_acc : unsigned(31 downto 0);
-    signal rxpi_fifo_res : std_logic_vector(31 downto 0);
-    signal rxpi_fifo_wr : std_logic;
-    signal rxpi_fifo_we, rxpi_fifo_full : std_logic;
+    signal rxpi_cnt : unsigned(31 downto 0);
+    signal rxpi_acc : unsigned(31 downto 0);
+    signal rxpi_res : std_logic_vector(31 downto 0);
+    signal rxpi_wr, rxpi_sync_ack : std_logic;
   begin
     process(gth_dmon_clk)
     begin
       if rising_edge(gth_dmon_clk) then
-        rxpi_fifo_wr <= '0';
+        rxpi_wr <= '0';
 
         if gth_dmon_rst_n = '0' then
           --  Start point
@@ -908,16 +1059,19 @@ begin
               rxpi_ext_0 <= (others => '0');
               rxpi_ext_1 <= (others => '0');
           end case;
-          rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+          rxpi_cnt <= unsigned(rxpi_fifo_samp);
         else
-          if rxpi_fifo_cnt = 0 then
-            rxpi_fifo_res <= std_logic_vector(rxpi_fifo_acc);
-            rxpi_fifo_acc <= unsigned(rxpi_ext);
-            rxpi_fifo_wr <= '1';
-            rxpi_fifo_cnt <= unsigned(rxpi_fifo_samp);
+          if rxpi_sync_ack = '1' then
+            rxpi_wr <= '0';
+          end if;
+          if rxpi_cnt = 0 then
+            rxpi_res <= std_logic_vector(rxpi_acc);
+            rxpi_acc <= unsigned(rxpi_ext);
+            rxpi_wr <= '1';
+            rxpi_cnt <= unsigned(rxpi_fifo_samp);
           else
-            rxpi_fifo_acc <= rxpi_fifo_acc + unsigned(rxpi_ext);
-            rxpi_fifo_cnt <= rxpi_fifo_cnt - 1;
+            rxpi_acc <= rxpi_acc + unsigned(rxpi_ext);
+            rxpi_cnt <= rxpi_cnt - 1;
           end if;
 
           --  Extend rxpi
@@ -952,66 +1106,39 @@ begin
       end if;
     end process;
 
-    process (gth_dmon_clk)
-    begin
-      if rising_edge(gth_dmon_clk) then
-        rxpi_fifo_we <= '0';
-        if gth_dmon_rst_n = '0' then
-          rxpi_fifo_nfull <= (others => '0');
-        else
-          if rxpi_fifo_en = '1' and rxpi_fifo_wr = '1' then
-            if rxpi_fifo_full = '0' then
-              rxpi_fifo_we <= '1';
-            else
-              rxpi_fifo_nfull <= std_logic_vector(unsigned(rxpi_fifo_nfull) + 1);
-            end if;
-          end if;
-          if rxpi_fifo_nfull_wr = '1' then
-            rxpi_fifo_nfull <= (others => '0');
-          end if;
+    inst_sync_rxpi: entity work.gc_sync_word_wr
+      generic map (
+        g_auto_wr => false,
+        g_width => 32
+      )
+      port map (
+        clk_in_i => gth_dmon_clk,
+        rst_in_n_i => gth_dmon_rst_n,
+        clk_out_i => clk_62m5,
+        rst_out_n_i => rst_n,
+        data_i => rxpi_res,
+        wr_i => rxpi_wr,
+        busy_o => open,
+        ack_o => rxpi_sync_ack,
+        data_o => rxpi_data,
+        wr_o => rxpi_valid
+      );
+  end block;
+
+  process (clk_62m5)
+  begin
+    if rising_edge(clk_62m5) then
+      if rst_n = '0' then
+        rxpi_rdcount <= (others => '0');
+      else
+        if rxpi_valid = '1' then
+          rxpi_rdcount <= rxpi_rdcount + 1;
         end if;
       end if;
-    end process;
+    end if;
+  end process;
 
-  inst_rxpi_fifo: entity work.inferred_async_fifo
-    generic map (
-      g_data_width => 32,
-      g_size => 4 * 1024,
-      g_show_ahead => True,
-      g_with_rd_empty => True,
-      g_with_rd_full => True,
-      g_with_rd_almost_empty => False,
-      g_with_rd_almost_full => False,
-      g_with_rd_count => True,
-      g_with_wr_empty => False,
-      g_with_wr_full => True,
-      g_with_wr_almost_empty => False,
-      g_with_wr_almost_full => False,
-      g_with_wr_count => False,
-      g_almost_empty_threshold => 0,
-      g_almost_full_threshold => 1,
-      g_memory_implementation_hint => open
-    )
-    port map (
-      rst_n_i => gth_dmon_rst_n,
-      clk_wr_i => gth_dmon_clk,
-      d_i => rxpi_fifo_res,
-      we_i => rxpi_fifo_we,
-      wr_empty_o => open,
-      wr_full_o => rxpi_fifo_full,
-      wr_almost_empty_o => open,
-      wr_almost_full_o => open,
-      wr_count_o => open,
-      clk_rd_i => clk_62m5,
-      q_o => rxpi_fifo_dout,
-      rd_i => rxpi_fifo_rd,
-      rd_empty_o => open,
-      rd_full_o => rxpi_fifo_rdcount(12),  --  When the fifo is full, rd_count_o = 0.
-      rd_almost_empty_o => open,
-      rd_almost_full_o => open,
-      rd_count_o => rxpi_fifo_rdcount(11 downto 0)
-    );
-  end block;
+  phy_rst <= gth_rst or phy16_out.rst;
 
   b_rst: block
     signal powergood_dly : std_logic;
@@ -1038,11 +1165,9 @@ begin
     rxusrrdy <= powergood_dly;
     txusrrdy <= powergood_dly;
 
-    gttxreset <= not powergood_dly or not qpll0_lock or gth_rst or gth_rx_rst;
-    gtrxreset <= not powergood_dly or not qpll0_lock or gth_rst or gth_tx_rst;
+    gttxreset <= not powergood_dly or not qpll0_lock or phy_rst or gth_rx_rst;
+    gtrxreset <= not powergood_dly or not qpll0_lock or phy_rst or gth_tx_rst;
   end block;
-
-  gth_rx_slide_out <= '0';
 
   gen_ila: if true generate
     component ila_0

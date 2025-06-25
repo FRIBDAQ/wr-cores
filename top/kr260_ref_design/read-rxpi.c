@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <time.h>
 
 #include "mpsoc_map.h"
 
@@ -93,6 +94,7 @@ static int do_regs(int argc, char **argv)
   printf ("fifo_ctrl: %08x\n", (unsigned)mpsoc->fifo_ctrl);
   printf ("rdcount:   %08x\n", (unsigned)mpsoc->fifo_rdcount);
   printf ("nfull:     %08x\n", (unsigned)mpsoc->fifo_nfull);
+  printf ("fifo_data: %08x\n", (unsigned)mpsoc->fifo_data);
 
   return 0;
 }
@@ -105,6 +107,8 @@ static int do_read(int argc, char **argv)
   unsigned cnt;
   size_t msize;
   unsigned i;
+  uint32_t prev_count, count;
+  struct timespec tstart, tend, tdiff;
 
   if (parse_uint(&cnt, argv[2], "read") < 0)
     return 1;
@@ -130,48 +134,43 @@ static int do_read(int argc, char **argv)
     return 1;
   }
 
-  /* Flush */
-  for (unsigned rdcnt = mpsoc->fifo_rdcount; rdcnt > 0; rdcnt--) {
-    mpsoc->fifo_data;
-  }
-
-  mpsoc->fifo_nfull = 1;
-
-  mpsoc->fifo_ctrl |= MPSOC_MAP_FIFO_CTRL_EN;
-
+  clock_gettime(CLOCK_MONOTONIC, &tstart);
   ptr = buf;
-  for (i = cnt; i; ) {
-    unsigned rdcnt = mpsoc->fifo_rdcount;
-
-    // printf("rdcnt: %u\n", rdcnt);
-
-    if (rdcnt == 0) {
-      usleep(10);
-      continue;
+  prev_count = 0;
+  for (i = cnt; i; i--) {
+    while (1) {
+      count = mpsoc->fifo_rdcount;
+      if (count != prev_count)
+	break;
+      usleep (40);
     }
-
-    if (rdcnt > i)
-      rdcnt = i;
-
-    i -= rdcnt;
-
-    for (; rdcnt > 0; rdcnt--) {
-      uint32_t val = mpsoc->fifo_data;
-      *ptr++ = val;
-    }
+    *ptr++ = mpsoc->fifo_data;
+    prev_count = count;
   }
 
-  mpsoc->fifo_ctrl &= ~MPSOC_MAP_FIFO_CTRL_EN;
+  clock_gettime(CLOCK_MONOTONIC, &tend);
 
+  tdiff.tv_nsec = tend.tv_nsec - tstart.tv_nsec;
+  tdiff.tv_sec = tend.tv_sec - tstart.tv_sec;
+  if (tdiff.tv_nsec < 0) {
+    tdiff.tv_nsec += 1000000000;
+    tdiff.tv_sec--;
+  }
+  
   for (i = 0; i < cnt; i++) {
     uint32_t val = buf[i];
-    uint32_t emean = (val * 10) / (samp + 1);
+    uint32_t emean = (((uint64_t)val) * 10) / (samp + 1);
     uint32_t mean = emean / 10;
-    printf ("0x%08x (m=%u.%u, mm=%u)\n", val,
+    printf ("0x%08x [21:8]=%08x (m=%u.%u, mm=%u)\n",
+	    val, (val >> 8) & 0x3fff,
 	    mean, emean - mean * 10,
 	    mean & 0x7f);
   }
 
+  fprintf(stderr, "time: %usec %uns; mean: %uns\n",
+	  (unsigned)tdiff.tv_sec, (unsigned)tdiff.tv_nsec,
+	  (unsigned)tdiff.tv_nsec / cnt);
+  
   fprintf(stderr, "nfull: %u\n", mpsoc->fifo_nfull);
   return 0;
 }

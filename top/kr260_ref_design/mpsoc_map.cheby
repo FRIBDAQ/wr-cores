@@ -68,7 +68,7 @@ memory-map:
      comment: number of rxpi samples to accumulate
      width: 32
      access: rw
-     preset: 0x3fff
+     preset: 0x7fff
   - reg:
      name: fifo_ctrl
      width: 32
