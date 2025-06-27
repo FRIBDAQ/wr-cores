@@ -47,7 +47,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity gtp_bitslide is
-  
   generic (
 -- set to non-zero value to enable some simulation speedups (reduce delays)
     g_simulation             : integer;
@@ -57,19 +56,18 @@ entity gtp_bitslide is
   port (
     gtp_rst_i : in std_logic;
 
--- GTP
+    -- GTP
     gtp_rx_clk_i : in std_logic;
 
--- '1' indicates that the GTP has detected a comma in the incoming serial stream
+    -- '1' indicates that the GTP has detected a comma in the incoming serial stream
     gtp_rx_comma_det_i : in std_logic;
-
 
     gtp_rx_byte_is_aligned_i : in std_logic;
 
--- GTP ready flag (PLL locked and RX signal present)
+    -- GTP ready flag (PLL locked and RX signal present)
     serdes_ready_i : in std_logic;
 
--- GTP manual bitslip control line
+    -- GTP manual bitslip control line
     gtp_rx_slide_o : out std_logic;
 
 -- GTP CDR reset, asserted when the link is lost to set the bitslide to a known
@@ -82,13 +80,10 @@ entity gtp_bitslide is
 -- '1' when the bitsliding has been completed and the link is up
     synced_o : out std_logic
     );
-
 end gtp_bitslide;
 
 
 architecture behavioral of gtp_bitslide is
-
-
   function f_eval_link_down_threshold return integer is
   begin
     if(g_simulation /= 0) then
@@ -97,8 +92,6 @@ architecture behavioral of gtp_bitslide is
       return 10000; -- 10000 bytes without comma = link down
     end if;
   end f_eval_link_down_threshold;
-  
-  
 
   function f_eval_sync_detect_threshold
     return integer is
@@ -110,6 +103,8 @@ architecture behavioral of gtp_bitslide is
     end if;
   end f_eval_sync_detect_threshold;
 
+  --  Minimum number of clock cycles between two bitslides.
+  --  The value is given by the UG.
   function f_eval_pause_tics return integer is
   begin
     if(g_target = "spartan6") then
@@ -119,6 +114,8 @@ architecture behavioral of gtp_bitslide is
     end if;
   end f_eval_pause_tics;
 
+  --  Maximum value for bitslides_o.
+  --  Correspond to the data path width.
   function f_max_bts return integer is
   begin
     if(g_target = "spartan6") then
@@ -131,7 +128,6 @@ architecture behavioral of gtp_bitslide is
   constant c_pause_tics            : integer := f_eval_pause_tics;
   constant c_sync_detect_threshold : integer := f_eval_sync_detect_threshold;
   constant c_max_bts               : integer := f_max_bts;
-
 
   type t_bitslide_fsm_state is (S_SYNC_LOST, S_STABILIZE, S_SLIDE, S_PAUSE, S_GOT_SYNC);
   signal cur_slide : unsigned(4 downto 0);
@@ -157,9 +153,8 @@ begin  -- behavioral
       end if;
 
       case state is
-
--- State: synchronization lost. Waits until a comma pattern is detected
         when S_SYNC_LOST =>
+          -- State: synchronization lost. Waits until a comma pattern is detected
           cur_slide        <= (others => '0');
           counter          <= (others => '0');
           gtp_rx_slide_o   <= '0';
@@ -171,16 +166,11 @@ begin  -- behavioral
             state <= S_STABILIZE;
           end if;
 
--- State: stabilize: 
-          
         when S_STABILIZE =>
-          
-          
           if(gtp_rx_comma_det_i = '1') then
             counter       <= counter + 1;
             commas_missed <= (others => '0');
           else
-
             commas_missed <= commas_missed + 1;
             if(commas_missed(3) = '1') then
               state <= S_SYNC_LOST;
@@ -197,6 +187,7 @@ begin  -- behavioral
           end if;
 
         when S_SLIDE =>
+          --  Slide by one bit
           if (cur_slide < c_max_bts-1) then
             cur_slide <= cur_slide + 1;
           else
@@ -212,6 +203,7 @@ begin  -- behavioral
           end if;
 
         when S_PAUSE =>
+          --  Pause after a slide.
           counter        <= counter + 1;
           if g_target = "ultrascale" then
             if counter = 1 then
@@ -222,14 +214,12 @@ begin  -- behavioral
             gtp_rx_slide_o <= '0';
           end if;
             
-
           if(counter = to_unsigned(c_pause_tics, counter'length)) then
-
             if(gtp_rx_byte_is_aligned_i = '0') then
               state <= S_SLIDE;
             else
               state <= S_GOT_SYNC;
-              counter <= to_unsigned(0, counter'length);
+              counter <= (others => '0');
             end if;
           end if;
 
@@ -238,7 +228,7 @@ begin  -- behavioral
           bitslide_o     <= std_logic_vector(cur_slide(4 downto 0));
           synced_o       <= '1';
           if gtp_rx_comma_det_i = '1' then
-            counter <= to_unsigned(0, counter'length);
+            counter <= (others => '0');
           else
             counter <= counter + 1;
           end if;
@@ -251,12 +241,7 @@ begin  -- behavioral
             gtp_rx_cdr_rst_o <= '1';
             state            <= S_SYNC_LOST;
           end if;
-
-        when others => null;
       end case;
     end if;
   end process;
-  
-  
-
 end behavioral;
