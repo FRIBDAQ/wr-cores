@@ -959,7 +959,6 @@ begin
       rx_enc_err_o => phy16_in.rx_enc_err,
       rx_bitslide_o => phy16_in.rx_bitslide,
       rst_i => phy_rst,
-      loopen_i => phy16_out.loopen_vec,
       rdy_o => phy16_in.rdy,
       gtwiz_userclk_tx_reset_o => open,
       gtwiz_userclk_tx_active_i => '1',
@@ -1194,7 +1193,7 @@ begin
     gth_status_a(11) <= gth_rx_comma_det_in;
 
     gth_status_a(12) <= gth_tx_prg_div_reset_done;
-    gth_status_a(13) <= '0';
+    gth_status_a(13) <= phy16_in.rdy;
     gth_status_a(14) <= '0';
     gth_status_a(15) <= gth_rst;
 
@@ -1211,7 +1210,7 @@ begin
     inst_ila: ila_0
       port map (
         clk => gth_dmon_clk,
-        probe0 (15 downto 0) => (others => '0'),
+        probe0 (15 downto 0) => phy16_in.rx_data,
         probe0 (31 downto 16) => gth_status(15 downto 0)
         );
   end generate;
