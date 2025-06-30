@@ -215,7 +215,7 @@ END COMPONENT;
 
   signal gth_rx_data_in : std_logic_vector(15 downto 0);
   signal gth_tx_data_out : std_logic_vector(15 downto 0);
-  signal gth_rx_slide_out : std_logic;
+  signal gth_rx_slide_out, gth_rx_slide : std_logic;
   signal gth_rx_k_in : std_logic_vector(15 downto 0);
   signal gth_tx_k_out : std_logic_vector(7 downto 0) := (others => '0');
   signal gth_rx_byte_aligned_in : std_logic;
@@ -254,6 +254,9 @@ END COMPONENT;
 
   signal gth_status_a, gth_status : std_logic_vector(15 downto 0) := (others => '0');
 
+  signal bitslide_force, bitslide_slide, bitslide_wr, bitslide_pulse : std_logic;
+  signal bitslide_cnt : unsigned(1 downto 0);
+  signal bitslide_pulse_rx, bitslide_pulse_rx_d, bitslide_pulse_out : std_logic;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -461,8 +464,51 @@ begin
     fifo_data_i => rxpi_data,
     fifo_data_rd_o => open,
     rxpi_samp_o => rxpi_fifo_samp,
-    fifo_ctrl_en_o => open
+    fifo_ctrl_en_o => open,
+
+    bitslide_slide_i => '0',
+    bitslide_force_o => bitslide_force,
+    bitslide_slide_o => bitslide_slide,
+    bitslide_wr_o => bitslide_wr,
+    bitslide_value_i => phy16_in.rx_bitslide,
+    bitslide_value_o => open
   );
+
+  process (clk_62m5)
+  begin
+    if rising_edge(clk_62m5) then
+      if rst_n = '0' then
+        bitslide_pulse <= '0';
+      else
+        if bitslide_wr = '1' and bitslide_slide = '1' then
+          bitslide_pulse <= '1';
+          bitslide_cnt <= "11";
+        elsif bitslide_cnt /= "00" then
+          bitslide_cnt <= bitslide_cnt - 1;
+        else
+          bitslide_pulse <= '0';
+        end if;
+      end if;
+    end if;
+  end process;
+
+  inst_bitslide: entity work.gc_sync_ffs
+    port map (
+      clk_i => phy16_in.rx_clk,
+      rst_n_i => '1',
+      data_i => bitslide_pulse,
+      synced_o => open,
+      ppulse_o => bitslide_pulse_rx,
+      npulse_o => open
+    );
+  
+  process (phy16_in.rx_clk)
+  begin
+    if rising_edge(phy16_in.rx_clk) then
+      bitslide_pulse_rx_d <= bitslide_pulse_rx;
+      bitslide_pulse_out <= bitslide_pulse_rx or bitslide_pulse_rx_d;
+    end if;
+  end process;
 
   gth_rst_n <= not gth_rst;
 
@@ -765,7 +811,7 @@ begin
       rxcommadeten_in(0) => '1',
       rxmcommaalignen_in(0) => '0',
       rxpcommaalignen_in(0) => '0',
-      rxslide_in(0) => gth_rx_slide_out,
+      rxslide_in(0) => gth_rx_slide,
       tx8b10ben_in(0) => '1',
       txctrl0_in => x"0000",
       txctrl1_in => x"0000",
@@ -800,6 +846,8 @@ begin
       dmonitoroutclk_out(0) => gth_dmon_clk_out,
       dmonitorclk_in(0) => gth_dmon_clk
   );
+
+  gth_rx_slide <= gth_rx_slide_out when bitslide_force = '0' else bitslide_pulse_out;
 
   inst_bufg_gt_tx: BUFG_GT
     port map (
@@ -987,20 +1035,20 @@ begin
 
   --  Generate some outputs on PMOD
 
-  process(txoutclk)
-    variable cnt : natural range 0 to 4 := 0;
-    variable v : std_logic := '0';
-  begin
-    if rising_edge(txoutclk) then
-      if cnt = 4 then
-        cnt := 0;
-        pmod4_6_b <= v;
-        v := not v;
-      else
-        cnt := cnt + 1;
-      end if;
-    end if;
-  end process;
+  -- process(txoutclk)
+  --   variable cnt : natural range 0 to 4 := 0;
+  --   variable v : std_logic := '0';
+  -- begin
+  --   if rising_edge(txoutclk) then
+  --     if cnt = 4 then
+  --       cnt := 0;
+  --       pmod4_6_b <= v;
+  --       v := not v;
+  --     else
+  --       cnt := cnt + 1;
+  --     end if;
+  --   end if;
+  -- end process;
 
   -- process(phy16_in.rx_clk)
   --   variable cnt : natural range 0 to 4 := 0;
@@ -1017,7 +1065,10 @@ begin
   --   end if;
   -- end process;
 
-  pmod4_4_b <= gth_dmon_clk;
+  -- pmod4_4_b <= gth_dmon_clk;
+
+  pmod4_4_b <= phy16_in.rx_clk; --  The recovered clock
+  pmod4_6_b <= phy16_in.ref_clk; --  The WR reference clock
 
   inst_gth_rst_sync: entity work.gc_sync
     port map (
@@ -1194,7 +1245,7 @@ begin
 
     gth_status_a(12) <= gth_tx_prg_div_reset_done;
     gth_status_a(13) <= phy16_in.rdy;
-    gth_status_a(14) <= '0';
+    gth_status_a(14) <= gth_rx_slide;
     gth_status_a(15) <= gth_rst;
 
     gen_sync: for i in gth_status'range generate
@@ -1209,9 +1260,19 @@ begin
 
     inst_ila: ila_0
       port map (
-        clk => gth_dmon_clk,
+        clk => phy16_in.rx_clk,
         probe0 (15 downto 0) => phy16_in.rx_data,
-        probe0 (31 downto 16) => gth_status(15 downto 0)
+        probe0(16) => gth_rx_byte_aligned_in,
+        probe0(17) => gth_rx_comma_det_in,
+        probe0(18) => gth_rx_slide,
+        probe0(19) => bitslide_force,
+        probe0(20) => bitslide_pulse_rx,
+        probe0(21) => bitslide_wr,
+        probe0(22) => bitslide_slide,
+        probe0(23) => bitslide_force,
+        probe0(28 downto 24) => phy16_in.rx_bitslide,
+        probe0(31 downto 29) => (others => '0')
+        --probe0 (31 downto 16) => gth_status(15 downto 0)
         );
   end generate;
 end top;

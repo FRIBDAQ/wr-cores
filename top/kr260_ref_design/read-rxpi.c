@@ -95,6 +95,7 @@ static int do_regs(int argc, char **argv)
   printf ("rdcount:   %08x\n", (unsigned)mpsoc->fifo_rdcount);
   printf ("nfull:     %08x\n", (unsigned)mpsoc->fifo_nfull);
   printf ("fifo_data: %08x\n", (unsigned)mpsoc->fifo_data);
+  printf ("bitslide:  %08x\n", (unsigned)mpsoc->bitslide);
 
   return 0;
 }
@@ -202,8 +203,31 @@ static int do_reset(int argc, char **argv)
   }
 
   mpsoc->ctrl = val | b;
+  usleep(130000);
   mpsoc->ctrl = val & ~b;
 
+  return 0;
+}
+
+static int do_slide(int argc, char **argv)
+{
+  unsigned int val = mpsoc->bitslide;
+
+  if (argc == 2) {
+    printf ("bitslide: %08x\n", val);
+  } else if (argc == 3 && strcmp(argv[2], "force") == 0)
+    val |= MPSOC_MAP_BITSLIDE_FORCE;
+  else if (argc == 3 && strcmp(argv[2], "1") == 0)
+    val |= MPSOC_MAP_BITSLIDE_SLIDE;
+  else if (argc == 3 && strcmp(argv[2], "pulse") == 0)
+    val |= MPSOC_MAP_BITSLIDE_SLIDE | MPSOC_MAP_BITSLIDE_FORCE;
+  else if (argc == 3 && strcmp(argv[2], "off") == 0)
+    val &= ~MPSOC_MAP_BITSLIDE_FORCE;
+  else {
+    printf ("usage: slide force|off|1\n");
+    return 1;
+  }
+  mpsoc->bitslide = val;
   return 0;
 }
 
@@ -216,6 +240,7 @@ static struct cmd_pair commands[] =
     {"read", do_read},
     {"samp", do_samp},
     {"reset", do_reset},
+    {"slide", do_slide},
     {NULL, NULL}
   };
 

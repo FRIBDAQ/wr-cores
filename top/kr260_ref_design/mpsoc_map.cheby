@@ -95,3 +95,24 @@ memory-map:
      access: ro
      x-hdl:
        read-strobe: True
+  - reg:
+     name: bitslide
+     comment: control of bitslide
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+     children:
+     - field:
+         name: force
+         range: 0
+     - field:
+         name: slide
+         range: 1
+         x-hdl:
+           type: wire
+     - field:
+         name: value
+         range: 12-8
+         x-hdl:
+           type: wire
