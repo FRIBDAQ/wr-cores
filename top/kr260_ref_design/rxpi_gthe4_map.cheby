@@ -1,0 +1,62 @@
+memory-map:
+  bus: wb-32-le
+  name: rxpi_gthe4_map
+  description: Memmap to control gthe4 for rxpi
+  x-hdl:
+    busgroup: True
+  children:
+  - reg:
+      name: id
+      width: 32
+      access: ro
+      preset: 0x000618e4
+      x-hdl:
+        type: const
+  - reg:
+      name: reset
+      comment: Reset register
+      width: 32
+      access: rw
+      children:
+      - field:
+          name: gth_rst
+          range: 0
+      - field:
+          name: gth_tx_rst
+          range: 4
+      - field:
+          name: gth_tx_pcs_rst
+          range: 5
+      - field:
+          name: gth_tx_pma_rst
+          range: 6
+      - field:
+          name: gth_rx_rst
+          range: 8
+      - field:
+          name: gth_rx_pcs_rst
+          range: 9
+      - field:
+          name: gth_rx_pma_rst
+          range: 10
+      - field:
+          name: gth_rx_buf_rst
+          range: 11
+  - reg:
+     name: status
+     width: 32
+     access: ro
+  - reg:
+     name: ctrl
+     width: 32
+     access: rw
+     children:
+     - field:
+         name: rdy
+         comment: Transceiver is fully ready
+         range: 0
+  - reg:
+     name: bitslide
+     comment: Bitslide
+     width: 32
+     access: ro

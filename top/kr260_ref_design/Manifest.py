@@ -3,6 +3,7 @@ fetchto = "../../ip_cores"
 files = [ "kr260_ref_top.vhd",
           "wr_gthe4_adapter.vhd", "wr_gthe4_rxtx_adapter.vhd",
           "mpsoc.bd", "mpsoc_map.vhd",
+          "rxpi_gthe4_map.vhd",
           "gthe4_sdm.tcl",
         ]
 

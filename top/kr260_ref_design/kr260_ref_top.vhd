@@ -205,8 +205,8 @@ END COMPONENT;
   signal phy16_out : t_phy_16bits_from_wrc;
   signal phy16_in : t_phy_16bits_to_wrc;
 
-  signal wb_wrpc_in: t_wishbone_master_in;
-  signal wb_wrpc_out: t_wishbone_master_out;
+  signal wb_wrpc_in, wb_wraux_in: t_wishbone_master_in;
+  signal wb_wrpc_out, wb_wraux_out: t_wishbone_master_out;
 
 --  signal phy16_out : t_phy_16bits_from_wrc;
 --  signal phy16_in : t_phy_16bits_to_wrc;
@@ -257,6 +257,9 @@ END COMPONENT;
   signal bitslide_force, bitslide_slide, bitslide_wr, bitslide_pulse : std_logic;
   signal bitslide_cnt : unsigned(1 downto 0);
   signal bitslide_pulse_rx, bitslide_pulse_rx_d, bitslide_pulse_out : std_logic;
+
+  signal bitslide_val : std_logic_vector(4 downto 0);
+  signal rdy_in, rdy_out_62m5 : std_logic;
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -414,6 +417,7 @@ begin
       rst_axi_n => rst_n,
       clk_axi => clk_62m5
     );
+
   inst_mpsoc_map: entity work.mpsoc_map
   port map (
     aclk => clk_62m5,
@@ -443,14 +447,14 @@ begin
 
     ctrl_led1_o => open,
     ctrl_led2_o => sfp_led2_o,
-    ctrl_gth_rst_o => gth_rst,
-    ctrl_gth_tx_rst_o => gth_tx_rst,
-    ctrl_gth_tx_pcs_rst_o => txpcsreset,
-    ctrl_gth_tx_pma_rst_o => txpmareset,
-    ctrl_gth_rx_rst_o => gth_rx_rst,
-    ctrl_gth_rx_pcs_rst_o => rxpcsreset,
-    ctrl_gth_rx_pma_rst_o => rxpmareset,
-    ctrl_gth_rx_buf_rst_o => rxbufreset,
+    ctrl_gth_rst_o => open,
+    ctrl_gth_tx_rst_o => open,
+    ctrl_gth_tx_pcs_rst_o => open,
+    ctrl_gth_tx_pma_rst_o => open,
+    ctrl_gth_rx_rst_o => open,
+    ctrl_gth_rx_pcs_rst_o => open,
+    ctrl_gth_rx_pma_rst_o => open,
+    ctrl_gth_rx_buf_rst_o => open,
     status_i(31 downto 16) => (others => '0'),
     status_i(15 downto 0) => gth_status,
     qpll0_sdm_o => open,
@@ -470,7 +474,7 @@ begin
     bitslide_force_o => bitslide_force,
     bitslide_slide_o => bitslide_slide,
     bitslide_wr_o => bitslide_wr,
-    bitslide_value_i => phy16_in.rx_bitslide,
+    bitslide_value_i => bitslide_val,
     bitslide_value_o => open
   );
 
@@ -847,6 +851,38 @@ begin
       dmonitorclk_in(0) => gth_dmon_clk
   );
 
+  inst_gthe4_map: entity work.rxpi_gthe4_map
+    port map (
+      rst_n_i => rst_n,
+      clk_i => clk_62m5,
+      wb_i => wb_wraux_out,
+      wb_o => wb_wraux_in,
+      reset_gth_rst_o => gth_rst,
+      reset_gth_tx_rst_o => gth_tx_rst,
+      reset_gth_tx_pcs_rst_o => txpcsreset,
+      reset_gth_tx_pma_rst_o => txpmareset,
+      reset_gth_rx_rst_o => gth_rx_rst,
+      reset_gth_rx_pcs_rst_o => rxpcsreset,
+      reset_gth_rx_pma_rst_o => rxpmareset,
+      reset_gth_rx_buf_rst_o => rxbufreset,
+      status_i(31 downto 16) => (others => '0'),
+      status_i(15 downto 0) => gth_status,
+      ctrl_rdy_o => rdy_out_62m5,
+      bitslide_i(4 downto 0) => bitslide_val,
+      bitslide_i(31 downto 5) => (others => '0')
+    );
+
+  --  As PMA slide mode is used, there is no extra latency.
+  phy16_in.rx_bitslide <= (others => '0');
+
+  inst_sync_rdy: entity work.gc_sync
+    port map (
+      clk_i => rxoutclk,
+      rst_n_a_i => '1',
+      d_i => rdy_out_62m5,
+      q_o => phy16_in.rdy
+    );
+
   gth_rx_slide <= gth_rx_slide_out when bitslide_force = '0' else bitslide_pulse_out;
 
   inst_bufg_gt_tx: BUFG_GT
@@ -961,8 +997,8 @@ begin
       uart_txd_o => uart_rx,
       slave_i => wb_wrpc_out,
       slave_o => wb_wrpc_in,
-      aux_master_i => open,
-      aux_master_o => open,
+      aux_master_i => wb_wraux_in,
+      aux_master_o => wb_wraux_out,
       wrf_src_o => open,
       wrf_src_i => open,
       wrf_snk_o => open,
@@ -1005,9 +1041,9 @@ begin
       rx_data_o => phy16_in.rx_data,
       rx_k_o => phy16_in.rx_k,
       rx_enc_err_o => phy16_in.rx_enc_err,
-      rx_bitslide_o => phy16_in.rx_bitslide,
+      rx_bitslide_o => bitslide_val,
       rst_i => phy_rst,
-      rdy_o => phy16_in.rdy,
+      rdy_o => rdy_in,
       gtwiz_userclk_tx_reset_o => open,
       gtwiz_userclk_tx_active_i => '1',
       gtwiz_userclk_rx_reset_o => open,
@@ -1244,7 +1280,7 @@ begin
     gth_status_a(11) <= gth_rx_comma_det_in;
 
     gth_status_a(12) <= gth_tx_prg_div_reset_done;
-    gth_status_a(13) <= phy16_in.rdy;
+    gth_status_a(13) <= rdy_in;
     gth_status_a(14) <= gth_rx_slide;
     gth_status_a(15) <= gth_rst;
 
