@@ -72,7 +72,8 @@ entity kr260_ref_top is
 
     pmod4_2_b : out std_logic;
     pmod4_4_b : out std_logic;
-    pmod4_6_b : out std_logic
+    pmod4_6_b : out std_logic;
+    pmod4_8_b : out std_logic
   );
 end;
 
@@ -260,6 +261,20 @@ END COMPONENT;
 
   signal bitslide_val : std_logic_vector(4 downto 0);
   signal rdy_in, rdy_out_62m5 : std_logic;
+
+  --  For phase shift
+  signal ps_clk_fb : std_logic;
+  signal ps_clk_in_stopped, ps_clk_fb_stopped : std_logic;
+  signal clk_ps_out, clk_ps : std_logic;
+  signal ps_clk_locked, ps_clk_pd, ps_clk_rst, ps_clk_rst_n : std_logic;
+  signal ps_clk_pen, ps_clk_done, ps_clk_incdec, ps_clk_busy : std_logic;
+  signal ps_clk_shift, ps_clk_shift_wr : std_logic;
+  signal ps_clk_phase : unsigned(15 downto 0);
+
+  signal ps_clk_nsamp : std_logic_vector(23 downto 0);
+  signal rxoutclk_sync : std_logic;
+  signal ps_clk_nsamp_cnt, ps_clk_count, ps_clk_count_out : unsigned(23 downto 0);
+  signal ps_clk_gen : unsigned(7 downto 0);
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -293,7 +308,7 @@ begin
   --  input: 156.25 * 8 = 1250Mhz / 20 => 62.50
   --  input: 74.25 * 20 = 1485Mhz
   --         74.25 * 16 = 1188Mhz  / 19 => 62.52
-  inst_mmcm: mmcme4_base
+  inst_mmcm_62m5: mmcme4_base
     generic map (
       BANDWIDTH => "OPTIMIZED",  -- Jitter programming
       CLKFBOUT_MULT_F => 8.0,   -- Multiply value for all CLKOUT
@@ -348,6 +363,108 @@ begin
       CLKIN1 => clk_156m25, -- 1-bit input: Primary clock
       PWRDWN => '0', -- 1-bit input: Power-down
       RST => '0'  -- 1-bit input: Reset
+    );
+
+      --  MMCM for phase shift
+      --  Input: ref clock
+      --  Output: shifted version of ref clock
+      --  VCO: 1250Mhz (x20)
+  inst_mmcm_ps : MMCME4_ADV
+    generic map (
+      BANDWIDTH => "OPTIMIZED",  -- Jitter programming
+      CLKFBOUT_MULT_F => 20.0,    -- Multiply value for all CLKOUT
+      CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB
+      CLKFBOUT_USE_FINE_PS => "FALSE", -- Fine phase shift enable (TRUE/FALSE)
+      CLKIN1_PERIOD => 16.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
+      CLKIN2_PERIOD => 0.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
+      CLKOUT0_DIVIDE_F => 20.0,        -- Divide amount for CLKOUT0
+      CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
+      CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
+      CLKOUT0_USE_FINE_PS => "TRUE",   -- Fine phase shift enable (TRUE/FALSE)
+      CLKOUT1_DIVIDE => 1,             -- Divide amount for CLKOUT (1-128)
+      CLKOUT1_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT outputs (0.001-0.999).
+      CLKOUT1_PHASE => 0.0,            -- Phase offset for CLKOUT outputs (-360.000-360.000).
+      CLKOUT1_USE_FINE_PS => "FALSE",
+      CLKOUT2_DIVIDE => 1,
+      CLKOUT2_DUTY_CYCLE => 0.5,
+      CLKOUT2_PHASE => 0.0,
+      CLKOUT2_USE_FINE_PS => "FALSE",
+      CLKOUT3_DIVIDE => 1,
+      CLKOUT3_DUTY_CYCLE => 0.5,
+      CLKOUT3_PHASE => 0.0,
+      CLKOUT3_USE_FINE_PS => "FALSE",
+      CLKOUT4_CASCADE => "FALSE",
+      CLKOUT4_DIVIDE => 1,
+      CLKOUT4_DUTY_CYCLE => 0.5,
+      CLKOUT4_PHASE => 0.0,
+      CLKOUT4_USE_FINE_PS => "FALSE",
+      CLKOUT5_DIVIDE => 1,
+      CLKOUT5_DUTY_CYCLE => 0.5,
+      CLKOUT5_PHASE => 0.0,
+      CLKOUT5_USE_FINE_PS => "FALSE",
+      CLKOUT6_DIVIDE => 1,
+      CLKOUT6_DUTY_CYCLE => 0.5,
+      CLKOUT6_PHASE => 0.0,
+      CLKOUT6_USE_FINE_PS => "FALSE",
+      COMPENSATION => "AUTO",            -- Clock input compensation
+      DIVCLK_DIVIDE => 1,                -- Master division value
+      IS_CLKFBIN_INVERTED => '0',
+      IS_CLKIN1_INVERTED => '0',
+      IS_CLKIN2_INVERTED => '0',
+      IS_CLKINSEL_INVERTED => '0',
+      IS_PSEN_INVERTED => '0',
+      IS_PSINCDEC_INVERTED => '0',
+      IS_PWRDWN_INVERTED => '0',
+      IS_RST_INVERTED => '0',
+      REF_JITTER1 => 0.0,
+      REF_JITTER2 => 0.0,
+      SS_EN => "FALSE",
+      SS_MODE => "CENTER_HIGH",
+      SS_MOD_PERIOD => 10000,
+      STARTUP_WAIT => "FALSE"
+      )
+    port map (
+      CDDCDONE => open, -- 1-bit output: Clock dynamic divide done
+      CLKFBOUT => ps_clk_fb, -- 1-bit output: Feedback clock
+      CLKFBOUTB => open, -- 1-bit output: Inverted CLKFBOUT
+      CLKFBSTOPPED => ps_clk_fb_stopped, -- 1-bit output: Feedback clock stopped
+      CLKINSTOPPED => ps_clk_in_stopped, -- 1-bit output: Input clock stopped
+      CLKOUT0 => clk_ps_out,   -- 1-bit output: CLKOUT0
+      CLKOUT0B => open, -- 1-bit output: Inverted CLKOUT0
+      CLKOUT1  => open,   -- 1-bit output: CLKOUT1
+      CLKOUT1B => open, -- 1-bit output: Inverted CLKOUT1
+      CLKOUT2  => open,   -- 1-bit output: CLKOUT2
+      CLKOUT2B => open, -- 1-bit output: Inverted CLKOUT2
+      CLKOUT3  => open,   -- 1-bit output: CLKOUT3
+      CLKOUT3B => open, -- 1-bit output: Inverted CLKOUT3
+      CLKOUT4  => open,   -- 1-bit output: CLKOUT4
+      CLKOUT5  => open,   -- 1-bit output: CLKOUT5
+      CLKOUT6  => open,   -- 1-bit output: CLKOUT6
+      DO => open,             -- 16-bit output: DRP data output
+      DRDY =>  open,         -- 1-bit output: DRP ready
+      LOCKED => ps_clk_locked,     -- 1-bit output: LOCK
+      PSDONE => ps_clk_done,     -- 1-bit output: Phase shift done
+      CDDCREQ => '0',   -- 1-bit input: Request to dynamic divide clock
+      CLKFBIN => ps_clk_fb,   -- 1-bit input: Feedback clock
+      CLKIN1 => txoutclk,     -- 1-bit input: Primary clock
+      CLKIN2 => '0',     -- 1-bit input: Secondary clock
+      CLKINSEL => '1', -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
+      DADDR => (others => '0'),       -- 7-bit input: DRP address
+      DCLK => '0',         -- 1-bit input: DRP clock
+      DEN => '0',           -- 1-bit input: DRP enable
+      DI => (others => '0'),             -- 16-bit input: DRP data input
+      DWE => '0',           -- 1-bit input: DRP write enable
+      PSCLK => clk_62m5,       -- 1-bit input: Phase shift clock
+      PSEN => ps_clk_pen,         -- 1-bit input: Phase shift enable
+      PSINCDEC => ps_clk_incdec, -- 1-bit input: Phase shift increment/decrement
+      PWRDWN => ps_clk_pd,     -- 1-bit input: Power-down
+      RST => ps_clk_rst            -- 1-bit input: Reset
+      );
+
+  inst_bufg_ps : BUFG
+    port map (
+      I => clk_ps_out,
+      O => clk_ps
     );
 
   process(clk_62m5, pll_locked)
@@ -869,8 +986,87 @@ begin
       status_i(15 downto 0) => gth_status,
       ctrl_rdy_o => rdy_out_62m5,
       bitslide_i(4 downto 0) => bitslide_val,
-      bitslide_i(31 downto 5) => (others => '0')
+      bitslide_i(31 downto 5) => (others => '0'),
+
+      ps_ctrl_shift_i => '0',
+      ps_ctrl_shift_o => ps_clk_shift,
+      ps_ctrl_wr_o => ps_clk_shift_wr,
+      ps_ctrl_rst_o => ps_clk_rst,
+      ps_ctrl_pd_o => ps_clk_pd,
+      ps_ctrl_incdec_o => ps_clk_incdec,
+      ps_stat_phase_i => std_logic_vector(ps_clk_phase),
+      ps_stat_fb_stopped_i => ps_clk_fb_stopped,
+      ps_stat_in_stopped_i => ps_clk_in_stopped,
+      ps_stat_locked_i => ps_clk_locked,
+      ps_stat_ps_busy_i => ps_clk_busy,
+      ps_count_val_o => ps_clk_nsamp,
+      ps_res_val_i => std_logic_vector(ps_clk_count_out),
+      ps_res_gen_i => std_logic_vector(ps_clk_gen)
     );
+
+  inst_sync_rxoutclk: entity work.gc_sync
+    port map (
+      clk_i => clk_ps,
+      rst_n_a_i => ps_clk_rst_n,
+      d_i => rxoutclk,
+      q_o => rxoutclk_sync
+    );
+  
+  ps_clk_rst_n <= not ps_clk_rst;
+
+  ps_clk_pen <= ps_clk_shift_wr and ps_clk_shift;
+
+  process (clk_62m5)
+  begin
+    if rising_edge(clk_62m5) then
+      if ps_clk_rst = '1' then
+        ps_clk_phase <= (others => '0');
+        ps_clk_busy <= '1';
+      else
+        if ps_clk_done = '1' then
+          ps_clk_busy <= '1';
+        end if;
+
+        if ps_clk_pen = '1' then
+          ps_clk_busy <= '0';
+
+          if ps_clk_incdec = '1' then
+            ps_clk_phase <= ps_clk_phase + 1;
+          else
+            ps_clk_phase <= ps_clk_phase - 1;
+          end if;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  process (clk_ps)
+    variable cnt : unsigned(23 downto 0);
+  begin
+    if rising_edge(clk_ps) then
+      if ps_clk_rst = '1' then
+        ps_clk_nsamp_cnt <= unsigned (ps_clk_nsamp);
+        ps_clk_gen <= x"00";
+      else
+        if ps_clk_nsamp_cnt = 0 then
+          ps_clk_nsamp_cnt <= unsigned(ps_clk_nsamp);
+          ps_clk_count_out <= ps_clk_count;
+          ps_clk_gen <= ps_clk_gen + 1;
+          cnt := (others => '0');
+        else
+          ps_clk_nsamp_cnt <= ps_clk_nsamp_cnt - 1;
+          cnt := ps_clk_count;
+        end if;
+
+        --  Sample the sync signal
+        if rxoutclk_sync = '1' then
+          cnt := cnt + 1;
+        end if;
+        ps_clk_count <= cnt;
+      end if;
+    end if;
+  end process;
+
 
   --  As PMA slide mode is used, there is no extra latency.
   phy16_in.rx_bitslide <= (others => '0');
@@ -1105,6 +1301,7 @@ begin
 
   pmod4_4_b <= phy16_in.rx_clk; --  The recovered clock
   pmod4_6_b <= phy16_in.ref_clk; --  The WR reference clock
+  pmod4_8_b <= clk_ps;
 
   inst_gth_rst_sync: entity work.gc_sync
     port map (

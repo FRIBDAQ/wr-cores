@@ -57,6 +57,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports pmod4_4_b]
 set_property PACKAGE_PIN AA11 [get_ports pmod4_6_b]
 set_property IOSTANDARD LVCMOS33 [get_ports pmod4_6_b]
 
+set_property PACKAGE_PIN AA10 [get_ports pmod4_8_b]
+set_property IOSTANDARD LVCMOS33 [get_ports pmod4_8_b]
+
 set_property PACKAGE_PIN A10 [get_ports sfp_tx_fault_i]
 set_property IOSTANDARD LVCMOS33 [get_ports sfp_tx_fault_i]
 

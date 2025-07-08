@@ -60,3 +60,68 @@ memory-map:
      comment: Bitslide
      width: 32
      access: ro
+
+  - reg:
+     name: ps_ctrl
+     comment: Control for phase shift
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+     children:
+     - field:
+        name: rst
+        range: 0
+     - field:
+        name: pd
+        range: 1
+     - field:
+        name: incdec
+        range: 8
+     - field:
+        name: shift
+        range: 9
+        x-hdl:
+          type: wire
+  - reg:
+     name: ps_stat
+     comment: Status for phase shift
+     width: 32
+     access: ro
+     children:
+     - field:
+        name: phase
+        range: 15-0
+     - field:
+        name: fb_stopped
+        range: 16
+     - field:
+        name: in_stopped
+        range: 17
+     - field:
+        name: locked
+        range: 18
+     - field:
+        name: ps_busy
+        range: 19
+  - reg:
+     name: ps_count
+     comment: Number of sampling for ps
+     width: 32
+     access: wo
+     children:
+     - field:
+        name: val
+        range: 23-0
+  - reg:
+     name: ps_res
+     comment: Number of sampling for ps
+     width: 32
+     access: ro
+     children:
+     - field:
+        name: val
+        range: 23-0
+     - field:
+        name: gen
+        range: 31-24
