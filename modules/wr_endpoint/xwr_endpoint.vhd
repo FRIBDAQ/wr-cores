@@ -590,11 +590,14 @@ begin
       txts_timestamp_valid_o => txts_timestamp_valid,
       txts_timestamp_stb_o   => open,
 
-      txts_o                 => txts_o,                   -- 2013-Nov-28 peterj added for debugging/calibration
-      rxts_o                 => rxts_o, 		              -- 2013-Nov-28 peterj added for debugging/calibration
+      txts_o                 => open, --txts_o,                   -- 2013-Nov-28 peterj added for debugging/calibration
+      rxts_o                 => open, --rxts_o, 		              -- 2013-Nov-28 peterj added for debugging/calibration
 
       regs_i => regs_fromwb,
       regs_o => regs_towb_tsu);
+
+  txts_o <= txpcs_timestamp_trigger_p_a;
+  rxts_o <= rxpcs_timestamp_trigger_p_a;
 
 -------------------------------------------------------------------------------
 -- Wishbone controller & IO registers
