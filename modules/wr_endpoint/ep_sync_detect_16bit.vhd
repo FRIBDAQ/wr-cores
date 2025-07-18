@@ -78,7 +78,6 @@ architecture behavioral of ep_sync_detect_16bit is
   function f_pick(sel : std_logic;
                   w1  : t_sync_fsm_state;
                   w0  : t_sync_fsm_state) return t_sync_fsm_state is
-
   begin
     if(sel = '1') then
       return w1;
@@ -86,8 +85,6 @@ architecture behavioral of ep_sync_detect_16bit is
       return w0;
     end if;
   end f_pick;
-
-
 
   signal state    : t_sync_fsm_state;
   signal good_cgs : unsigned(2 downto 0);
@@ -103,7 +100,7 @@ begin  -- behavioral
   invalid_code <= '1' when (err_i = '1' or (k_i(0) = '1' and data_i(7 downto 0) = c_k28_5)) else '0';
 
 
-  sync_fsm : process (rbclk_i, rst_n_i)
+  sync_fsm : process (rbclk_i)
   begin  -- process sync_fsm
     if rising_edge(rbclk_i) then
       if(rst_n_i = '0') then
@@ -118,7 +115,7 @@ begin  -- behavioral
         else
 
           -- prevents from 
-          if(cal_i = '0') then
+          if cal_i = '0' then
             
             case state is
               when LOSS_OF_SYNC =>
@@ -186,8 +183,4 @@ begin  -- behavioral
       end if;
     end if;
   end process;
-
-
-
-
 end behavioral;

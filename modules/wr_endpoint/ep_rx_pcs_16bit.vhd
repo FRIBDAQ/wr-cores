@@ -148,18 +148,6 @@ architecture behavioral of ep_rx_pcs_16bit is
 
   constant c_cal_pattern_counter_bits : integer := f_calc_pattern_counter_bits;
 
-  component ep_sync_detect_16bit
-    port (
-      rst_n_i  : in  std_logic;
-      rbclk_i  : in  std_logic;
-      en_i     : in  std_logic;
-      data_i   : in  std_logic_vector(15 downto 0);
-      k_i      : in  std_logic_vector(1 downto 0);
-      err_i    : in  std_logic;
-      synced_o : out std_logic;
-      cal_i    : in  std_logic);
-  end component;
-
   signal rst_n_rx : std_logic;
 
   signal rx_state         : t_tbif_rx_state;
@@ -297,7 +285,7 @@ begin
 -- 802.3z Link Synchronization State Machine
 -------------------------------------------------------------------------------
 
-  U_SYNC_DET : ep_sync_detect_16bit
+  U_SYNC_DET : entity work.ep_sync_detect_16bit
     port map (
       rst_n_i  => rst_n_rx,
       rbclk_i  => phy_rx_clk_i,
