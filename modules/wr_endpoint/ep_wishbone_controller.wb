@@ -634,6 +634,13 @@ peripheral {
 				 load = LOAD_EXT;
 
 			};
+			field {
+				 name = "RX sync";
+				 prefix = "RXSYNC";
+				 type = BIT;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
 	 };
 	
 		reg {

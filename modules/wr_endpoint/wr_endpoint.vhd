@@ -379,7 +379,7 @@ architecture syn of wr_endpoint is
   signal txfra_pause_ready : std_logic;
   signal txfra_pause_delay : std_logic_vector(15 downto 0);
 
-  signal link_ok : std_logic;
+  signal link_ok, rx_synced : std_logic;
 
   signal mdio_addr    : std_logic_vector(15 downto 0);
 
@@ -502,6 +502,7 @@ begin
 
       txpcs_timestamp_trigger_p_a_o => txpcs_timestamp_trigger_p_a,
 
+      rx_sync_o  => rx_synced,
       link_ok_o  => link_ok,
       link_ctr_i => ep_ctrl,
 
@@ -825,7 +826,8 @@ begin
   regs_towb_ep.tscr_cs_done_i            <= '0';
   regs_towb_ep.tscr_rx_cal_result_i      <= '0';
   regs_towb_ep.tcar_pcp_map_i            <= (others => '0');
-  regs_towb_ep.dsr_lstatus_i             <= '0';
+  regs_towb_ep.dsr_lstatus_i             <= link_ok;
+  regs_towb_ep.dsr_rxsync_i              <= rx_synced;
   regs_towb_ep.dmcr_en_i                 <= '0';
   regs_towb_ep.dmcr_n_avg_i              <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_conf_ifg_i   <= (others => '0');

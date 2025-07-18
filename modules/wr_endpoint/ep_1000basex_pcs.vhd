@@ -118,7 +118,12 @@ entity ep_1000basex_pcs is
     -- 1-pulse: TX timestamp trigger (to timestamping unit).
     txpcs_timestamp_trigger_p_a_o : out std_logic;
 
+    --  RX is synced (receive idle or data and low bit error)
+    rx_sync_o : out std_logic;
+
+    --  Link is OK (synced + autonegociation)
     link_ok_o : out std_logic;
+
     link_ctr_i : in std_logic;
     -----------------------------------------------------------------------------
     -- GTP/GTX/TBI Serdes interface
@@ -588,6 +593,7 @@ begin  -- rtl
   end process;
 
   link_ok_o <= link_ok and synced_d1;
+  rx_sync_o <= synced;
 
   --RMON events
   U_sync_tx_underrun: gc_sync_ffs
