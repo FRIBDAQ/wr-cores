@@ -641,6 +641,13 @@ peripheral {
 				 access_bus = READ_ONLY;
 				 access_dev = WRITE_ONLY;
 			};
+			field {
+				 name = "GT ready";
+				 prefix = "GTREADY";
+				 type = BIT;
+				 access_bus = READ_ONLY;
+				 access_dev = WRITE_ONLY;
+			};
 	 };
 	
 		reg {

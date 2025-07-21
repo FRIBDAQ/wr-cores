@@ -456,14 +456,14 @@ architecture syn of wr_endpoint is
 
 begin
 
-  U_Sync_phy_rdy_sysclk : gc_sync_ffs
+  U_Sync_phy_rdy_sysclk : gc_sync
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => clk_sys_i,
-      rst_n_i  => '1',
-      data_i   => phy_rdy_i,
-      synced_o => phy_rdy_resync_sys);
+      clk_i     => clk_sys_i,
+      rst_n_a_i => '1',
+      d_i       => phy_rdy_i,
+      q_o       => phy_rdy_resync_sys);
 
   rst_n_rx  <= rst_rxclk_n_i and phy_rdy_i;
 
@@ -828,6 +828,7 @@ begin
   regs_towb_ep.tcar_pcp_map_i            <= (others => '0');
   regs_towb_ep.dsr_lstatus_i             <= link_ok;
   regs_towb_ep.dsr_rxsync_i              <= rx_synced;
+  regs_towb_ep.dsr_gtready_i             <= phy_rdy_resync_sys;
   regs_towb_ep.dmcr_en_i                 <= '0';
   regs_towb_ep.dmcr_n_avg_i              <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_conf_ifg_i   <= (others => '0');
@@ -1025,5 +1026,3 @@ begin
   gmii_tx_er_o <= '0';
 
 end syn;
-
-
