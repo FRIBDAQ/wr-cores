@@ -121,11 +121,13 @@ begin
       d_i       => rst_i,
       q_o       => rst_rxclk);
 
+  --  For gthe4, do not use byte_is_aligned to detect link down.
+  --  Check for missing comma.
   U_Bitslide : entity work.gtp_bitslide
     generic map (
       g_simulation => 0,
       g_target     => "ultrascale",
-      g_use_rx_byte_is_aligned => true)
+      g_use_rx_byte_is_aligned => false)
     port map (
       gtp_rst_i                => rst_i,
       gtp_rx_clk_i             => gth_rx_clk_i,
