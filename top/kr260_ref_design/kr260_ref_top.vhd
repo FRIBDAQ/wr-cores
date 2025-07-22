@@ -250,6 +250,7 @@ END COMPONENT;
   signal gth_dmon_clk, gth_dmon_clk_out, gth_dmon_rst_n : std_logic;
 
   signal rxpi_fifo_samp, rxpi_data : std_logic_vector(31 downto 0);
+  signal rxpi_one_samp, rxpi_one_samp_dmon : std_logic_vector(6 downto 0);
   signal rxpi_valid : std_logic;
   signal rxpi_rdcount : unsigned(31 downto 0);
 
@@ -263,7 +264,7 @@ END COMPONENT;
   signal rdy_in, rdy_out_62m5 : std_logic;
 
   --  For phase shift
-  signal ps_clk_fb : std_logic;
+  signal ps_clk_fb, ps_clk_fb_bufg : std_logic;
   signal ps_clk_in_stopped, ps_clk_fb_stopped : std_logic;
   signal clk_ps_out, clk_ps : std_logic;
   signal ps_clk_locked, ps_clk_pd, ps_clk_rst, ps_clk_rst_n : std_logic;
@@ -275,6 +276,10 @@ END COMPONENT;
   signal rxoutclk_sync : std_logic;
   signal ps_clk_nsamp_cnt, ps_clk_count, ps_clk_count_out : unsigned(23 downto 0);
   signal ps_clk_gen : unsigned(7 downto 0);
+
+  signal abscal_tx, abscal_rx : std_logic;
+
+  signal nbr_comma, nbr_bytealign, nbr_counter, nbr_comma_cnt, nbr_bytealign_cnt: unsigned(31 downto 0);
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -349,7 +354,7 @@ begin
       CLKFBOUTB => open, -- 1-bit output: Inverted CLKFBOUT
       CLKOUT0 => clk_62m5, -- 1-bit output: CLKOUT0
       CLKOUT0B => open,  -- 1-bit output: Inverted CLKOUT0
-      CLKOUT1 => pmod4_2_b,   -- 1-bit output: CLKOUT1
+      CLKOUT1 => open, -- pmod4_2_b,   -- 1-bit output: CLKOUT1
       CLKOUT1B => open,  -- 1-bit output: Inverted CLKOUT1
       CLKOUT2 => open,   -- 1-bit output: CLKOUT2
       CLKOUT2B => open,  -- 1-bit output: Inverted CLKOUT2
@@ -445,7 +450,7 @@ begin
       LOCKED => ps_clk_locked,     -- 1-bit output: LOCK
       PSDONE => ps_clk_done,     -- 1-bit output: Phase shift done
       CDDCREQ => '0',   -- 1-bit input: Request to dynamic divide clock
-      CLKFBIN => ps_clk_fb,   -- 1-bit input: Feedback clock
+      CLKFBIN => ps_clk_fb_bufg,   -- 1-bit input: Feedback clock
       CLKIN1 => txoutclk,     -- 1-bit input: Primary clock
       CLKIN2 => '0',     -- 1-bit input: Secondary clock
       CLKINSEL => '1', -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
@@ -465,6 +470,12 @@ begin
     port map (
       I => clk_ps_out,
       O => clk_ps
+    );
+
+  inst_bufg_ps_fb: BUFG
+    port map (
+      I => ps_clk_fb,
+      O => ps_clk_fb_bufg
     );
 
   process(clk_62m5, pll_locked)
@@ -578,22 +589,50 @@ begin
     qpll0_sdm_wr_o => open,
     qpll1_sdm_o => hpll_data_out,
     qpll1_sdm_wr_o => hpll_load,
-    fifo_rdcount_i => std_logic_vector(rxpi_rdcount),
-    fifo_nfull_i => (others => '0'),
-    fifo_nfull_o => open,
-    fifo_nfull_wr_o => open,
-    fifo_data_i => rxpi_data,
-    fifo_data_rd_o => open,
-    rxpi_samp_o => rxpi_fifo_samp,
-    fifo_ctrl_en_o => open,
+    rxpi_count_i => std_logic_vector(rxpi_rdcount),
+    rxpi_tag_i => rxpi_data,
+    rxpi_nsamp_o => rxpi_fifo_samp,
+    rxpi_direct_i(31 downto 7) => (others => '0'),
+    rxpi_direct_i(6 downto 0) => rxpi_one_samp,
 
     bitslide_slide_i => '0',
     bitslide_force_o => bitslide_force,
     bitslide_slide_o => bitslide_slide,
     bitslide_wr_o => bitslide_wr,
     bitslide_value_i => bitslide_val,
-    bitslide_value_o => open
+    bitslide_value_o => open,
+
+    nbr_comma_det_i => std_logic_vector(nbr_comma),
+    nbr_byte_align_i => std_logic_vector(nbr_bytealign)
   );
+ 
+  process (clk_62m5)
+  begin
+    if rising_edge(clk_62m5) then
+      if rst_n = '0' then
+        nbr_counter <= (others => '0');
+        nbr_comma <= (others => '0');
+        nbr_bytealign <= (others => '0');
+        nbr_comma_cnt <= (others => '0');
+        nbr_bytealign_cnt <= (others => '0');
+      else
+        if gth_rx_comma_det_in = '1' then
+          nbr_comma_cnt <= nbr_comma_cnt + 1;
+        end if;
+        if gth_rx_byte_aligned_in = '1' then
+          nbr_bytealign_cnt <= nbr_bytealign_cnt + 1;
+        end if;
+        nbr_counter <= nbr_counter + 1;
+        if nbr_counter = 16#01_00_00_00# then
+          nbr_counter <= (others => '0');
+          nbr_comma <= nbr_comma_cnt;
+          nbr_bytealign <= nbr_bytealign_cnt;
+          nbr_comma_cnt <= (others => '0');
+          nbr_bytealign_cnt <= (others => '0');
+        end if;
+      end if;
+    end if;
+  end process;
 
   process (clk_62m5)
   begin
@@ -613,7 +652,7 @@ begin
     end if;
   end process;
 
-  inst_bitslide: entity work.gc_sync_ffs
+  inst_sync_bitslide: entity work.gc_sync_ffs
     port map (
       clk_i => phy16_in.rx_clk,
       rst_n_i => '1',
@@ -1201,8 +1240,8 @@ begin
       wrf_snk_i => open,
       timestamps_o => open,
       timestamps_ack_i => open,
-      abscal_txts_o => open,
-      abscal_rxts_o => open,
+      abscal_txts_o => abscal_tx,
+      abscal_rxts_o => abscal_rx,
       fc_tx_pause_req_i => open,
       fc_tx_pause_delay_i => open,
       fc_tx_pause_ready_o => open,
@@ -1299,9 +1338,12 @@ begin
 
   -- pmod4_4_b <= gth_dmon_clk;
 
-  pmod4_4_b <= phy16_in.rx_clk; --  The recovered clock
-  pmod4_6_b <= phy16_in.ref_clk; --  The WR reference clock
-  pmod4_8_b <= clk_ps;
+  pmod4_2_b <= phy16_in.rx_clk; --  The recovered clock
+  pmod4_4_b <= phy16_in.ref_clk; --  The WR reference clock
+  pmod4_6_b <= abscal_tx;
+  pmod4_8_b <= abscal_rx;
+
+  --  clk_ps; phase shift clock
 
   inst_gth_rst_sync: entity work.gc_sync
     port map (
@@ -1325,6 +1367,7 @@ begin
     begin
       if rising_edge(gth_dmon_clk) then
         rxpi_wr <= '0';
+        rxpi_one_samp_dmon <= rxpi;
 
         if gth_dmon_rst_n = '0' then
           --  Start point
@@ -1389,6 +1432,7 @@ begin
       end if;
     end process;
 
+    --  Synchronizer for rxpi acc.
     inst_sync_rxpi: entity work.gc_sync_word_wr
       generic map (
         g_auto_wr => false,
@@ -1405,6 +1449,24 @@ begin
         ack_o => rxpi_sync_ack,
         data_o => rxpi_data,
         wr_o => rxpi_valid
+      );
+
+    inst_sync_rxpi_one: entity work.gc_sync_word_wr
+      generic map (
+        g_auto_wr => true,
+        g_width => 7
+      )
+      port map (
+        clk_in_i => gth_dmon_clk,
+        rst_in_n_i => gth_dmon_rst_n,
+        clk_out_i => clk_62m5,
+        rst_out_n_i => rst_n,
+        data_i => rxpi_one_samp_dmon,
+        wr_i => open,
+        busy_o => open,
+        ack_o => open,
+        data_o => rxpi_one_samp,
+        wr_o => open
       );
   end block;
 

@@ -64,37 +64,25 @@ memory-map:
      x-hdl:
        write-strobe: True
   - reg:
-     name: rxpi_samp
+     name: rxpi_nsamp
      comment: number of rxpi samples to accumulate
      width: 32
      access: rw
      preset: 0x7fff
   - reg:
-     name: fifo_ctrl
-     width: 32
-     access: rw
-     children:
-     - field:
-        name: en
-        range: 0
-  - reg:
-     name: fifo_rdcount
+     name: rxpi_count
+     comment: Number of tags
      width: 32
      access: ro
   - reg:
-     name: fifo_nfull
-     comment: number of samples discarded because fifo was full, write to clear
-     width: 32
-     access: rw
-     x-hdl:
-       type: wire
-       write-strobe: True
-  - reg:
-     name: fifo_data
+     name: rxpi_tag
      width: 32
      access: ro
-     x-hdl:
-       read-strobe: True
+  - reg:
+     name: rxpi_direct
+     comment: rxpi (7b) samples
+     width: 32
+     access: ro
   - reg:
      name: bitslide
      comment: control of bitslide
@@ -116,3 +104,11 @@ memory-map:
          range: 12-8
          x-hdl:
            type: wire
+  - reg:
+     name: nbr_comma_det
+     width: 32
+     access: ro
+  - reg:
+     name: nbr_byte_align
+     width: 32
+     access: ro

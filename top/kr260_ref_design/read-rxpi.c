@@ -80,22 +80,23 @@ static int do_samp(int argc, char **argv)
   if (parse_uint(&val, argv[2], "samp") < 0)
     return 1;
 
-  mpsoc->rxpi_samp = val;
+  mpsoc->rxpi_nsamp = val;
   return 0;
 }
 
 static int do_regs(int argc, char **argv)
 {
-  printf ("ctrl:      %08x\n", (unsigned)mpsoc->ctrl);
-  printf ("status:    %08x\n", (unsigned)mpsoc->status);
-  printf ("qpll0_sdm: %08x\n", (unsigned)mpsoc->qpll0_sdm);
-  printf ("qpll1_sdm: %08x\n", (unsigned)mpsoc->qpll1_sdm);
-  printf ("rxpi_samp: %08x\n", (unsigned)mpsoc->rxpi_samp);
-  printf ("fifo_ctrl: %08x\n", (unsigned)mpsoc->fifo_ctrl);
-  printf ("rdcount:   %08x\n", (unsigned)mpsoc->fifo_rdcount);
-  printf ("nfull:     %08x\n", (unsigned)mpsoc->fifo_nfull);
-  printf ("fifo_data: %08x\n", (unsigned)mpsoc->fifo_data);
-  printf ("bitslide:  %08x\n", (unsigned)mpsoc->bitslide);
+  printf ("ctrl:       %08x\n", (unsigned)mpsoc->ctrl);
+  printf ("status:     %08x\n", (unsigned)mpsoc->status);
+  printf ("qpll0_sdm:  %08x\n", (unsigned)mpsoc->qpll0_sdm);
+  printf ("qpll1_sdm:  %08x\n", (unsigned)mpsoc->qpll1_sdm);
+  printf ("rxpi_samp:  %08x\n", (unsigned)mpsoc->rxpi_nsamp);
+  printf ("rdcount:    %08x\n", (unsigned)mpsoc->rxpi_count);
+  printf ("tag:        %08x\n", (unsigned)mpsoc->rxpi_tag);
+  printf ("direct:     %08x\n", (unsigned)mpsoc->rxpi_direct);
+  printf ("bitslide:   %08x\n", (unsigned)mpsoc->bitslide);
+  printf ("nbr_comma:  %08x\n", (unsigned)mpsoc->nbr_comma_det);
+  printf ("nbr_byteal: %08x\n", (unsigned)mpsoc->nbr_byte_align);
 
   return 0;
 }
@@ -116,10 +117,10 @@ static int do_read(int argc, char **argv)
 
   msize = (4 * cnt + PAGE_MASK) & ~PAGE_MASK;
 
-  samp = mpsoc->rxpi_samp;
+  samp = mpsoc->rxpi_nsamp;
   if (samp == 0) {
     samp = 100;
-    mpsoc->rxpi_samp = samp;
+    mpsoc->rxpi_nsamp = samp;
   }
 
   fprintf(stderr, "reading %u values every %u samples\n", cnt, samp);
@@ -140,12 +141,12 @@ static int do_read(int argc, char **argv)
   prev_count = 0;
   for (i = cnt; i; i--) {
     while (1) {
-      count = mpsoc->fifo_rdcount;
+      count = mpsoc->rxpi_count;
       if (count != prev_count)
 	break;
       usleep (40);
     }
-    *ptr++ = mpsoc->fifo_data;
+    *ptr++ = mpsoc->rxpi_tag;
     prev_count = count;
   }
 
@@ -172,7 +173,6 @@ static int do_read(int argc, char **argv)
 	  (unsigned)tdiff.tv_sec, (unsigned)tdiff.tv_nsec,
 	  (unsigned)tdiff.tv_nsec / cnt);
   
-  fprintf(stderr, "nfull: %u\n", mpsoc->fifo_nfull);
   return 0;
 }
 
