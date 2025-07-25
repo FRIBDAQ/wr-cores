@@ -261,7 +261,7 @@ END COMPONENT;
   signal bitslide_pulse_rx, bitslide_pulse_rx_d, bitslide_pulse_out : std_logic;
 
   signal bitslide_val : std_logic_vector(4 downto 0);
-  signal rdy_in, rdy_out_62m5 : std_logic;
+  signal rdy_in, rdy_in_62m5, rdy_out_62m5 : std_logic;
 
   --  For phase shift
   signal ps_clk_fb, ps_clk_fb_bufg : std_logic;
@@ -574,7 +574,7 @@ begin
     wrpc_o => wb_wrpc_out,
 
     ctrl_led1_o => open,
-    ctrl_led2_o => sfp_led2_o,
+    ctrl_led2_o => open,
     ctrl_gth_rst_o => open,
     ctrl_gth_tx_rst_o => open,
     ctrl_gth_tx_pcs_rst_o => open,
@@ -1021,7 +1021,8 @@ begin
       reset_gth_rx_pcs_rst_o => rxpcsreset,
       reset_gth_rx_pma_rst_o => rxpmareset,
       reset_gth_rx_buf_rst_o => rxbufreset,
-      status_i(31 downto 16) => (others => '0'),
+      status_i(31 downto 17) => (others => '0'),
+      status_i(16) => rdy_in_62m5,
       status_i(15 downto 0) => gth_status,
       ctrl_rdy_o => rdy_out_62m5,
       bitslide_i(4 downto 0) => bitslide_val,
@@ -1118,6 +1119,14 @@ begin
       q_o => phy16_in.rdy
     );
 
+  inst_sync_rdy_in: entity work.gc_sync
+    port map (
+      clk_i => clk_62m5,
+      rst_n_a_i => '1',
+      d_i => rdy_in,
+      q_o => rdy_in_62m5
+    );
+
   gth_rx_slide <= gth_rx_slide_out when bitslide_force = '0' else bitslide_pulse_out;
 
   inst_bufg_gt_tx: BUFG_GT
@@ -1211,7 +1220,6 @@ begin
       phy8_o => open,
       phy16_o => phy16_out,
       phy16_i => phy16_in,
-      led_act_o => open,
       scl_o => open,
       scl_i => open,
       sda_o => open,
@@ -1258,7 +1266,8 @@ begin
       pps_p_o => open,
       pps_led_o => open,
       rst_aux_n_o => open,
-      led_link_o => open,
+      led_act_o => sfp_led2_o,
+      led_link_o => sfp_led1_o,
       link_ok_o => open,
       aux_diag_i => open,
       aux_diag_o => open,
@@ -1338,10 +1347,13 @@ begin
 
   -- pmod4_4_b <= gth_dmon_clk;
 
-  pmod4_2_b <= phy16_in.rx_clk; --  The recovered clock
-  pmod4_4_b <= phy16_in.ref_clk; --  The WR reference clock
-  pmod4_6_b <= abscal_tx;
-  pmod4_8_b <= abscal_rx;
+  b_pmod: block
+  begin
+    pmod4_2_b <= phy16_in.rx_clk; --  The recovered clock
+    pmod4_4_b <= phy16_in.ref_clk; --  The WR reference clock
+    pmod4_6_b <= clk_ps; -- abscal_tx;
+    pmod4_8_b <= abscal_rx;
+  end block;
 
   --  clk_ps; phase shift clock
 

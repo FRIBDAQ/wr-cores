@@ -60,7 +60,6 @@ memory-map:
      comment: Bitslide
      width: 32
      access: ro
-
   - reg:
      name: ps_ctrl
      comment: Control for phase shift
