@@ -217,7 +217,8 @@ END COMPONENT;
   signal gth_rx_data_in : std_logic_vector(15 downto 0);
   signal gth_tx_data_out : std_logic_vector(15 downto 0);
   signal gth_rx_slide_out, gth_rx_slide : std_logic;
-  signal gth_rx_k_in : std_logic_vector(15 downto 0);
+  signal gth_rx_k_in, gth_rx_disp_err_in : std_logic_vector(15 downto 0);
+  signal gth_rx_comma_in, gth_rx_dec_err_in : std_logic_vector(7 downto 0);
   signal gth_tx_k_out : std_logic_vector(7 downto 0) := (others => '0');
   signal gth_rx_byte_aligned_in : std_logic;
   signal gth_rx_comma_det_in : std_logic;
@@ -731,7 +732,7 @@ begin
   --  The common part of the gthe4.
   --  The values can be found in the top-level module generated when the common
   --  part is included.
-  inst_common: gthe4_common
+  inst_gth_common: gthe4_common
     generic map (
       AEN_QPLL0_FBDIV       =>          '1',
       AEN_QPLL1_FBDIV       =>          '1',
@@ -909,7 +910,7 @@ begin
   );
 
 
-  inst_gth: gthe4_sdm
+  inst_gth_channel: gthe4_sdm
     port map (
       gthrxn_in(0)  => pad_rxn_i,
       gthrxp_in(0)  => pad_rxp_i,
@@ -981,9 +982,9 @@ begin
       rxbyterealign_out => open,
       rxcommadet_out(0) => gth_rx_comma_det_in,
       rxctrl0_out => gth_rx_k_in,
-      rxctrl1_out => open,
-      rxctrl2_out => open,
-      rxctrl3_out => open,
+      rxctrl1_out => gth_rx_disp_err_in,
+      rxctrl2_out => gth_rx_comma_in,
+      rxctrl3_out => gth_rx_dec_err_in,
       rxpmaresetdone_out(0) => gth_rx_pma_reset_done_in,
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
 --      txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
@@ -1305,6 +1306,8 @@ begin
       gth_rx_slide_o => gth_rx_slide_out,
       gth_rx_k_i => gth_rx_k_in(1 downto 0),
       gth_tx_k_o => gth_tx_k_out(1 downto 0),
+      gth_rx_dec_err_i => gth_rx_dec_err_in(1 downto 0),
+      gth_rx_disp_err_i => gth_rx_disp_err_in(1 downto 0),
       gth_rx_byte_aligned_i => gth_rx_byte_aligned_in,
       gth_rx_comma_det_i => gth_rx_comma_det_in,
       gth_rx_pma_reset_done_i => gth_rx_pma_reset_done_in,
@@ -1530,7 +1533,7 @@ begin
     component ila_0
       port (
         clk    : in STD_LOGIC;
-        probe0 : in STD_LOGIC_VECTOR(31 downto 0)
+        probe0 : in STD_LOGIC_VECTOR(63 downto 0)
       );
     end component  ;
 
@@ -1578,7 +1581,11 @@ begin
         probe0(22) => bitslide_slide,
         probe0(23) => bitslide_force,
         probe0(28 downto 24) => phy16_in.rx_bitslide,
-        probe0(31 downto 29) => (others => '0')
+        probe0(30 downto 29) => gth_rx_k_in(1 downto 0),
+        probe0(32 downto 31) => gth_rx_disp_err_in(1 downto 0),
+        probe0(34 downto 33) => gth_rx_comma_in(1 downto 0),
+        probe0(36 downto 35) => gth_rx_dec_err_in(1 downto 0),
+        probe0(63 downto 37) => (others => '0')
         --probe0 (31 downto 16) => gth_status(15 downto 0)
         );
   end generate;

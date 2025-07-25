@@ -47,6 +47,8 @@ entity wr_gthe4_rxtx_adapter is
     gth_tx_data_o : out std_logic_vector(15 downto 0);
     gth_rx_k_i : in std_logic_vector(1 downto 0);
     gth_tx_k_o : out std_logic_vector(1 downto 0);
+    gth_rx_dec_err_i : in std_logic_vector(1 downto 0);
+    gth_rx_disp_err_i : in std_logic_vector(1 downto 0);
 
     gth_rx_clk_i : in std_logic;
     gth_tx_clk_i : in std_logic
@@ -81,7 +83,7 @@ begin
       if serdes_ready_rxclk = '1' and rx_synced_i = '1' then
         rx_data_o    <= gth_rx_data_i(7 downto 0) & gth_rx_data_i(15 downto 8);
         rx_k_o       <= gth_rx_k_i(0) & gth_rx_k_i(1);
-        rx_enc_err_o <= '0';  --rx_disp_err(0) or rx_disp_err(1) or rx_code_err(0) or rx_code_err(1);
+        rx_enc_err_o <= gth_rx_disp_err_i(0) or gth_rx_disp_err_i(1) or gth_rx_dec_err_i(0) or gth_rx_dec_err_i(1);
       else
         rx_data_o    <= (others => '1');
         rx_k_o       <= (others => '1');

@@ -71,6 +71,8 @@ entity wr_gthe4_adapter is
     gth_rx_slide_o : out std_logic;
     gth_rx_k_i : in std_logic_vector(1 downto 0);
     gth_tx_k_o : out std_logic_vector(1 downto 0);
+    gth_rx_dec_err_i : in std_logic_vector(1 downto 0);
+    gth_rx_disp_err_i : in std_logic_vector(1 downto 0);
     gth_rx_byte_aligned_i : in std_logic;
     gth_rx_comma_det_i : in std_logic;
     gth_rx_pma_reset_done_i : in std_logic;
@@ -167,6 +169,8 @@ begin
           gth_tx_data_o => gth_tx_data_o,
           gth_rx_k_i => gth_rx_k_i,
           gth_tx_k_o => gth_tx_k_o,
+          gth_rx_dec_err_i => gth_rx_dec_err_i,
+          gth_rx_disp_err_i => gth_rx_disp_err_i,
           gth_rx_clk_i => gth_rx_clk_i,
           gth_tx_clk_i => gth_tx_clk_i
         );
