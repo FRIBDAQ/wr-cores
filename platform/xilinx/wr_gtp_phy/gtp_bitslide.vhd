@@ -227,7 +227,7 @@ begin  -- behavioral
           gtp_rx_slide_o <= '0';
           bitslide_o     <= std_logic_vector(cur_slide(4 downto 0));
           synced_o       <= '1';
-          if gtp_rx_comma_det_i = '1' then
+          if (gtp_rx_comma_det_i and gtp_rx_byte_is_aligned_i) = '1' then
             counter <= (others => '0');
           else
             counter <= counter + 1;
