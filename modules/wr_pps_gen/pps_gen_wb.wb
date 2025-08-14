@@ -238,4 +238,35 @@ peripheral {
         access_dev = READ_ONLY;
       };
    };
+
+   reg {
+      name = "Lock Sweep register";
+      prefix = "LOCK_SWEEP";
+
+      field {
+         name = "Phase position";
+         description = "Local oscillator phase position with respect to WR reference clock.\
+                        Used when local oscillator has a different frequency and an (integer) \
+                        multiple phase positions (at PPS) may occur when the RW reference clock \
+                        locks to the local oscillator.";
+         prefix = "PHASE";
+         size = 16;
+         type = SLV;
+         clock = "refclk_i";
+         access_dev = WRITE_ONLY;
+         access_bus = READ_ONLY;
+      };
+
+      field {
+         name = "status";
+         description = "Local Sweep status \
+                        read 0: Phase position OK, do not sweep oscillator \
+                        read 1: Wrong phase position, sweep oscillator";
+         prefix = "STAT";
+         type = BIT;
+         clock = "refclk_i";
+         access_dev = WRITE_ONLY;
+         access_bus = READ_ONLY;
+      };
+   };
 };

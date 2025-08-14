@@ -41,7 +41,7 @@ entity wr_pps_gen is
     rst_ref_n_i : in std_logic;
     rst_sys_n_i : in std_logic;
 
-    wb_adr_i   : in  std_logic_vector(4 downto 0);
+    wb_adr_i   : in  std_logic_vector(5 downto 0);
     wb_dat_i   : in  std_logic_vector(31 downto 0);
     wb_dat_o   : out std_logic_vector(31 downto 0);
     wb_cyc_i   : in  std_logic;
@@ -68,6 +68,10 @@ entity wr_pps_gen is
     pps_pre_o   : out std_logic;
     pps_valid_o : out std_logic;
 
+    -- LockSweep signals
+    lock_sweep_i       : in std_logic := '0';
+    lock_sweep_phase_i : in std_logic_vector(15 downto 0) := (others => '0');
+
     tm_utc_o        : out std_logic_vector(39 downto 0);
     tm_cycles_o     : out std_logic_vector(27 downto 0);
     tm_time_valid_o : out std_logic
@@ -81,8 +85,8 @@ architecture behavioral of wr_pps_gen is
   signal resized_addr : std_logic_vector(c_wishbone_address_width-1 downto 0);
 begin  -- behavioral
 
-  resized_addr(4 downto 0)                          <= wb_adr_i;
-  resized_addr(c_wishbone_address_width-1 downto 5) <= (others => '0');
+  resized_addr(5 downto 0)                          <= wb_adr_i;
+  resized_addr(c_wishbone_address_width-1 downto 6) <= (others => '0');
 
   U_Adapter : wb_slave_adapter
     generic map (
@@ -114,22 +118,24 @@ begin  -- behavioral
       g_with_ext_clock_input => g_with_ext_clock_input
       )
     port map(
-      clk_ref_i       => clk_ref_i,
-      clk_sys_i       => clk_sys_i,
-      rst_ref_n_i     => rst_ref_n_i,
-      rst_sys_n_i     => rst_sys_n_i,
-      slave_i         => wb_in,
-      slave_o         => wb_out,
-      link_ok_i       => link_ok_i,
-      pps_in_i        => pps_in_i,
-      ppsin_term_o    => ppsin_term_o,
-      pps_csync_o     => pps_csync_o,
-      pps_out_o       => pps_out_o,
-      pps_led_o       => pps_led_o,
-      pps_pre_o       => pps_pre_o,
-      pps_valid_o     => pps_valid_o,
-      tm_utc_o        => tm_utc_o,
-      tm_cycles_o     => tm_cycles_o,
-      tm_time_valid_o => tm_time_valid_o
+      clk_ref_i          => clk_ref_i,
+      clk_sys_i          => clk_sys_i,
+      rst_ref_n_i        => rst_ref_n_i,
+      rst_sys_n_i        => rst_sys_n_i,
+      slave_i            => wb_in,
+      slave_o            => wb_out,
+      link_ok_i          => link_ok_i,
+      pps_in_i           => pps_in_i,
+      ppsin_term_o       => ppsin_term_o,
+      pps_csync_o        => pps_csync_o,
+      pps_out_o          => pps_out_o,
+      pps_led_o          => pps_led_o,
+      pps_pre_o          => pps_pre_o,
+      pps_valid_o        => pps_valid_o,
+      lock_sweep_i       => lock_sweep_i,
+      lock_sweep_phase_i => lock_sweep_phase_i,
+      tm_utc_o           => tm_utc_o,
+      tm_cycles_o        => tm_cycles_o,
+      tm_time_valid_o    => tm_time_valid_o
       );
 end behavioral;

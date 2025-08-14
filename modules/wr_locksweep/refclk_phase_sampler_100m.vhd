@@ -134,30 +134,18 @@ begin  -- architecture struct
     end if;
   end process;
 
-  -- NOTE: Vivado doesn't like a (lock_pattern_1a or lock_pattern_1b) in a case when statement which leads to
-  -- "Choice in CASE statement alternative must be locally static.".
   p_phase_mux : process(captured_pattern)
   begin
     case captured_pattern is
-      when lock_pattern_1a =>
+      when lock_pattern_1a | lock_pattern_1b =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(1,lock_sweep_phase'length));
-      when lock_pattern_1b =>
-        lock_sweep_phase <= std_logic_vector(to_unsigned(1,lock_sweep_phase'length));
-      when lock_pattern_2a =>
+      when lock_pattern_2a | lock_pattern_2b =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(2,lock_sweep_phase'length));
-      when lock_pattern_2b =>
-        lock_sweep_phase <= std_logic_vector(to_unsigned(2,lock_sweep_phase'length));
-      when lock_pattern_3a =>
+      when lock_pattern_3a | lock_pattern_3b =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(3,lock_sweep_phase'length));
-      when lock_pattern_3b =>
-        lock_sweep_phase <= std_logic_vector(to_unsigned(3,lock_sweep_phase'length));
-      when lock_pattern_4a =>
+      when lock_pattern_4a | lock_pattern_4b =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(4,lock_sweep_phase'length));
-      when lock_pattern_4b =>
-        lock_sweep_phase <= std_logic_vector(to_unsigned(4,lock_sweep_phase'length));
-      when lock_pattern_5a =>
-        lock_sweep_phase <= std_logic_vector(to_unsigned(5,lock_sweep_phase'length));
-      when lock_pattern_5b =>
+      when lock_pattern_5a | lock_pattern_5b =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(5,lock_sweep_phase'length));
       when others =>
         lock_sweep_phase <= std_logic_vector(to_unsigned(0,lock_sweep_phase'length));

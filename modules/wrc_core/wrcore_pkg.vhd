@@ -61,22 +61,24 @@ package wrcore_pkg is
       g_with_ext_clock_input : boolean
       );
     port (
-      clk_ref_i       : in  std_logic;
-      clk_sys_i       : in  std_logic;
-      rst_ref_n_i     : in  std_logic;
-      rst_sys_n_i     : in  std_logic;
-      slave_i         : in  t_wishbone_slave_in;
-      slave_o         : out t_wishbone_slave_out;
-      link_ok_i       : in  std_logic;
-      pps_in_i        : in  std_logic;
-      pps_csync_o     : out std_logic;
-      pps_out_o       : out std_logic;
-      pps_led_o       : out std_logic;
-      pps_valid_o     : out std_logic;
-      pps_pre_o       : out std_logic;
-      tm_utc_o        : out std_logic_vector(39 downto 0);
-      tm_cycles_o     : out std_logic_vector(27 downto 0);
-      tm_time_valid_o : out std_logic
+      clk_ref_i          : in  std_logic;
+      clk_sys_i          : in  std_logic;
+      rst_ref_n_i        : in  std_logic;
+      rst_sys_n_i        : in  std_logic;
+      slave_i            : in  t_wishbone_slave_in;
+      slave_o            : out t_wishbone_slave_out;
+      link_ok_i          : in  std_logic;
+      pps_in_i           : in  std_logic;
+      pps_csync_o        : out std_logic;
+      pps_out_o          : out std_logic;
+      pps_led_o          : out std_logic;
+      pps_valid_o        : out std_logic;
+      pps_pre_o          : out std_logic;
+      lock_sweep_i       : in std_logic := '0';
+      lock_sweep_phase_i : in std_logic_vector(15 downto 0) := (others => '0');
+      tm_utc_o           : out std_logic_vector(39 downto 0);
+      tm_cycles_o        : out std_logic_vector(27 downto 0);
+      tm_time_valid_o    : out std_logic
       );
   end component;
 
@@ -424,6 +426,8 @@ package wrcore_pkg is
       clk_ext_stopped_i    : in std_logic := '0';
       clk_ext_rst_o        : out std_logic;
       clk_ext_i            : in std_logic := '0';
+      lock_sweep_i         : in std_logic := '0';
+      lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
       pps_ext_i            : in std_logic := '0';
       rst_n_i              : in std_logic;
 
@@ -607,6 +611,10 @@ package wrcore_pkg is
       clk_ext_mul_locked_i : in std_logic := '1';
       clk_ext_stopped_i    : in std_logic := '0';
       clk_ext_rst_o        : out std_logic;
+
+      -- LockSweep signals
+      lock_sweep_i         : in std_logic := '0';
+      lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
 
       -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
       pps_ext_i : in std_logic := '0';

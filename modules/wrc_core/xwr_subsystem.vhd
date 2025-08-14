@@ -114,6 +114,10 @@ entity xwr_subsystem is
     --  Reset external clock
     clk_ext_rst_o        : out std_logic;
 
+    -- LockSweep signals
+    lock_sweep_i         : in std_logic := '0';
+    lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
+
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
     pps_ext_i : in std_logic := '0';
 
@@ -644,6 +648,10 @@ begin
       pps_valid_o => pps_valid,
 
       ppsin_term_o => open,
+
+      -- LockSweep signals
+      lock_sweep_i       => lock_sweep_i,
+      lock_sweep_phase_i => lock_sweep_phase_i,
 
       tm_utc_o        => tm_tai_o,
       tm_cycles_o     => tm_cycles_o,

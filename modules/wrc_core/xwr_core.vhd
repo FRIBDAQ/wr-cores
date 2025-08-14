@@ -127,6 +127,16 @@ entity xwr_core is
     --  Reset external clock
     clk_ext_rst_o        : out std_logic;
 
+    -- LockSweep signals
+    -- Leave default if LockSweep is not implemented.
+    -- When LockSweep is implemented, these signals are connected to one
+    -- of the reference clock phase sampler modules found in directory
+    -- wr_locksweep/. LockSweep signals are directly forwarded to the PPS
+    -- generator memory map registers where they are read by wrpc-sw (with
+    -- enabled LockSweep option).
+    lock_sweep_i         : in std_logic := '0';
+    lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
+
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
     pps_ext_i : in std_logic := '0';
 
@@ -359,6 +369,8 @@ begin
       clk_ext_mul_locked_i => clk_ext_mul_locked_i,
       clk_ext_stopped_i => clk_ext_stopped_i,
       clk_ext_rst_o => clk_ext_rst_o,
+      lock_sweep_i => lock_sweep_i,
+      lock_sweep_phase_i => lock_sweep_phase_i,
       pps_ext_i => pps_ext_i,
       rst_n_i => rst_n_i,
       direct_tag0_i => direct_tag0_i,
