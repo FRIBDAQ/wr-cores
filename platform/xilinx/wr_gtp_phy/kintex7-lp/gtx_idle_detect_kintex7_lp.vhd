@@ -64,6 +64,7 @@ architecture rtl of gtx_idle_detect_kintex7_lp is
 
 begin
 
+  --  Concatenate received data before downsampling.
   process(clk_rx_250m_i)
   begin
     if rising_edge(clk_rx_250m_i) then
@@ -76,6 +77,7 @@ begin
 
   rx_data_merged_x4_62m_sh <= rx_data_merged_x4_62m(0) & rx_data_merged_x4_62m(rx_data_merged_x4_62m_sh'length-1 downto 1);
 
+  --  CDC and ...
   process(clk_rx_62m5_i)
   begin
     if rising_edge(clk_rx_62m5_i) then
@@ -83,6 +85,7 @@ begin
     end if;
   end process;
 
+  --  ...  subsample.
   process(clk_rx_62m5_i)
   begin
     if rising_edge(clk_rx_62m5_i) then
@@ -93,6 +96,7 @@ begin
   end process;
 
 
+  --  Detect comma +/- in every position
   p_look_for_loose_commas : process(clk_rx_62m5_i)
   begin
     if rising_edge(clk_rx_62m5_i) then
@@ -139,6 +143,7 @@ begin
             link_up <= '0';
 
             if unsigned(comma_found) /= 0 then
+              --  One comma has been found.
               comma_mask_first <= comma_found;
               state            <= SYNC_CHECK;
               cnt              <= to_unsigned(4, cnt'length);
@@ -146,8 +151,10 @@ begin
 
           when SYNC_CHECK =>
             if comma_found = comma_mask_first then
+              --  Comma at the same position, sync is going well.
               cnt <= cnt + 4;
             elsif cnt > 0 then
+              --  No comma.  Sync is being lost.
               cnt <= cnt - 1;
               if cnt = 1 then
                 state <= SYNC_LOST;
@@ -155,6 +162,7 @@ begin
             end if;
 
             if cnt >= c_IDLE_LENGTH_UP then
+              --  Good enough.
               state <= SYNC_ACQUIRED;
               cnt   <= (others => '0');
             end if;
@@ -167,6 +175,7 @@ begin
             else
               cnt <= cnt + 1;
               if cnt = c_IDLE_LENGTH_LOSS then
+                --  No comma for too long.  No more synchronized.
                 state <= SYNC_LOST;
               end if;
             end if;
