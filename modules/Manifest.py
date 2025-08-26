@@ -20,5 +20,6 @@ modules =  {
         "wr_nmea",
         "wr_auxclk_gen",
         "wr_timecodes",
+        "wr_flash",
     ]
 }
