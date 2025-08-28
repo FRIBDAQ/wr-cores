@@ -135,6 +135,7 @@ architecture top of kr260_ref_top is
     rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpcsreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    rxpd_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     rxpmareset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxprogdivreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxslide_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -146,6 +147,7 @@ architecture top of kr260_ref_top is
     txctrl1_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     txctrl2_in : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
     txpcsreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    txpd_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     txpippmen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmovrden_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpippmpd_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -227,6 +229,7 @@ END COMPONENT;
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
+  signal gth_tx_pd, gth_rx_pd : std_logic;
 
   signal gtrxreset, gttxreset : std_logic;
   signal rx_reset_done, tx_reset_done : std_logic;
@@ -919,6 +922,10 @@ begin
 
       gtrxreset_in(0) => gtrxreset,
       gttxreset_in(0) => gttxreset,
+      rxpd_in(0)      => gth_rx_pd,
+      rxpd_in(1)      => gth_rx_pd,
+      txpd_in(0)      => gth_tx_pd,
+      txpd_in(1)      => gth_tx_pd,
       txuserrdy_in(0) => txusrrdy,
       rxuserrdy_in(0) => rxusrrdy,
 
@@ -1498,12 +1505,13 @@ begin
     end if;
   end process;
 
-  phy_rst <= gth_rst or phy16_out.rst;
-
   b_rst: block
     signal powergood_dly : std_logic;
     constant pg_dly_len : natural := 250_000 / 16; --  250us / clk_cyc
     signal pg_dly_cnt : natural range 0 to pg_dly_len := 0;
+    constant pd_dly_len : natural := 10;
+    signal pd_dly_cnt : natural range 0 to pd_dly_len;
+    signal pd_dly : std_logic;
   begin
     process (clk_62m5, gth_powergood)
     begin
@@ -1519,14 +1527,33 @@ begin
       end if;
     end process;
 
+    process (clk_62m5)
+    begin
+      if rising_edge(clk_62m5) then
+        if phy_rst = '1' then
+          pd_dly <= '1';
+          pd_dly_cnt <= 0;
+        elsif pd_dly_cnt < pd_dly_len then
+          pd_dly_cnt <= pd_dly_cnt + 1;
+        else
+          pd_dly <= '0';
+        end if;
+      end if;
+    end process;
+
+    phy_rst <= gth_rst or phy16_out.rst;
+
     qpll1_reset <= not powergood_dly;
     qpll0_reset <= not powergood_dly;
 
     rxusrrdy <= powergood_dly;
     txusrrdy <= powergood_dly;
 
-    gttxreset <= not powergood_dly or not qpll0_lock or phy_rst or gth_rx_rst;
-    gtrxreset <= not powergood_dly or not qpll0_lock or phy_rst or gth_tx_rst;
+    gth_rx_pd <= phy_rst;
+    gth_tx_pd <= phy_rst;
+
+    gttxreset <= not powergood_dly or not qpll0_lock or pd_dly or gth_rx_rst;
+    gtrxreset <= not powergood_dly or not qpll0_lock or pd_dly or gth_tx_rst;
   end block;
 
   gen_ila: if true generate
@@ -1556,7 +1583,7 @@ begin
     gth_status_a(12) <= gth_tx_prg_div_reset_done;
     gth_status_a(13) <= rdy_in;
     gth_status_a(14) <= gth_rx_slide;
-    gth_status_a(15) <= gth_rst;
+    gth_status_a(15) <= phy_rst;
 
     gen_sync: for i in gth_status'range generate
       inst_sync: entity work.gc_sync
