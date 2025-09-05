@@ -286,6 +286,9 @@ END COMPONENT;
   signal abscal_tx, abscal_rx : std_logic;
 
   signal nbr_comma, nbr_bytealign, nbr_counter, nbr_comma_cnt, nbr_bytealign_cnt: unsigned(31 downto 0);
+
+  signal spi_sclk, spi_cs_n, spi_mosi, spi_miso : std_logic;
+
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -1239,10 +1242,10 @@ begin
       sfp_scl_i => sfp_scl_b,
       sfp_sda_o => sfp_sda_out,
       sfp_sda_i => sfp_sda_b,
-      spi_sclk_o => open,
-      spi_ncs_o => open,
-      spi_mosi_o => open,
-      spi_miso_i => open,
+      spi_sclk_o => spi_sclk,
+      spi_ncs_o => spi_cs_n,
+      spi_mosi_o => spi_mosi,
+      spi_miso_i => spi_miso,
       owr_pwren_o => open,
       owr_en_o => open,
       owr_i => open,
@@ -1281,6 +1284,9 @@ begin
       link_ok_o => open,
       aux_diag_i => open,
       aux_diag_o => open,
+      aux_timing_serdes_locked_i => '1',
+      utc_o => open,
+      aux_timing_o => open,
       btn1_i => open,
       btn2_i => open
       );
@@ -1324,6 +1330,18 @@ begin
       gth_rx_clk_i => phy16_in.rx_clk,
       gth_tx_clk_i => phy16_in.ref_clk
       );
+
+  inst_flash: entity work.wr_mac_flash
+    port map (
+      clk_i => clk_62m5,
+      rst_n_i => rst_n,
+      mac_addr_i => x"aa_01_02_03_04_05",
+      mac_valid_i => '1',
+      spi_sclk_i => spi_sclk,
+      spi_cs_n_i => spi_cs_n,
+      spi_mosi_i => spi_mosi,
+      spi_miso_o => spi_miso
+    );
 
   --  Generate some outputs on PMOD
 
