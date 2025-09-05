@@ -39,6 +39,7 @@ use ieee.numeric_std.all;
 
 entity wr_mac_flash is
   port (
+    --  Must be the same clock/reset as the wrpc sys clock.
     clk_i : in std_logic;
     rst_n_i : in std_logic;
 
@@ -48,6 +49,7 @@ entity wr_mac_flash is
     mac_valid_i : in std_logic;
 
     --  Slave SPI interface
+    --  Note: the inputs are not resynchronized.
     spi_sclk_i : in  std_logic;
     spi_cs_n_i : in  std_logic;
     spi_mosi_i : in  std_logic;
