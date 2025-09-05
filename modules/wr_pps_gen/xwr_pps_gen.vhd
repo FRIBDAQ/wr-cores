@@ -6,7 +6,7 @@
 -- Author     : Tomasz Wlostowski
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2010-09-02
--- Last update: 2018-03-08
+-- Last update: 2025-09-05
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
 -------------------------------------------------------------------------------
@@ -84,47 +84,9 @@ entity xwr_pps_gen is
 end xwr_pps_gen;
 
 architecture behavioral of xwr_pps_gen is
-
-  component wr_pps_gen is
-    generic(
-      g_interface_mode       : t_wishbone_interface_mode;
-      g_address_granularity  : t_wishbone_address_granularity;
-      g_ref_clock_rate       : integer;
-      g_ext_clock_rate       : integer := 10000000;
-      g_with_ext_clock_input : boolean := FALSE
-      );
-    port (
-      clk_ref_i       : in  std_logic;
-      clk_sys_i       : in  std_logic;
-      rst_ref_n_i     : in  std_logic;
-      rst_sys_n_i     : in  std_logic;
-      wb_adr_i        : in  std_logic_vector(4 downto 0);
-      wb_dat_i        : in  std_logic_vector(31 downto 0);
-      wb_dat_o        : out std_logic_vector(31 downto 0);
-      wb_cyc_i        : in  std_logic;
-      wb_sel_i        : in  std_logic_vector(3 downto 0);
-      wb_stb_i        : in  std_logic;
-      wb_we_i         : in  std_logic;
-      wb_ack_o        : out std_logic;
-      wb_stall_o      : out std_logic;
-      link_ok_i       : in  std_logic;
-      pps_in_i        : in  std_logic;
-      ppsin_term_o    : out std_logic;
-      pps_csync_o     : out std_logic;
-      pps_out_o       : out std_logic;
-      pps_led_o       : out std_logic;
-      pps_pre_o       : out std_logic;
-      pps_valid_o     : out std_logic;
-      tm_utc_o        : out std_logic_vector(39 downto 0);
-      tm_cycles_o     : out std_logic_vector(27 downto 0);
-      tm_time_valid_o : out std_logic
-      );
-  end component;
-
 begin  -- behavioral
 
-
-  WRAPPED_PPSGEN : wr_pps_gen
+  WRAPPED_PPSGEN : entity work.wr_pps_gen
     generic map(
       g_interface_mode       => g_interface_mode,
       g_address_granularity  => g_address_granularity,
