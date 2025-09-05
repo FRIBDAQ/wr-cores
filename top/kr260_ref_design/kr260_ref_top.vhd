@@ -1361,9 +1361,9 @@ begin
 
   b_pmod: block
   begin
-    pmod4_2_b <= phy16_in.rx_clk; --  The recovered clock
-    pmod4_4_b <= phy16_in.ref_clk; --  The WR reference clock
-    pmod4_6_b <= clk_ps; -- abscal_tx;
+    pmod4_2_b <= phy16_in.ref_clk; --  The WR reference clock
+    pmod4_4_b <= '0'; -- phy16_in.rx_clk; --  The recovered clock
+    pmod4_6_b <= abscal_tx; -- '0'; -- clk_ps;
     pmod4_8_b <= abscal_rx;
   end block;
 
