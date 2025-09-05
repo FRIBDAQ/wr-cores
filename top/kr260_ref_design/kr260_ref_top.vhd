@@ -44,6 +44,8 @@ use unisim.vcomponents.all;
 
 entity kr260_ref_top is
   port (
+    -- ref0: 156.25
+    -- ref1: 74.25 (12g sdi)
     refclk0_n_i : in std_logic;
     refclk0_p_i : in std_logic;
 

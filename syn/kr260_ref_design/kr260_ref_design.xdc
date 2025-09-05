@@ -9,7 +9,10 @@
 create_clock -period 6.400 -name clk [get_ports {refclk0_p_i}]
 
 # Aux oscillator (used only for leds ?)
-create_clock -period 40.000 -name clk_25m_i [get_ports {clk_25m_i}]
+create_clock -period 40.000 -name clk_25m [get_ports {clk_25m_i}]
+
+create_generated_clock -name clk_62m5 [get_pins inst_mmcm_62m5/CLKOUT0]
+create_generated_clock -name clk_ps_out [get_pins inst_mmcm_ps/CLKOUT0]
 
 # GTH monitor clock
 # Not sure about the period (apparently 2* clk)
@@ -37,21 +40,44 @@ create_clock -period 10.000 -name dmon_clk [get_pins {inst_gth_channel/inst/gen_
 set_clock_groups -asynchronous \
   -group clk_62m5 \
   -group clk_ps_out \
+  -group clk_25m \
   -group dmon_clk \
   -group [get_clocks -of_objects [get_pins {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/RXOUTCLK}]] \
   -group [get_clocks -of_objects [get_pins {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK}]]
 
 
 # Input delays
-create_clock -period 16.000 -name VIRTUAL_clk_62m5 -waveform {0.000 8.000}
-set_input_delay -clock VIRTUAL_clk_62m5 -min -add_delay 0.0 [get_ports {sfp_mod_abs_i}]
-set_input_delay -clock VIRTUAL_clk_62m5 -max -add_delay 4.0 [get_ports {sfp_mod_abs_i}]
-set_input_delay -clock VIRTUAL_clk_62m5 -min -add_delay 0.0 [get_ports {sfp_scl_b}]
-set_input_delay -clock VIRTUAL_clk_62m5 -max -add_delay 4.0 [get_ports {sfp_scl_b}]
-set_input_delay -clock VIRTUAL_clk_62m5 -min -add_delay 0.0 [get_ports {sfp_sda_b}]
-set_input_delay -clock VIRTUAL_clk_62m5 -max -add_delay 4.0 [get_ports {sfp_sda_b}]
-set_input_delay -clock VIRTUAL_clk_62m5 -min -add_delay 0.0 [get_ports {sfp_tx_fault_i}]
-set_input_delay -clock VIRTUAL_clk_62m5 -max -add_delay 4.0 [get_ports {sfp_tx_fault_i}]
+# We don't really care about the delay on async inputs
+set_input_delay 8.0 -clock clk_62m5 [get_ports {sfp_mod_abs_i}]
+set_false_path -from [get_ports {sfp_mod_abs_i}]
+set_input_delay 8.0 -clock clk_62m5 [get_ports {sfp_scl_b}]
+set_false_path -from [get_ports {sfp_scl_b}]
+set_input_delay 8.0 -clock clk_62m5 [get_ports {sfp_sda_b}]
+set_false_path -from [get_ports {sfp_sda_b}]
+set_input_delay 8.0 -clock clk_62m5 [get_ports {sfp_tx_fault_i}]
+set_false_path -from [get_ports {sfp_tx_fault_i}]
+
+# Output delays
+set_output_delay 2.0 -clock clk_25m [get_ports {led1_o}]
+set_false_path -to [get_ports {led1_o}]
+set_output_delay 2.0 -clock clk_25m [get_ports {led2_o}]
+set_false_path -to [get_ports {led2_o}]
+
+set_output_delay 2.0 -clock clk_62m5 [get_ports {pmod4_6_b}]
+set_false_path -to [get_ports {pmod4_6_b}]
+set_output_delay 2.0 -clock clk_62m5 [get_ports {pmod4_8_b}]
+set_false_path -to [get_ports {pmod4_8_b}]
+
+set_output_delay 2.0 -clock clk_62m5 [get_ports {sfp_led1_o}]
+set_false_path -to [get_ports {sfp_led1_o}]
+set_output_delay 2.0 -clock clk_62m5 [get_ports {sfp_led2_o}]
+set_false_path -to [get_ports {sfp_led2_o}]
+set_output_delay 2.0 -clock clk_62m5 [get_ports {sfp_scl_b}]
+set_false_path -to [get_ports {sfp_scl_b}]
+set_output_delay 2.0 -clock clk_62m5 [get_ports {sfp_sda_b}]
+set_false_path -to [get_ports {sfp_sda_b}]
+set_output_delay 2.0 -clock clk_62m5 [get_ports {sfp_tx_disable_o}]
+set_false_path -to [get_ports {sfp_tx_disable_o}]
 
 ##################
 # I/O constraints
