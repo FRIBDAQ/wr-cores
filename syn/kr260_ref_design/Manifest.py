@@ -1,4 +1,4 @@
-board  = "kr260"
+board  = "gthe4-rxpi"
 target = "xilinx"
 action = "synthesis"
 
