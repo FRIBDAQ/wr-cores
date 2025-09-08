@@ -1187,7 +1187,8 @@ begin
       g_dpram_size => 192 * 1024 / 4,
       g_pcs_16bit => true,
       g_records_for_phy => true,
-      g_softpll_enable_debugger => true
+      g_softpll_enable_debugger => true,
+      g_direct_tag => true
       )
     port map (
       clk_sys_i => clk_62m5,
@@ -1202,8 +1203,8 @@ begin
       clk_ext_stopped_i => open,
       clk_ext_rst_o => open,
       pps_ext_i => open,
-      rxpi_valid_i => rxpi_valid,
-      rxpi_i => rxpi_data(29 downto 8),
+      direct_tag0_valid_i => rxpi_valid,
+      direct_tag0_i => rxpi_data(31 downto 8),
       dac_hpll_load_p1_o => open,
       dac_hpll_data_o => open,
       dac_dpll_load_p1_o => mpll_load,
