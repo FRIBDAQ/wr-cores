@@ -12,11 +12,11 @@ create_clock -period 6.400 -name clk [get_ports {refclk0_p_i}]
 create_clock -period 40.000 -name clk_25m [get_ports {clk_25m_i}]
 
 create_generated_clock -name clk_62m5 [get_pins inst_mmcm_62m5/CLKOUT0]
-create_generated_clock -name clk_ps_out [get_pins inst_mmcm_ps/CLKOUT0]
+create_generated_clock -name clk_ps_out [get_pins inst_wrc_board/inst_mmcm_ps/CLKOUT0]
 
 # GTH monitor clock
 # Not sure about the period (apparently 2* clk)
-create_clock -period 10.000 -name dmon_clk [get_pins {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/DMONITOROUTCLK}]
+create_clock -period 10.000 -name dmon_clk [get_pins {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/DMONITOROUTCLK}]
 
 # create_clock -period 16.000 -name gth_txclk   -waveform {0.000 8.000} [get_nets cmp_xwrc_board_pxie_fmc/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/tx_out_clk_o]
 
@@ -42,8 +42,8 @@ set_clock_groups -asynchronous \
   -group clk_ps_out \
   -group clk_25m \
   -group dmon_clk \
-  -group [get_clocks -of_objects [get_pins {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/RXOUTCLK}]] \
-  -group [get_clocks -of_objects [get_pins {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK}]]
+  -group [get_clocks -of_objects [get_pins {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/RXOUTCLK}]] \
+  -group [get_clocks -of_objects [get_pins {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST/TXOUTCLK}]]
 
 
 # Input delays
@@ -150,8 +150,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports sfp_scl_b]
 
 # For dmonitor
 # Cf xapp1252
-set_property ADAPT_CFG1 "1101100000000010" [get_cells {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property DMONITOR_CFG1 "00000001" [get_cells {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property RXCDR_CFG0 "0000010000100110" [get_cells {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property RXCDR_CFG2 "0000000011000101" [get_cells {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
-set_property RXCDR_CFG5 "0011010001111011" [get_cells {inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property ADAPT_CFG1 "1101100000000010" [get_cells {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property DMONITOR_CFG1 "00000001" [get_cells {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG0 "0000010000100110" [get_cells {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG2 "0000000011000101" [get_cells {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
+set_property RXCDR_CFG5 "0011010001111011" [get_cells {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_sdm_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST} ]
