@@ -136,12 +136,18 @@ architecture top of kr260_ref_top is
 begin
   inst_wrc_board: entity work.xwrc_board_gthe4_rxpi
     generic map (
-      g_refclk0_freq => 156_250_000
+      g_refclk0_freq => 156_250_000,
+      g_use_sdm => true,
+      g_refclk0_bufg_div => "000",
+      g_board_name => "KR26",
+      g_dpram_initf => "",
+      g_dpram_size => (128+32) * 1024 / 4
     )
     port map (
       refclk0_n_i => refclk0_n_i,
       refclk0_p_i => refclk0_p_i,
-      refclk0_o => refclk0,
+      refclk0_bufg_o => refclk0,
+      refclk0_gt_o => open,
       clk_62m5_i => clk_62m5,
       clk_ref_o => clk_ref,
       rst_n_i => rst_n,
@@ -156,16 +162,31 @@ begin
       sfp_mod_abs_i => sfp_mod_abs_i,
       sfp_sda_b => sfp_sda_b,
       sfp_scl_b => sfp_scl_b,
+      dac_dpll_data_o => open,
+      dac_dpll_load_p1_o => open,
       wb_wrpc_i => wb_wrpc_out,
       wb_wrpc_o => wb_wrpc_in,
+      wrf_snk_i => open,
+      wrf_snk_o => open,
+      wrf_src_i => open,
+      wrf_src_o => open,
       abscal_txts_o => abscal_tx,
       abscal_rxts_o => abscal_rx,
       spi_sclk_o => spi_sclk,
       spi_ncs_o => spi_cs_n,
       spi_mosi_o => spi_mosi,
       spi_miso_i => spi_miso,
+      eeprom_scl_b => open,
+      eeprom_sda_b => open,
       uart_rxd_i => uart_rx,
-      uart_txd_o => uart_tx
+      uart_txd_o => uart_tx,
+      tm_link_up_o => open,
+      tm_time_valid_o => open,
+      tm_tai_o => open,
+      tm_cycles_o => open,
+      pps_valid_o => open,
+      pps_p_o => open,
+      pps_led_o => open
     );
 
   inst_bufg: BUFG
