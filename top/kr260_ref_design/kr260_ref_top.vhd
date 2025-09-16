@@ -132,21 +132,20 @@ architecture top of kr260_ref_top is
 
   signal spi_sclk, spi_cs_n, spi_mosi, spi_miso : std_logic;
 
-  signal refclk0 : std_logic;
+  signal refclk0_int, refclk0 : std_logic;
 begin
   inst_wrc_board: entity work.xwrc_board_gthe4_rxpi
     generic map (
       g_refclk0_freq => 156_250_000,
       g_use_sdm => true,
-      g_refclk0_bufg_div => "000",
       g_board_name => "KR26",
       g_dpram_initf => "",
-      g_dpram_size => (128+32) * 1024 / 4
+      g_dpram_size => (128+64) * 1024 / 4
     )
     port map (
       refclk0_n_i => refclk0_n_i,
       refclk0_p_i => refclk0_p_i,
-      refclk0_bufg_o => refclk0,
+      refclk0_int_o => refclk0_int,
       refclk0_gt_o => open,
       clk_62m5_i => clk_62m5,
       clk_ref_o => clk_ref,
@@ -188,6 +187,17 @@ begin
       pps_p_o => open,
       pps_led_o => open
     );
+
+  inst_buf_gt : BUFG_GT
+    port map (
+      O => refclk0,
+      CE => '1',
+      CEMASK => '0',
+      CLR => '0',
+      CLRMASK => '0',
+      DIV => "000",
+      I => refclk0_int);
+
 
   inst_bufg: BUFG
     port map (
