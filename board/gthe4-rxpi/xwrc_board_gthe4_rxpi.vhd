@@ -245,7 +245,7 @@ END COMPONENT;
   signal qpll0_outclk, qpll0_outrefclk : std_logic;
   signal qpll1_outclk, qpll1_outrefclk : std_logic;
 
-  signal gth_rst, gth_rst_n: std_logic;
+  signal gth_rst : std_logic;
   signal gth_tx_rst, gth_rx_rst : std_logic;
   signal sfp_scl_out, sfp_sda_out : std_logic;
 
@@ -280,41 +280,24 @@ END COMPONENT;
   signal phy_rst : std_logic;
 
   signal mpll_data_out : std_logic_vector(15 downto 0);
-  signal hpll_data_out : std_logic_vector(31 downto 0);
-  signal hpll_load, mpll_load : std_logic;
+  signal mpll_load : std_logic;
 
   signal hpll_data, mpll_data : std_logic_vector(24 downto 0);
   signal hpll_toggle, mpll_toggle : std_logic;
-  signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
   signal rxoutclk_out, rxoutclk : std_logic;
   signal txoutclk_out, txoutclk : std_logic;
   
   signal dmonitorout : std_logic_vector(15 downto 0);
-  signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
-  signal gth_dmon_clk, gth_dmon_clk_out, gth_dmon_rst_n : std_logic;
+  signal gth_dmon_clk, gth_dmon_clk_out  : std_logic;
 
-  signal rxpi_fifo_samp, rxpi_data : std_logic_vector(31 downto 0);
+  signal rxpi_data : std_logic_vector(31 downto 0);
   signal rxpi_valid : std_logic;
 
   signal gth_status_a, gth_status : std_logic_vector(15 downto 0) := (others => '0');
 
   signal bitslide_val : std_logic_vector(4 downto 0);
-  signal rdy_in, rdy_in_62m5, rdy_out_62m5 : std_logic;
-
-  --  For phase shift
-  signal ps_clk_fb, ps_clk_fb_bufg : std_logic;
-  signal ps_clk_in_stopped, ps_clk_fb_stopped : std_logic;
-  signal clk_ps_out, clk_ps : std_logic;
-  signal ps_clk_locked, ps_clk_pd, ps_clk_rst, ps_clk_rst_n : std_logic;
-  signal ps_clk_pen, ps_clk_done, ps_clk_incdec, ps_clk_busy : std_logic;
-  signal ps_clk_shift, ps_clk_shift_wr : std_logic;
-  signal ps_clk_phase : unsigned(15 downto 0);
-
-  signal ps_clk_nsamp : std_logic_vector(23 downto 0);
-  signal rxoutclk_sync : std_logic;
-  signal ps_clk_nsamp_cnt, ps_clk_count, ps_clk_count_out : unsigned(23 downto 0);
-  signal ps_clk_gen : unsigned(7 downto 0);
+  signal rdy_in, rdy_out_62m5 : std_logic;
 
   signal eeprom_scl_out, eeprom_sda_out : std_logic;
 begin
@@ -332,183 +315,11 @@ begin
 
   refclk0_gt_o <= refclk0;
 
-  --  MMCM for phase shift
-  --  Input: ref clock
-  --  Output: shifted version of ref clock
-  --  VCO: 1250Mhz (x20)
-  inst_mmcm_ps : MMCME4_ADV
-    generic map (
-      BANDWIDTH => "OPTIMIZED",  -- Jitter programming
-      CLKFBOUT_MULT_F => 20.0,    -- Multiply value for all CLKOUT
-      CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB
-      CLKFBOUT_USE_FINE_PS => "FALSE", -- Fine phase shift enable (TRUE/FALSE)
-      CLKIN1_PERIOD => 16.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
-      CLKIN2_PERIOD => 0.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
-      CLKOUT0_DIVIDE_F => 20.0,        -- Divide amount for CLKOUT0
-      CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
-      CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
-      CLKOUT0_USE_FINE_PS => "TRUE",   -- Fine phase shift enable (TRUE/FALSE)
-      CLKOUT1_DIVIDE => 1,             -- Divide amount for CLKOUT (1-128)
-      CLKOUT1_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT outputs (0.001-0.999).
-      CLKOUT1_PHASE => 0.0,            -- Phase offset for CLKOUT outputs (-360.000-360.000).
-      CLKOUT1_USE_FINE_PS => "FALSE",
-      CLKOUT2_DIVIDE => 1,
-      CLKOUT2_DUTY_CYCLE => 0.5,
-      CLKOUT2_PHASE => 0.0,
-      CLKOUT2_USE_FINE_PS => "FALSE",
-      CLKOUT3_DIVIDE => 1,
-      CLKOUT3_DUTY_CYCLE => 0.5,
-      CLKOUT3_PHASE => 0.0,
-      CLKOUT3_USE_FINE_PS => "FALSE",
-      CLKOUT4_CASCADE => "FALSE",
-      CLKOUT4_DIVIDE => 1,
-      CLKOUT4_DUTY_CYCLE => 0.5,
-      CLKOUT4_PHASE => 0.0,
-      CLKOUT4_USE_FINE_PS => "FALSE",
-      CLKOUT5_DIVIDE => 1,
-      CLKOUT5_DUTY_CYCLE => 0.5,
-      CLKOUT5_PHASE => 0.0,
-      CLKOUT5_USE_FINE_PS => "FALSE",
-      CLKOUT6_DIVIDE => 1,
-      CLKOUT6_DUTY_CYCLE => 0.5,
-      CLKOUT6_PHASE => 0.0,
-      CLKOUT6_USE_FINE_PS => "FALSE",
-      COMPENSATION => "AUTO",            -- Clock input compensation
-      DIVCLK_DIVIDE => 1,                -- Master division value
-      IS_CLKFBIN_INVERTED => '0',
-      IS_CLKIN1_INVERTED => '0',
-      IS_CLKIN2_INVERTED => '0',
-      IS_CLKINSEL_INVERTED => '0',
-      IS_PSEN_INVERTED => '0',
-      IS_PSINCDEC_INVERTED => '0',
-      IS_PWRDWN_INVERTED => '0',
-      IS_RST_INVERTED => '0',
-      REF_JITTER1 => 0.0,
-      REF_JITTER2 => 0.0,
-      SS_EN => "FALSE",
-      SS_MODE => "CENTER_HIGH",
-      SS_MOD_PERIOD => 10000,
-      STARTUP_WAIT => "FALSE"
-      )
-    port map (
-      CDDCDONE => open, -- 1-bit output: Clock dynamic divide done
-      CLKFBOUT => ps_clk_fb, -- 1-bit output: Feedback clock
-      CLKFBOUTB => open, -- 1-bit output: Inverted CLKFBOUT
-      CLKFBSTOPPED => ps_clk_fb_stopped, -- 1-bit output: Feedback clock stopped
-      CLKINSTOPPED => ps_clk_in_stopped, -- 1-bit output: Input clock stopped
-      CLKOUT0 => clk_ps_out,   -- 1-bit output: CLKOUT0
-      CLKOUT0B => open, -- 1-bit output: Inverted CLKOUT0
-      CLKOUT1  => open,   -- 1-bit output: CLKOUT1
-      CLKOUT1B => open, -- 1-bit output: Inverted CLKOUT1
-      CLKOUT2  => open,   -- 1-bit output: CLKOUT2
-      CLKOUT2B => open, -- 1-bit output: Inverted CLKOUT2
-      CLKOUT3  => open,   -- 1-bit output: CLKOUT3
-      CLKOUT3B => open, -- 1-bit output: Inverted CLKOUT3
-      CLKOUT4  => open,   -- 1-bit output: CLKOUT4
-      CLKOUT5  => open,   -- 1-bit output: CLKOUT5
-      CLKOUT6  => open,   -- 1-bit output: CLKOUT6
-      DO => open,             -- 16-bit output: DRP data output
-      DRDY =>  open,         -- 1-bit output: DRP ready
-      LOCKED => ps_clk_locked,     -- 1-bit output: LOCK
-      PSDONE => ps_clk_done,     -- 1-bit output: Phase shift done
-      CDDCREQ => '0',   -- 1-bit input: Request to dynamic divide clock
-      CLKFBIN => ps_clk_fb_bufg,   -- 1-bit input: Feedback clock
-      CLKIN1 => txoutclk,     -- 1-bit input: Primary clock
-      CLKIN2 => '0',     -- 1-bit input: Secondary clock
-      CLKINSEL => '1', -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
-      DADDR => (others => '0'),       -- 7-bit input: DRP address
-      DCLK => '0',         -- 1-bit input: DRP clock
-      DEN => '0',           -- 1-bit input: DRP enable
-      DI => (others => '0'),             -- 16-bit input: DRP data input
-      DWE => '0',           -- 1-bit input: DRP write enable
-      PSCLK => clk_62m5_i,        -- 1-bit input: Phase shift clock
-      PSEN => ps_clk_pen,         -- 1-bit input: Phase shift enable
-      PSINCDEC => ps_clk_incdec,  -- 1-bit input: Phase shift inc/dec
-      PWRDWN => ps_clk_pd,        -- 1-bit input: Power-down
-      RST => ps_clk_rst           -- 1-bit input: Reset
-      );
-
-  inst_bufg_ps : BUFG
-    port map (
-      I => clk_ps_out,
-      O => clk_ps
-    );
-
-  inst_bufg_ps_fb: BUFG
-    port map (
-      I => ps_clk_fb,
-      O => ps_clk_fb_bufg
-    );
-
-  gth_rst_n <= not gth_rst;
-
   sfp_tx_disable_o <= phy16_out.sfp_tx_disable;
   phy16_in.sfp_tx_fault <= sfp_tx_fault_i;
  
   sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
   sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
-
-  gen_sdm: if g_use_sdm generate
-    process(clk_62m5_i)
-    begin
-      if rising_edge(clk_62m5_i) then
-        if rst_n_i = '0' then
-          mpll_cnt <= (others => '0');
-          hpll_cnt <= (others => '0');
-          mpll_toggle <= '0';
-          hpll_toggle <= '0';
-        else
-          if mpll_cnt = 0 then
-            --  Idle, can accept a new value
-            if mpll_load = '1' then
-              --  Reformat.
-              --  According to 73205, only LSB are significant.
-              mpll_data <= (others => '0');
-              mpll_data(13 downto 0) <= mpll_data_out(15 downto 2);
-              mpll_cnt <= (others => '1');
-            end if;
-          else
-            --  FB CLK should be way higher than system clock
-            if mpll_cnt(5 downto 4) = "00" then
-              mpll_toggle <= '0';
-            elsif mpll_cnt(5 downto 4) /= "11" then
-              mpll_toggle <= '1';
-            end if;
-            mpll_cnt <= mpll_cnt - 1;
-          end if;
-
-          if hpll_cnt = 0 then
-            --  Idle, can accept a new value
-            if hpll_load = '1' then
-              --  Reformat.
-              --  According to 73205, only LSB are significant.
-              hpll_data <= (others => '0');
-              hpll_data(23 downto 0) <= hpll_data_out(23 downto 0); -- b"1111_111" & hpll_data_out & '0';
-              hpll_cnt <= (others => '1');
-            end if;
-          else
-            --  FB CLK should be way higher than system clock
-            if hpll_cnt(5 downto 4) = "00" then
-              hpll_toggle <= '0';
-            elsif mpll_cnt(5 downto 4) /= "11" then
-              hpll_toggle <= '1';
-            end if;
-            hpll_cnt <= hpll_cnt - 1;
-          end if;
-        end if;
-      end if;
-    end process;
-  end generate gen_sdm;
-
-  gen_no_sdm: if not g_use_sdm generate
-    dac_dpll_load_p1_o <= mpll_load;
-    dac_dpll_data_o    <= mpll_data_out;
-
-    mpll_data <= (others => '0');
-    mpll_toggle <= '0';
-    hpll_data <= (others => '0');
-    hpll_toggle <= '0';
-  end generate;
 
   --  The common part of the gthe4.
   --  The values can be found in the top-level module generated when the common
@@ -793,106 +604,42 @@ begin
       dmonitorclk_in(0) => gth_dmon_clk
   );
 
-  inst_gthe4_map: entity work.rxpi_gthe4_map
+  inst_gthe4_rxpi: entity work.xwrc_gthe4_rxpi
+    generic map (
+      g_use_sdm => g_use_sdm
+    )
     port map (
+      clk_62m5_i => clk_62m5_i,
       rst_n_i => rst_n_i,
-      clk_i => clk_62m5_i,
-      wb_i => wb_wraux_out,
-      wb_o => wb_wraux_in,
-      reset_gth_rst_o => gth_rst,
-      reset_gth_tx_rst_o => gth_tx_rst,
-      reset_gth_tx_pcs_rst_o => txpcsreset,
-      reset_gth_tx_pma_rst_o => txpmareset,
-      reset_gth_rx_rst_o => gth_rx_rst,
-      reset_gth_rx_pcs_rst_o => rxpcsreset,
-      reset_gth_rx_pma_rst_o => rxpmareset,
-      reset_gth_rx_buf_rst_o => rxbufreset,
-      status_i(31 downto 17) => (others => '0'),
-      status_i(16) => rdy_in_62m5,
-      status_i(15 downto 0) => gth_status,
-      ctrl_rdy_o => rdy_out_62m5,
-      bitslide_i(4 downto 0) => bitslide_val,
-      bitslide_i(31 downto 5) => (others => '0'),
-
-      ps_ctrl_shift_i => '0',
-      ps_ctrl_shift_o => ps_clk_shift,
-      ps_ctrl_wr_o => ps_clk_shift_wr,
-      ps_ctrl_rst_o => ps_clk_rst,
-      ps_ctrl_pd_o => ps_clk_pd,
-      ps_ctrl_incdec_o => ps_clk_incdec,
-      ps_stat_phase_i => std_logic_vector(ps_clk_phase),
-      ps_stat_fb_stopped_i => ps_clk_fb_stopped,
-      ps_stat_in_stopped_i => ps_clk_in_stopped,
-      ps_stat_locked_i => ps_clk_locked,
-      ps_stat_ps_busy_i => ps_clk_busy,
-      ps_count_val_o => ps_clk_nsamp,
-      ps_res_val_i => std_logic_vector(ps_clk_count_out),
-      ps_res_gen_i => std_logic_vector(ps_clk_gen)
+      wb_aux_i => wb_wraux_out,
+      wb_aux_o => wb_wraux_in,
+      tx_out_clk_i => txoutclk,
+      rx_out_clk_i => rxoutclk,
+      dmonitorout_i => dmonitorout,
+      gth_dmon_clk_i => gth_dmon_clk,
+      rxpi_valid_o => rxpi_valid,
+      rxpi_data_o => rxpi_data,
+      mpll_data_i => mpll_data_out,
+      mpll_load_i => mpll_load,
+      hpll_data_i => open,
+      hpll_load_i => open,
+      mpll_data_o => mpll_data,
+      mpll_toggle_o => mpll_toggle,
+      hpll_data_o => hpll_data,
+      hpll_toggle_o => hpll_toggle,
+      phy_rdy_i => rdy_in,
+      phy_rdy_o => rdy_out_62m5,
+      gth_rst_o => gth_rst,
+      gth_tx_rst_o => gth_tx_rst,
+      gth_rx_rst_o => gth_rx_rst,
+      bitslide_val_i => bitslide_val,
+      rxbufreset_o => rxbufreset,
+      rxpcsreset_o => rxpcsreset,
+      rxpmareset_o => rxpmareset,
+      txpcsreset_o => txpcsreset,
+      txpmareset_o => txpmareset,
+      gth_status_i => gth_status
     );
-
-  inst_sync_rxoutclk: entity work.gc_sync
-    port map (
-      clk_i => clk_ps,
-      rst_n_a_i => ps_clk_rst_n,
-      d_i => rxoutclk,
-      q_o => rxoutclk_sync
-    );
-  
-  ps_clk_rst_n <= not ps_clk_rst;
-
-  ps_clk_pen <= ps_clk_shift_wr and ps_clk_shift;
-
-  process (clk_62m5_i)
-  begin
-    if rising_edge(clk_62m5_i) then
-      if ps_clk_rst = '1' then
-        ps_clk_phase <= (others => '0');
-        ps_clk_busy <= '1';
-      else
-        if ps_clk_done = '1' then
-          ps_clk_busy <= '1';
-        end if;
-
-        if ps_clk_pen = '1' then
-          ps_clk_busy <= '0';
-
-          if ps_clk_incdec = '1' then
-            ps_clk_phase <= ps_clk_phase + 1;
-          else
-            ps_clk_phase <= ps_clk_phase - 1;
-          end if;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  process (clk_ps)
-    variable cnt : unsigned(23 downto 0);
-  begin
-    if rising_edge(clk_ps) then
-      if ps_clk_rst = '1' then
-        ps_clk_nsamp_cnt <= unsigned (ps_clk_nsamp);
-        ps_clk_gen <= x"00";
-      else
-        if ps_clk_nsamp_cnt = 0 then
-          ps_clk_nsamp_cnt <= unsigned(ps_clk_nsamp);
-          ps_clk_count_out <= ps_clk_count;
-          ps_clk_gen <= ps_clk_gen + 1;
-          cnt := (others => '0');
-        else
-          ps_clk_nsamp_cnt <= ps_clk_nsamp_cnt - 1;
-          cnt := ps_clk_count;
-        end if;
-
-        --  Sample the sync signal
-        if rxoutclk_sync = '1' then
-          cnt := cnt + 1;
-        end if;
-        ps_clk_count <= cnt;
-      end if;
-    end if;
-  end process;
-
 
   --  As PMA slide mode is used, there is no extra latency.
   phy16_in.rx_bitslide <= (others => '0');
@@ -903,14 +650,6 @@ begin
       rst_n_a_i => '1',
       d_i => rdy_out_62m5,
       q_o => phy16_in.rdy
-    );
-
-  inst_sync_rdy_in: entity work.gc_sync
-    port map (
-      clk_i => clk_62m5_i,
-      rst_n_a_i => '1',
-      d_i => rdy_in,
-      q_o => rdy_in_62m5
     );
 
   gth_rx_slide <= gth_rx_slide_out;
@@ -926,7 +665,7 @@ begin
       DIV => "000"
     );
 
-    phy16_in.ref_clk <= txoutclk;
+  phy16_in.ref_clk <= txoutclk;
 
   inst_bufg_gt_rx: BUFG_GT
     port map (
@@ -939,7 +678,7 @@ begin
       DIV => "000"
     );
 
-    phy16_in.rx_clk <= rxoutclk;
+  phy16_in.rx_clk <= rxoutclk;
   
   inst_gth_dmon_bufg: BUFG_GT
     port map (
@@ -1113,117 +852,6 @@ begin
       gth_rx_clk_i => phy16_in.rx_clk,
       gth_tx_clk_i => phy16_in.ref_clk
       );
-
-  --  clk_ps; phase shift clock
-
-  inst_gth_rst_sync: entity work.gc_sync
-    port map (
-      clk_i => gth_dmon_clk,
-      rst_n_a_i => '1',
-      d_i => gth_rst_n,
-      q_o => gth_dmon_rst_n
-    );
-  
-  b_rxpi: block
-    alias rxpi is dmonitorout(6 downto 0);
-    signal rxpi_ext : std_logic_vector(31 downto 0);
-    alias rxpi_d is rxpi_ext(rxpi'range);
-
-    signal rxpi_cnt : unsigned(31 downto 0);
-    signal rxpi_acc : unsigned(31 downto 0);
-    signal rxpi_res : std_logic_vector(31 downto 0);
-    signal rxpi_wr, rxpi_sync_ack : std_logic;
-  begin
-    rxpi_fifo_samp <= x"00007fff";
-
-    process(gth_dmon_clk)
-    begin
-      if rising_edge(gth_dmon_clk) then
-        rxpi_wr <= '0';
-
-        if gth_dmon_rst_n = '0' then
-          --  Start point
-          case rxpi(6 downto 5) is
-            when "00" =>
-              --  Might go below 0.
-              rxpi_ext_0 <= x"000000" & '0';
-              rxpi_ext_1 <= x"ffffff" & '1';
-            when "11" =>
-              --  Might go above 0x7f
-              rxpi_ext_0 <= x"000000" & '1';
-              rxpi_ext_1 <= x"000000" & '0';
-            when others =>
-              --  Safe
-              rxpi_ext_0 <= (others => '0');
-              rxpi_ext_1 <= (others => '0');
-          end case;
-          rxpi_cnt <= unsigned(rxpi_fifo_samp);
-        else
-          if rxpi_sync_ack = '1' then
-            rxpi_wr <= '0';
-          end if;
-          if rxpi_cnt = 0 then
-            rxpi_res <= std_logic_vector(rxpi_acc);
-            rxpi_acc <= unsigned(rxpi_ext);
-            rxpi_wr <= '1';
-            rxpi_cnt <= unsigned(rxpi_fifo_samp);
-          else
-            rxpi_acc <= rxpi_acc + unsigned(rxpi_ext);
-            rxpi_cnt <= rxpi_cnt - 1;
-          end if;
-
-          --  Extend rxpi
-          if rxpi(rxpi'high) = '1' then
-            rxpi_ext(rxpi_ext_1'range) <= rxpi_ext_1;
-          else
-            rxpi_ext(rxpi_ext_0'range) <= rxpi_ext_0;
-          end if;
-          rxpi_ext(rxpi'range) <= rxpi;
-
-          --  Update extensions.
-          --  When rxpi increases:
-          if rxpi_d(6 downto 3) = "0100" and rxpi(6 downto 3) = "0101" then
-            --  Moving towards 1.
-            rxpi_ext_1 <= rxpi_ext_0;
-          end if;
-          if rxpi_d(6 downto 3) = "1100" and rxpi(6 downto 3) = "1101" then
-            --  Moving towards 0.
-            rxpi_ext_0 <= std_logic_vector(unsigned(rxpi_ext_1) + 1);
-          end if;
-
-          --  When rxpi decreases:
-          if rxpi_d(6 downto 3) = "1011" and rxpi(6 downto 3) = "1010" then
-            --  Moving away from 1.
-            rxpi_ext_0 <= rxpi_ext_1;
-          end if;
-          if rxpi_d(6 downto 3) = "0011" and rxpi(6 downto 3) = "0010" then
-            --  Moving towards 0.
-            rxpi_ext_1 <= std_logic_vector(unsigned(rxpi_ext_0) - 1);
-          end if;
-        end if;
-      end if;
-    end process;
-
-    --  Synchronizer for rxpi acc.
-    inst_sync_rxpi: entity work.gc_sync_word_wr
-      generic map (
-        g_auto_wr => false,
-        g_width => 32
-      )
-      port map (
-        clk_in_i => gth_dmon_clk,
-        rst_in_n_i => gth_dmon_rst_n,
-        clk_out_i => clk_62m5_i,
-        rst_out_n_i => rst_n_i,
-        data_i => rxpi_res,
-        wr_i => rxpi_wr,
-        busy_o => open,
-        ack_o => rxpi_sync_ack,
-        data_o => rxpi_data,
-        wr_o => rxpi_valid
-      );
-
-  end block;
 
   b_rst: block
     signal powergood_dly : std_logic;
