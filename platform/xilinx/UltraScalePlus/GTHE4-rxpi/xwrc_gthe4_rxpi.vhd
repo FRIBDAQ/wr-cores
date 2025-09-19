@@ -81,14 +81,15 @@ entity xwrc_gthe4_rxpi is
     phy_rdy_o : out std_logic;
 
     --  Phy control
+    rxpmareset_o : out std_logic;
+    bitslide_val_i : std_logic_vector(4 downto 0);
+
+    --  Not used by SW, extra.
     gth_rst_o : out std_logic;
     gth_tx_rst_o : out std_logic;
     gth_rx_rst_o : out std_logic;
-
-    bitslide_val_i : std_logic_vector(4 downto 0);
     rxbufreset_o : out std_logic;
     rxpcsreset_o : out std_logic;
-    rxpmareset_o : out std_logic;
     txpcsreset_o : out std_logic;
     txpmareset_o : out std_logic;
     gth_status_i : std_logic_vector(15 downto 0) := (others => '0')
@@ -303,9 +304,8 @@ begin
       reset_gth_rx_pcs_rst_o => rxpcsreset_o,
       reset_gth_rx_pma_rst_o => rxpmareset_o,
       reset_gth_rx_buf_rst_o => rxbufreset_o,
-      status_i(31 downto 17) => (others => '0'),
-      status_i(16) => phy_rdy_in_62m5,
-      status_i(15 downto 0) => gth_status_i,
+      status_phy_ready_i => phy_rdy_in_62m5,
+      status_extra_i(15 downto 0) => gth_status_i,
       ctrl_rdy_o => phy_rdy_o,
       bitslide_i(4 downto 0) => bitslide_val_i,
       bitslide_i(31 downto 5) => (others => '0'),

@@ -7,6 +7,7 @@ memory-map:
   children:
   - reg:
       name: id
+      comment: magic number to check presence
       width: 32
       access: ro
       preset: 0x000618e4
@@ -19,33 +20,42 @@ memory-map:
       access: rw
       children:
       - field:
-          name: gth_rst
+          name: gth_rx_pma_rst
+          comment: reset RX PMA for a different position
           range: 0
       - field:
+          name: gth_rst
+          range: 1
+      - field:
           name: gth_tx_rst
-          range: 4
+          range: 2
       - field:
           name: gth_tx_pcs_rst
-          range: 5
+          range: 3
       - field:
           name: gth_tx_pma_rst
-          range: 6
+          range: 4
       - field:
           name: gth_rx_rst
-          range: 8
+          range: 5
       - field:
           name: gth_rx_pcs_rst
-          range: 9
-      - field:
-          name: gth_rx_pma_rst
-          range: 10
+          range: 6
       - field:
           name: gth_rx_buf_rst
-          range: 11
+          range: 7
   - reg:
      name: status
      width: 32
      access: ro
+     children:
+     - field:
+        name: phy_ready
+        comment: serdes ready (reset and bypass done) and bitslide done
+        range: 0
+     - field:
+        name: extra
+        range: 31-16
   - reg:
      name: ctrl
      width: 32
