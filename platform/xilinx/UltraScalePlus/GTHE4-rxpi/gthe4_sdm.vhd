@@ -1,7 +1,6 @@
 -------------------------------------------------------------------------------
--- Title      : WRPC reference design for KR260 board
+-- Title      : SDM adapter for Xilinx GTHe4 (and probably others)
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
 -------------------------------------------------------------------------------
 -- Company    : CERN (BE-CO-HT)
 -- Standard   : VHDL'93
@@ -31,11 +30,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
-use work.wishbone_pkg.all;
-
-library unisim;
-use unisim.vcomponents.all;
 
 entity gthe4_sdm is
   port (
