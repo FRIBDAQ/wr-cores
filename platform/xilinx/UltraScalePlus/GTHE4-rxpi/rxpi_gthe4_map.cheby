@@ -6,44 +6,47 @@ memory-map:
     busgroup: True
   children:
   - reg:
-      name: id
-      comment: magic number to check presence
-      width: 32
-      access: ro
-      preset: 0x000618e4
-      x-hdl:
-        type: const
+     name: id
+     comment: magic number to check presence
+     width: 32
+     access: ro
+     preset: 0x000618e4
+     x-hdl:
+       type: const
   - reg:
-      name: reset
-      comment: Reset register
-      width: 32
-      access: rw
-      children:
-      - field:
-          name: gth_rx_pma_rst
-          comment: reset RX PMA for a different position
-          range: 0
-      - field:
-          name: gth_rst
-          range: 1
-      - field:
-          name: gth_tx_rst
-          range: 2
-      - field:
-          name: gth_tx_pcs_rst
-          range: 3
-      - field:
-          name: gth_tx_pma_rst
-          range: 4
-      - field:
-          name: gth_rx_rst
-          range: 5
-      - field:
-          name: gth_rx_pcs_rst
-          range: 6
-      - field:
-          name: gth_rx_buf_rst
-          range: 7
+     name: reset
+     comment: Reset register
+     width: 32
+     access: rw
+     children:
+     - field:
+         name: gth_rx_pma_rst
+         comment: reset RX PMA for a different position
+         range: 0
+     - field:
+         name: gth_rst
+         range: 1
+     - field:
+         name: gth_tx_rst
+         range: 2
+     - field:
+         name: gth_tx_pcs_rst
+         range: 3
+     - field:
+         name: gth_tx_pma_rst
+         range: 4
+     - field:
+         name: gth_rx_rst
+         range: 5
+     - field:
+         name: gth_rx_pcs_rst
+         range: 6
+     - field:
+         name: gth_rx_buf_rst
+         range: 7
+     - field:
+         name: rxpi_rst
+         range: 16
   - reg:
      name: status
      width: 32
@@ -70,6 +73,16 @@ memory-map:
      comment: Bitslide
      width: 32
      access: ro
+  - reg:
+     name: rxpi_nsamp
+     width: 32
+     access: rw
+     preset: 0x00007fff
+  - reg:
+     name: rxpi_shift
+     width: 32
+     access: rw
+     preset: 0
   - reg:
      name: ps_ctrl
      comment: Control for phase shift

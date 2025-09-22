@@ -101,10 +101,11 @@ architecture top of xwrc_gthe4_rxpi is
 
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
-  signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
   signal gth_dmon_rst_n : std_logic;
 
-  signal rxpi_fifo_samp : std_logic_vector(31 downto 0);
+  signal rxpi_nsamp : std_logic_vector(31 downto 0);
+  signal rxpi_shift : std_logic_vector(31 downto 0);
+  signal rxpi_reset, rxpi_reset_dmon : std_logic;
 
   signal phy_rdy_in_62m5 : std_logic;
 
@@ -304,12 +305,14 @@ begin
       reset_gth_rx_pcs_rst_o => rxpcsreset_o,
       reset_gth_rx_pma_rst_o => rxpmareset_o,
       reset_gth_rx_buf_rst_o => rxbufreset_o,
+      reset_rxpi_rst_o => rxpi_reset,
       status_phy_ready_i => phy_rdy_in_62m5,
       status_extra_i(15 downto 0) => gth_status_i,
       ctrl_rdy_o => phy_rdy_o,
       bitslide_i(4 downto 0) => bitslide_val_i,
       bitslide_i(31 downto 5) => (others => '0'),
-
+      rxpi_nsamp_o => rxpi_nsamp,
+      rxpi_shift_o => rxpi_shift,
       ps_ctrl_shift_i => '0',
       ps_ctrl_shift_o => ps_clk_shift,
       ps_ctrl_wr_o => ps_clk_shift_wr,
@@ -408,25 +411,33 @@ begin
       d_i => gth_rst_n,
       q_o => gth_dmon_rst_n
     );
+
+  inst_rxpi_rst_sync: entity work.gc_sync
+    port map (
+      clk_i => gth_dmon_clk_i,
+      rst_n_a_i => '1',
+      d_i => rxpi_reset,
+      q_o => rxpi_reset_dmon
+    );
   
   b_rxpi: block
     alias rxpi is dmonitorout_i(6 downto 0);
     signal rxpi_ext : std_logic_vector(31 downto 0);
     alias rxpi_d is rxpi_ext(rxpi'range);
 
+    signal rxpi_ext_0, rxpi_ext_1 : std_logic_vector(31 downto 7);
+
     signal rxpi_cnt : unsigned(31 downto 0);
     signal rxpi_acc : unsigned(31 downto 0);
     signal rxpi_res : std_logic_vector(31 downto 0);
     signal rxpi_wr, rxpi_sync_ack : std_logic;
   begin
-    rxpi_fifo_samp <= x"00007fff";
-
     process(gth_dmon_clk_i)
     begin
       if rising_edge(gth_dmon_clk_i) then
         rxpi_wr <= '0';
 
-        if gth_dmon_rst_n = '0' then
+        if gth_dmon_rst_n = '0' or rxpi_reset_dmon = '1' then
           --  Start point
           case rxpi(6 downto 5) is
             when "00" =>
@@ -442,16 +453,16 @@ begin
               rxpi_ext_0 <= (others => '0');
               rxpi_ext_1 <= (others => '0');
           end case;
-          rxpi_cnt <= unsigned(rxpi_fifo_samp);
+          rxpi_cnt <= unsigned(rxpi_nsamp);
         else
           if rxpi_sync_ack = '1' then
             rxpi_wr <= '0';
           end if;
           if rxpi_cnt = 0 then
-            rxpi_res <= std_logic_vector(rxpi_acc);
+            rxpi_res <= std_logic_vector(rxpi_acc srl to_integer(unsigned (rxpi_shift(3 downto 0))));
             rxpi_acc <= unsigned(rxpi_ext);
             rxpi_wr <= '1';
-            rxpi_cnt <= unsigned(rxpi_fifo_samp);
+            rxpi_cnt <= unsigned(rxpi_nsamp);
           else
             rxpi_acc <= rxpi_acc + unsigned(rxpi_ext);
             rxpi_cnt <= rxpi_cnt - 1;
