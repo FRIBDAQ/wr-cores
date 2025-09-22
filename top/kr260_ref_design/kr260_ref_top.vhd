@@ -137,7 +137,6 @@ begin
   inst_wrc_board: entity work.xwrc_board_gthe4_rxpi
     generic map (
       g_refclk0_freq => 156_250_000,
-      g_use_sdm => true,
       g_board_name => "KR26",
       g_dpram_initf => "",
       g_dpram_size => (128+64) * 1024 / 4

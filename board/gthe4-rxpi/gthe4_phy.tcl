@@ -1,5 +1,5 @@
-create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gthe4_sdm
-set_property CONFIG.preset {GTH-Gigabit_Ethernet} [get_ips gthe4_sdm]
+create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gthe4_phy
+set_property CONFIG.preset {GTH-Gigabit_Ethernet} [get_ips gthe4_phy]
 set_property -dict [list \
   CONFIG.CHANNEL_ENABLE {X0Y6} \
   CONFIG.LOCATE_RX_USER_CLOCKING {EXAMPLE_DESIGN} \
@@ -25,11 +25,11 @@ set_property -dict [list \
   CONFIG.LOCATE_COMMON {EXAMPLE_DESIGN} \
   CONFIG.LOCATE_RESET_CONTROLLER {EXAMPLE_DESIGN} \
   CONFIG.ENABLE_OPTIONAL_PORTS {dmonitorclk_in drpaddr_in drpclk_in drpdi_in drpen_in drpwe_in rxbufreset_in rxpcsreset_in rxpd_in rxpmareset_in txpcsreset_in txpd_in txpippmen_in txpippmovrden_in txpippmpd_in txpippmsel_in txpippmstepsize_in txpllclksel_in txpmareset_in dmonitorout_out dmonitoroutclk_out drpdo_out drprdy_out} \
-] [get_ips gthe4_sdm]
+] [get_ips gthe4_phy]
 
-set_property CONFIG.RX_SLIDE_MODE {PMA} [get_ips gthe4_sdm]
-set_property CONFIG.RX_OUTCLK_SOURCE {RXOUTCLKPMA} [get_ips gthe4_sdm]
-set_property CONFIG.RX_OUTCLK_SOURCE {RXOUTCLKPCS} [get_ips gthe4_sdm]
-set_property CONFIG.RX_COMMA_SHOW_REALIGN_ENABLE {false} [get_ips gthe4_sdm]
+set_property CONFIG.RX_SLIDE_MODE {PMA} [get_ips gthe4_phy]
+set_property CONFIG.RX_OUTCLK_SOURCE {RXOUTCLKPMA} [get_ips gthe4_phy]
+set_property CONFIG.RX_OUTCLK_SOURCE {RXOUTCLKPCS} [get_ips gthe4_phy]
+set_property CONFIG.RX_COMMA_SHOW_REALIGN_ENABLE {false} [get_ips gthe4_phy]
 
-generate_target {instantiation_template} [get_files gthe4_sdm.xci]
+generate_target {instantiation_template} [get_files gthe4_phy.xci]

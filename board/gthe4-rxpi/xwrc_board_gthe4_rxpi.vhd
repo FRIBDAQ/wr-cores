@@ -46,10 +46,6 @@ entity xwrc_board_gthe4_rxpi is
     --  Frequency of refclk0
     g_refclk0_freq : natural := 156_250_000;
 
-    --  If True, use QPLL sdm to tune the GTHe4 ref clock.
-    --  If False, the ref clock must be tuned externally using dac_dpll interface
-    g_use_sdm     : boolean := True;
-
     --  From wrc_core
     g_board_name  : string                         := "NA  ";
     g_dpram_initf : string                         := "";
@@ -135,7 +131,7 @@ entity xwrc_board_gthe4_rxpi is
 end;
 
 architecture top of xwrc_board_gthe4_rxpi is
-  COMPONENT gthe4_sdm
+  COMPONENT gthe4_phy
   PORT (
     gtwiz_userclk_tx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -502,7 +498,7 @@ begin
   );
 
 
-  inst_gth_channel: gthe4_sdm
+  inst_gth_channel: gthe4_phy
     port map (
       gthrxn_in(0)  => pad_rxn_i,
       gthrxp_in(0)  => pad_rxp_i,
@@ -604,10 +600,18 @@ begin
       dmonitorclk_in(0) => gth_dmon_clk
   );
 
+  inst_mpll_sdm: entity work.gthe4_sdm
+  port map (
+    clk_62m5_i => clk_62m5_i,
+    rst_n_i => rst_n_i,
+    dac_data_i(13 downto 0) => mpll_data_out(15 downto 2),
+    dac_data_i(23 downto 14) => (others => '0'),
+    dac_load_i => mpll_load,
+    sdm_data_o => mpll_data,
+    sdm_toggle_o => mpll_toggle
+  );
+
   inst_gthe4_rxpi: entity work.xwrc_gthe4_rxpi
-    generic map (
-      g_use_sdm => g_use_sdm
-    )
     port map (
       clk_62m5_i => clk_62m5_i,
       rst_n_i => rst_n_i,
@@ -619,14 +623,14 @@ begin
       gth_dmon_clk_i => gth_dmon_clk,
       rxpi_valid_o => rxpi_valid,
       rxpi_data_o => rxpi_data,
-      mpll_data_i => mpll_data_out,
-      mpll_load_i => mpll_load,
+      mpll_data_i => open,
+      mpll_load_i => open,
       hpll_data_i => open,
       hpll_load_i => open,
-      mpll_data_o => mpll_data,
-      mpll_toggle_o => mpll_toggle,
-      hpll_data_o => hpll_data,
-      hpll_toggle_o => hpll_toggle,
+      mpll_data_o => open,
+      mpll_toggle_o => open,
+      hpll_data_o => open,
+      hpll_toggle_o => open,
       phy_rdy_i => rdy_in,
       phy_rdy_o => rdy_out_62m5,
       gth_rst_o => gth_rst,
