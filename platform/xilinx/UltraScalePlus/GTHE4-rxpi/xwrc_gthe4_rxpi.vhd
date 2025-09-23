@@ -38,11 +38,6 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity xwrc_gthe4_rxpi is
-  generic (
-    --  If True, use QPLL sdm to tune the GTHe4 ref clock.
-    --  If False, the ref clock must be tuned externally using dac_dpll interface
-    g_use_sdm     : boolean := True
-    );
   port (
     --  System clock (same as WR core clk_sys)
     clk_62m5_i  : in std_logic;
@@ -63,18 +58,6 @@ entity xwrc_gthe4_rxpi is
     --  rxpi output
     rxpi_valid_o : out std_logic;
     rxpi_data_o : out std_logic_vector(31 downto 0);
-
-    --  WR dac input
-    mpll_data_i : in  std_logic_vector(15 downto 0) := (others => '0');
-    hpll_data_i : in  std_logic_vector(31 downto 0) := (others => '0');
-    hpll_load_i : in  std_logic := '0';
-    mpll_load_i : in  std_logic := '0';
-
-    --  sdm output
-    mpll_data_o   : out std_logic_vector(24 downto 0);
-    mpll_toggle_o : out std_logic;
-    hpll_data_o   : out std_logic_vector(24 downto 0);
-    hpll_toggle_o : out std_logic;
 
     --  phy ready (async)
     phy_rdy_i : in std_logic;
@@ -98,8 +81,6 @@ end;
 
 architecture top of xwrc_gthe4_rxpi is
   signal gth_rst, gth_rst_n: std_logic;
-
-  signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
   signal gth_dmon_rst_n : std_logic;
 
@@ -231,65 +212,6 @@ begin
       I => ps_clk_fb,
       O => ps_clk_fb_bufg
     );
-
-  gen_sdm: if g_use_sdm generate
-    process(clk_62m5_i)
-    begin
-      if rising_edge(clk_62m5_i) then
-        if rst_n_i = '0' then
-          mpll_cnt <= (others => '0');
-          hpll_cnt <= (others => '0');
-          mpll_toggle_o <= '0';
-          hpll_toggle_o <= '0';
-        else
-          if mpll_cnt = 0 then
-            --  Idle, can accept a new value
-            if mpll_load_i = '1' then
-              --  Reformat.
-              --  According to 73205, only LSB are significant.
-              mpll_data_o <= (others => '0');
-              mpll_data_o(13 downto 0) <= mpll_data_i(15 downto 2);
-              mpll_cnt <= (others => '1');
-            end if;
-          else
-            --  FB CLK should be way higher than system clock
-            if mpll_cnt(5 downto 4) = "00" then
-              mpll_toggle_o <= '0';
-            elsif mpll_cnt(5 downto 4) /= "11" then
-              mpll_toggle_o <= '1';
-            end if;
-            mpll_cnt <= mpll_cnt - 1;
-          end if;
-
-          if hpll_cnt = 0 then
-            --  Idle, can accept a new value
-            if hpll_load_i = '1' then
-              --  Reformat.
-              --  According to 73205, only LSB are significant.
-              hpll_data_o <= (others => '0');
-              hpll_data_o(23 downto 0) <= hpll_data_i(23 downto 0); -- b"1111_111" & hpll_data_out & '0';
-              hpll_cnt <= (others => '1');
-            end if;
-          else
-            --  FB CLK should be way higher than system clock
-            if hpll_cnt(5 downto 4) = "00" then
-              hpll_toggle_o <= '0';
-            elsif mpll_cnt(5 downto 4) /= "11" then
-              hpll_toggle_o <= '1';
-            end if;
-            hpll_cnt <= hpll_cnt - 1;
-          end if;
-        end if;
-      end if;
-    end process;
-  end generate gen_sdm;
-
-  gen_no_sdm: if not g_use_sdm generate
-    mpll_data_o <= (others => '0');
-    mpll_toggle_o <= '0';
-    hpll_data_o <= (others => '0');
-    hpll_toggle_o <= '0';
-  end generate;
 
   inst_gthe4_map: entity work.rxpi_gthe4_map
     port map (
