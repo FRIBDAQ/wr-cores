@@ -255,7 +255,7 @@ END COMPONENT;
 
   signal gth_rx_data_in : std_logic_vector(15 downto 0);
   signal gth_tx_data_out : std_logic_vector(15 downto 0);
-  signal gth_rx_slide_out, gth_rx_slide : std_logic;
+  signal gth_rx_slide : std_logic;
   signal gth_rx_k_in, gth_rx_disp_err_in : std_logic_vector(15 downto 0);
   signal gth_rx_comma_in, gth_rx_dec_err_in : std_logic_vector(7 downto 0);
   signal gth_tx_k_out : std_logic_vector(7 downto 0) := (others => '0');
@@ -638,7 +638,7 @@ begin
     );
 
   --  As PMA slide mode is used, there is no extra latency.
-  phy16_in.rx_bitslide <= (others => '0');
+  phy16_in.rx_bitslide <= (others => '0'); -- bitslide_val;
 
   inst_sync_rdy: entity work.gc_sync
     port map (
@@ -647,8 +647,6 @@ begin
       d_i => rdy_out_62m5,
       q_o => phy16_in.rdy
     );
-
-  gth_rx_slide <= gth_rx_slide_out;
 
   inst_bufg_gt_tx: BUFG_GT
     port map (
@@ -836,7 +834,7 @@ begin
       gtwiz_reset_rx_done_i => rx_reset_done,
       gth_rx_data_i => gth_rx_data_in,
       gth_tx_data_o => gth_tx_data_out,
-      gth_rx_slide_o => gth_rx_slide_out,
+      gth_rx_slide_o => gth_rx_slide,
       gth_rx_k_i => gth_rx_k_in(1 downto 0),
       gth_tx_k_o => gth_tx_k_out(1 downto 0),
       gth_rx_dec_err_i => gth_rx_dec_err_in(1 downto 0),
