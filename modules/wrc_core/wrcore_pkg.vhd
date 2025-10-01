@@ -591,16 +591,16 @@ package wrcore_pkg is
       pps_p_o              : out std_logic;
       pps_led_o            : out std_logic;
 
-      utc_o                : out t_utc_out;
-      aux_timing_o         : out t_aux_timing_out;
-      pll_serdes_locked_i  : in std_logic := '0';
-
       rst_aux_n_o : out std_logic;
 
-      link_ok_o : out std_logic;
+      aux_timing_serdes_locked_i  : in std_logic := '0';
+      utc_o                : out t_utc_out;
+      aux_timing_o         : out t_aux_timing_out;
 
       aux_diag_i : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others=>(others=>'0'));
-      aux_diag_o : out t_generic_word_array(g_diag_rw_size-1 downto 0)
+      aux_diag_o : out t_generic_word_array(g_diag_rw_size-1 downto 0);
+
+      link_ok_o : out std_logic
       );
   end component;
 
