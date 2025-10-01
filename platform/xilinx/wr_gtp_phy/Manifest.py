@@ -162,15 +162,16 @@ elif (syn_device[0:4].upper()=="XCKU"): # Kintex Ultrascale GTH
         "family7-gthe3/gc_reset_synchronizer.vhd" ])
     files.extend( xilinx_ip_gthe3 );
     files.extend( xilinx_ip_common );
-elif (syn_device[0:4].upper()=="XCZU" or  # Zynq Ultrascale GTH
-      syn_device[0:5].upper()=="XCK26"):  # Kria K26
+elif (syn_device[0:4].upper()=="XCZU" or # Zynq Ultrascale GTH
+      (syn_device[0:5].upper()=="XCK26" and lpdc==False)):  # Kria K26
     files.extend([
         "family7-gthe4/wr_gthe4_phy_family7_xilinx_ip.vhd",
         ]);
     files.extend( xilinx_ip_gthe4 );
     files.extend( xilinx_ip_common );
 elif (syn_device[0:6].upper()=="XCAU10" or # Artix Ultrascale+ AU10P AU15P GTH
-      syn_device[0:6].upper()=="XCAU15"):  # use Low Phase Drift implementation
+      syn_device[0:6].upper()=="XCAU15" or  # use Low Phase Drift implementation
+      (syn_device[0:5].upper()=="XCK26" and lpdc==True)):  # Kria K26
     files.extend([
         "family7-gthe4-lp/wr_gthe4_phy_family7_lp.vhd",
         "family7-gtx-lp/gtx_comma_detect_lp.vhd",

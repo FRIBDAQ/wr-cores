@@ -1,6 +1,7 @@
 board  = "cts"
 target = "xilinx"
 action = "synthesis"
+lpdc = True
 
 syn_device = "xck26-sfvc784"
 syn_package = "-2LV"
@@ -17,7 +18,7 @@ syn_grade = "-c"
 #	@echo 'CTSExtensionMux.vhd' >> $@
 #
 # In project.tcl part in Makefile, add following to generate bin file
-#		echo set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
+#		echo set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1] >> $@
 #
 # Finally, you have to run design_1.tcl inside the project.
 # Then, create design HDL wrapper for the board design
@@ -30,6 +31,7 @@ syn_tool = "vivado"
 files = [
     "cts.xdc",
     "gtwizard_ultrascale_0.xci",
+    "ip/gtwizard_ultrascale_2_lpdc/gtwizard_ultrascale_2_lpdc.xci",
     "CTSExtensionMux.vhd",
     "gen_x_mhz.vhd",
 ]

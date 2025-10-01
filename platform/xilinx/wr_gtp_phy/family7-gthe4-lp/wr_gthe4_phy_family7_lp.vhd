@@ -171,7 +171,7 @@ architecture rtl of wr_gthe4_phy_family7_lp is
       aligned_o           : out std_logic);
   end component gtx_comma_detect_lp;
 
-  component gtwizard_ultrascale_2 is
+  component gtwizard_ultrascale_2_lpdc is
     port (
       gtwiz_userclk_tx_reset_in            : in   std_logic;
       gtwiz_userclk_tx_srcclk_out          : out  std_logic;
@@ -229,7 +229,7 @@ architecture rtl of wr_gthe4_phy_family7_lp is
       txpmaresetdone_out                   : out  std_logic;
       txprgdivresetdone_out                : out  std_logic;
       txresetdone_out                      : out  std_logic);
-  end component gtwizard_ultrascale_2;
+  end component gtwizard_ultrascale_2_lpdc;
 
   signal rst_n                         : std_logic;
 
@@ -434,7 +434,7 @@ begin
     end if;
   end process;
 
-  U_gtwizard_gthe4 : gtwizard_ultrascale_2
+  U_gtwizard_gthe4 : gtwizard_ultrascale_2_lpdc
     port map (
       gtwiz_userclk_tx_reset_in            => '0',
       gtwiz_userclk_tx_srcclk_out          => open,

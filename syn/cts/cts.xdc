@@ -4,8 +4,8 @@ set_property PACKAGE_PIN A2     [get_ports LEMO_HP_OUT0_p]   ;# Bank  66 VCCO - 
 set_property PACKAGE_PIN A1     [get_ports LEMO_HP_OUT0_n]   ;# Bank  66 VCCO - som240_1_a4 - IO_L8N_T1L_N3_AD5N_66
 set_property PACKAGE_PIN C3     [get_ports SI5344_HP_GC_p]    ;# Bank  66 VCCO - som240_1_a6 - IO_L12P_T1U_N10_GC_66
 set_property PACKAGE_PIN C2     [get_ports SI5344_HP_GC_n]    ;# Bank  66 VCCO - som240_1_a7 - IO_L12N_T1U_N11_GC_66
-set_property PACKAGE_PIN G8     [get_ports SI5344_2_HP_p]     ;# Bank  66 VCCO - som240_1_a12 - IO_L16P_T2U_N6_QBC_AD3P_66
-set_property PACKAGE_PIN F7     [get_ports SI5344_2_HP_n]     ;# Bank  66 VCCO - som240_1_a13 - IO_L16N_T2U_N7_QBC_AD3N_66
+#set_property PACKAGE_PIN G8     [get_ports SI5344_2_HP_p]     ;# Bank  66 VCCO - som240_1_a12 - IO_L16P_T2U_N6_QBC_AD3P_66
+#set_property PACKAGE_PIN F7     [get_ports SI5344_2_HP_n]     ;# Bank  66 VCCO - som240_1_a13 - IO_L16N_T2U_N7_QBC_AD3N_66
 #set_property PACKAGE_PIN F11    [get_ports EEPROM_SCK0]      ;# Bank  45 VCCO - som240_1_a15 - IO_L6N_HDGC_45
 #set_property PACKAGE_PIN J12    [get_ports EEPROM_CSN0]      ;# Bank  45 VCCO - som240_1_a16 - IO_L4P_AD12P_45
 #set_property PACKAGE_PIN H12    [get_ports EEPROM_SI0]       ;# Bank  45 VCCO - som240_1_a17 - IO_L4N_AD12N_45
@@ -154,8 +154,8 @@ set_property IOSTANDARD LVDS [get_ports SI5344_HP_GC_p]
 set_property DIFF_TERM true  [get_ports SI5344_HP_GC_p]
 
 # Helper clock
-set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_p]
-set_property DIFF_TERM true  [get_ports SI5344_2_HP_p]
+#set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_p]
+#set_property DIFF_TERM true  [get_ports SI5344_2_HP_p]
 set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_GC_p]
 set_property DIFF_TERM true  [get_ports SI5344_2_HP_GC_p]
 
@@ -199,8 +199,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS1]
 create_clock -period  8.000 -name SFP_125MHz        -waveform {0.000  4.000} [get_ports {GTH_REFCLK0_p}]
 create_clock -period  8.000 -name WR_MAIN           -waveform {0.000  4.000} [get_ports {SI5344_HP_GC_p}]
 create_clock -period  8.000 -name WR_HELPER         -waveform {0.000  4.000} [get_ports {SI5344_2_HP_GC_p}]
-create_clock -period 16.000 -name gth_txclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_tx_usrclk2_out[0]}]
-create_clock -period 16.000 -name gth_rxclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_rx_usrclk2_out[0]}]
+create_clock -period 16.000 -name gth_txclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus_lpdc.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_tx_usrclk2_out[0]}]
+create_clock -period 16.000 -name gth_rxclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus_lpdc.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_rx_usrclk2_out[0]}]
 
 # clk_ref_62m5_div2 = 16 ns = 8 clock periods of clk_500m which has 2 ns period
 # Setup requirement at edge 8, hold requirement at edge 7
@@ -215,6 +215,6 @@ set_multicycle_path 1 -hold -from [get_clocks gth_txclk] -to [get_clocks  "*clk_
 set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 
-create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_default_plls.gen_zynqus_default_plls.cmp_clk_dmtd_buf_o/O]
+#create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus_lpdc.cmp_clk_dmtd_buf_o/O]
 
 set_clock_groups -asynchronous -group {SFP_125MHz} -group {WR_MAIN} -group {WR_HELPER} -group {gth_txclk} -group {gth_rxclk} -group {clk_pll_dmtd}

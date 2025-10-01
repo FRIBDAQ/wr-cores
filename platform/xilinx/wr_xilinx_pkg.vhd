@@ -117,7 +117,10 @@ package wr_xilinx_pkg is
       ext_ref_rst_i         : in  std_logic             := '0';
       serdes_i              : in std_logic_vector(7 downto 0) := (others => '0');
       aux_timing_serdes_locked_o  : out std_logic;
-      serdes_o              : out std_logic);
+      serdes_o              : out std_logic;
+      phy_mdio_slave_i      : in  t_wishbone_slave_in;
+      phy_mdio_slave_o      : out t_wishbone_slave_out;
+      rst_62m5_n_i          : in  std_logic);
   end component xwrc_platform_xilinx;
 
   component wr_gtp_phy_spartan6

@@ -261,6 +261,15 @@ architecture struct of xwrc_board_cts is
   signal phy16_to_wrc   : t_phy_16bits_to_wrc;
   signal phy16_from_wrc : t_phy_16bits_from_wrc;
 
+  signal phy_mdio_master_in   : t_wishbone_master_in :=
+    (ack => '1',
+     err => '0',
+     rty => '0',
+     stall => '0',
+     dat => (others => '1')
+     );
+  signal phy_mdio_master_out  : t_wishbone_master_out;
+
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -285,7 +294,7 @@ begin  -- architecture struct
 
   cmp_xwrc_platform : xwrc_platform_xilinx
     generic map (
-      g_fpga_family               => "zynqus",
+      g_fpga_family               => "zynqus_lpdc",
       g_with_external_clock_input => FALSE,
       g_use_default_plls          => TRUE,
       g_aux_pll_cfg               => g_aux_pll_cfg,
@@ -309,7 +318,10 @@ begin  -- architecture struct
       clk_pll_aux_o         => clk_pll_aux_o,
       pll_locked_o          => pll_locked,
       phy16_o               => phy16_to_wrc,
-      phy16_i               => phy16_from_wrc);
+      phy16_i               => phy16_from_wrc,
+      phy_mdio_slave_o      => phy_mdio_master_in,
+      phy_mdio_slave_i      => phy_mdio_master_out,
+      rst_62m5_n_i          => rst_62m5_n);
 
   clk_ref_125m_o <= clk_pll_125m;
   clk_sys_62m5_o <= clk_pll_62m5;
@@ -412,6 +424,8 @@ begin  -- architecture struct
       dac_hpll_data_o      => dac_hpll_data,
       dac_dpll_load_p1_o   => dac_dpll_load_p1,
       dac_dpll_data_o      => dac_dpll_data,
+      phy_mdio_master_i    => phy_mdio_master_in,
+      phy_mdio_master_o    => phy_mdio_master_out,
       phy16_o              => phy16_from_wrc,
       phy16_i              => phy16_to_wrc,
       scl_o                => eeprom_scl_o,
