@@ -14,6 +14,14 @@ syn_grade = "-c"
 # I don't understand why those are missing.
 #	@echo '../../ip_cores/urv-core/rtl/urv_defs.v' >> $@
 #	@echo '../../ip_cores/urv-core/rtl/urv_config.v' >> $@
+#	@echo 'CTSExtensionMux.vhd' >> $@
+#
+# In project.tcl part in Makefile, add following to generate bin file
+#		echo set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
+#
+# Finally, you have to run design_1.tcl inside the project.
+# Then, create design HDL wrapper for the board design
+# Then, set it as top
 
 syn_top = "cts_top"
 syn_project = "cts"
