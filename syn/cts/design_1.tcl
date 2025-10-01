@@ -140,6 +140,7 @@ if { $bCheckIPs == 1 } {
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:util_ds_buf:2.2\
 xilinx.com:ip:util_vector_logic:2.0\
+xilinx.com:ip:clk_wiz:6.0\
 "
 
    set list_ips_missing ""
@@ -266,8 +267,8 @@ proc create_root_design { parentCell } {
   set P2_HDIO4 [ create_bd_port -dir IO P2_HDIO4 ]
   set P2_HDIO2 [ create_bd_port -dir O P2_HDIO2 ]
   set P2_HDIO3 [ create_bd_port -dir O P2_HDIO3 ]
-  set SI5344_2_HP_p [ create_bd_port -dir I SI5344_2_HP_p ]
-  set SI5344_2_HP_n [ create_bd_port -dir I SI5344_2_HP_n ]
+  set HP_SI5344_2_in_p [ create_bd_port -dir O -from 0 -to 0 -type clk HP_SI5344_2_in_p ]
+  set HP_SI5344_2_in_n [ create_bd_port -dir O -from 0 -to 0 -type clk HP_SI5344_2_in_n ]
 
   # Create instance: zynq_ultra_ps_e_0, and set properties
   set zynq_ultra_ps_e_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0 ]
@@ -374,16 +375,22 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_51_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_51_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_51_SLEW {slow} \
+    CONFIG.PSU_MIO_52_DRIVE_STRENGTH {12} \
     CONFIG.PSU_MIO_52_POLARITY {Default} \
     CONFIG.PSU_MIO_52_PULLUPDOWN {pulldown} \
+    CONFIG.PSU_MIO_52_SLEW {fast} \
+    CONFIG.PSU_MIO_53_DRIVE_STRENGTH {12} \
     CONFIG.PSU_MIO_53_POLARITY {Default} \
     CONFIG.PSU_MIO_53_PULLUPDOWN {pulldown} \
+    CONFIG.PSU_MIO_53_SLEW {fast} \
     CONFIG.PSU_MIO_54_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_54_POLARITY {Default} \
     CONFIG.PSU_MIO_54_PULLUPDOWN {pulldown} \
     CONFIG.PSU_MIO_54_SLEW {slow} \
+    CONFIG.PSU_MIO_55_DRIVE_STRENGTH {12} \
     CONFIG.PSU_MIO_55_POLARITY {Default} \
     CONFIG.PSU_MIO_55_PULLUPDOWN {pulldown} \
+    CONFIG.PSU_MIO_55_SLEW {fast} \
     CONFIG.PSU_MIO_56_DRIVE_STRENGTH {4} \
     CONFIG.PSU_MIO_56_POLARITY {Default} \
     CONFIG.PSU_MIO_56_SLEW {slow} \
@@ -391,6 +398,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU_MIO_57_POLARITY {Default} \
     CONFIG.PSU_MIO_57_SLEW {slow} \
     CONFIG.PSU_MIO_58_DRIVE_STRENGTH {4} \
+    CONFIG.PSU_MIO_58_INPUT_TYPE {cmos} \
     CONFIG.PSU_MIO_58_POLARITY {Default} \
     CONFIG.PSU_MIO_58_SLEW {slow} \
     CONFIG.PSU_MIO_59_DRIVE_STRENGTH {4} \
@@ -721,6 +729,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
     CONFIG.PSU__UART1__PERIPHERAL__IO {MIO 36 .. 37} \
     CONFIG.PSU__USB0__PERIPHERAL__ENABLE {0} \
     CONFIG.PSU__USB0__RESET__ENABLE {0} \
+    CONFIG.PSU__USB0__RESET__IO {<Select>} \
     CONFIG.PSU__USB1_COHERENCY {0} \
     CONFIG.PSU__USB1__PERIPHERAL__ENABLE {1} \
     CONFIG.PSU__USB1__PERIPHERAL__IO {MIO 64 .. 75} \
@@ -844,16 +853,30 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $util_vector_logic_1
 
 
-  # Create instance: util_ds_buf_0, and set properties
-  set util_ds_buf_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0 ]
+  # Create instance: clk_wiz_0, and set properties
+  set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
+  set_property -dict [list \
+    CONFIG.CLKOUT1_JITTER {266.768} \
+    CONFIG.CLKOUT1_PHASE_ERROR {354.315} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25} \
+    CONFIG.MMCM_CLKFBOUT_MULT_F {107.750} \
+    CONFIG.MMCM_CLKOUT0_DIVIDE_F {47.875} \
+    CONFIG.MMCM_DIVCLK_DIVIDE {9} \
+    CONFIG.RESET_PORT {resetn} \
+    CONFIG.RESET_TYPE {ACTIVE_LOW} \
+  ] $clk_wiz_0
+
+
+  # Create instance: util_ds_buf_1, and set properties
+  set util_ds_buf_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_1 ]
+  set_property CONFIG.C_BUF_TYPE {OBUFDS} $util_ds_buf_1
+
 
   # Create port connections
   connect_bd_net -net CTSExtensionMux_0_A0_o [get_bd_pins CTSExtensionMux_0/A0_o] [get_bd_ports P2_HDIO2]
   connect_bd_net -net CTSExtensionMux_0_A1_o [get_bd_pins CTSExtensionMux_0/A1_o] [get_bd_ports P2_HDIO3]
   connect_bd_net -net CTSExtensionMux_0_eeprom_scl_o [get_bd_pins CTSExtensionMux_0/eeprom_scl_o] [get_bd_pins cts_top_0/eeprom_scl_in]
   connect_bd_net -net CTSExtensionMux_0_eeprom_sda_o [get_bd_pins CTSExtensionMux_0/eeprom_sda_o] [get_bd_pins cts_top_0/eeprom_sda_in]
-  connect_bd_net -net CTSExtensionMux_0_scl_o [get_bd_pins LEMO_IN_3/IBUF_OUT] [get_bd_pins LEMO_OUT_3/OBUF_IN]
-  connect_bd_net -net CTSExtensionMux_0_sda_o [get_bd_pins util_ds_buf_0/IBUF_OUT] [get_bd_pins LEMO_OUT_2/OBUF_IN]
   connect_bd_net -net CTSExtensionMux_0_sfp_scl_o [get_bd_pins CTSExtensionMux_0/sfp_scl_o] [get_bd_pins cts_top_0/sfp_scl_in]
   connect_bd_net -net CTSExtensionMux_0_sfp_sda_o [get_bd_pins CTSExtensionMux_0/sfp_sda_o] [get_bd_pins cts_top_0/sfp_sda_in]
   connect_bd_net -net GTH_REFCLK0_n_1 [get_bd_ports GTH_REFCLK0_n] [get_bd_pins cts_top_0/wr_clk_sfp_125m_n_i]
@@ -874,10 +897,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net SFP_RX_LOS0_1 [get_bd_ports SFP_RX_LOS0] [get_bd_pins cts_top_0/sfp_los_i]
   connect_bd_net -net SI5344_2_HP_GC_n_1 [get_bd_ports SI5344_2_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_helper_125m_n_i]
   connect_bd_net -net SI5344_2_HP_GC_p_1 [get_bd_ports SI5344_2_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_helper_125m_p_i]
-  connect_bd_net -net SI5344_2_HP_n_1 [get_bd_ports SI5344_2_HP_n] [get_bd_pins util_ds_buf_0/IBUF_DS_N]
-  connect_bd_net -net SI5344_2_HP_p_1 [get_bd_ports SI5344_2_HP_p] [get_bd_pins util_ds_buf_0/IBUF_DS_P]
   connect_bd_net -net SI5344_HP_GC_n_1 [get_bd_ports SI5344_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_main_125m_n_i]
   connect_bd_net -net SI5344_HP_GC_p_1 [get_bd_ports SI5344_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_main_125m_p_i]
+  connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins util_ds_buf_1/OBUF_IN]
   connect_bd_net -net cts_top_0_clk_ref_10m_o [get_bd_pins cts_top_0/clk_ref_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN] [get_bd_pins CTSExtensionMux_0/clk_10MHz_i]
   connect_bd_net -net cts_top_0_eeprom_scl_out [get_bd_pins cts_top_0/eeprom_scl_out] [get_bd_pins CTSExtensionMux_0/eeprom_scl_i]
   connect_bd_net -net cts_top_0_eeprom_sda_out [get_bd_pins cts_top_0/eeprom_sda_out] [get_bd_pins CTSExtensionMux_0/eeprom_sda_i]
@@ -897,7 +919,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_ds_buf_0_OBUF_DS_N [get_bd_pins LEMO_OUT_0/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT0_n]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_P [get_bd_pins LEMO_OUT_0/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT0_p]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_N [get_bd_pins LEMO_OUT_1/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT1_n]
+  connect_bd_net -net util_ds_buf_1_OBUF_DS_N1 [get_bd_pins util_ds_buf_1/OBUF_DS_N] [get_bd_ports HP_SI5344_2_in_n]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_P [get_bd_pins LEMO_OUT_1/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT1_p]
+  connect_bd_net -net util_ds_buf_1_OBUF_DS_P1 [get_bd_pins util_ds_buf_1/OBUF_DS_P] [get_bd_ports HP_SI5344_2_in_p]
   connect_bd_net -net util_ds_buf_2_OBUF_DS_N [get_bd_pins LEMO_OUT_2/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT2_n]
   connect_bd_net -net util_ds_buf_2_OBUF_DS_P [get_bd_pins LEMO_OUT_2/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT2_p]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_N [get_bd_pins LEMO_OUT_3/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT3_n]
@@ -906,7 +930,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_vector_logic_1_Res [get_bd_pins util_vector_logic_1/Res] [get_bd_pins util_vector_logic_0/Op2]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_gpio_o [get_bd_pins zynq_ultra_ps_e_0/emio_gpio_o] [get_bd_pins util_vector_logic_0/Op1]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_uart0_txd [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_txd] [get_bd_pins cts_top_0/uart_rxd_i]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins util_vector_logic_1/Op1]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins clk_wiz_0/clk_in1]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins util_vector_logic_1/Op1] [get_bd_pins clk_wiz_0/resetn]
 
   # Create address segments
 
@@ -914,7 +939,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -926,4 +950,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 

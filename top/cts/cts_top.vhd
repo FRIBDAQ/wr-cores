@@ -115,12 +115,26 @@ entity cts_top is
 end cts_top;
 
 architecture Behavioral of cts_top is
+
+    component gen_x_mhz is
+      generic (
+        g_divide    : integer
+      );
+      port (
+        clk_500m_i  : in  std_logic;
+        rst_n_i     : in  std_logic;
+        pps_i       : in  std_logic;
+        clk_x_mhz_o : out std_logic
+      );
+    end component gen_x_mhz;
+
     signal rst_n: std_logic;
     signal clk_sys_62m5 : std_logic;
-    signal clk_ref_125m : std_logic;
 
-    signal clk_10MHz_fb : std_logic;
-    signal clk_10MHz_locked : std_logic;
+    signal clk_500Mhz_fb : std_logic;
+    signal clk_500Mhz_locked : std_logic;
+    signal clk_500Mhz : std_logic;
+
     signal clk_10MHz : std_logic;
 
     signal led_act_buf, led_link_buf, pps_p_buf: std_logic;
@@ -140,7 +154,7 @@ begin
       wr_clk_sfp_125m_p_i    => wr_clk_sfp_125m_p_i,
       wr_clk_sfp_125m_n_i    => wr_clk_sfp_125m_n_i,
       clk_sys_62m5_o         => clk_sys_62m5,
-      clk_ref_125m_o         => clk_ref_125m,
+
 
       plldac_sclk_o   => plldac_sclk_o,
       plldac_din_o    => plldac_din_o,
@@ -176,11 +190,11 @@ begin
    clk_10m_mmcme4_inst : MMCME4_ADV
    generic map (
       BANDWIDTH => "OPTIMIZED",        -- Jitter programming
-      CLKFBOUT_MULT_F => 16.0,          -- Multiply value for all CLKOUT
+      CLKFBOUT_MULT_F => 25.0,          -- Multiply value for all CLKOUT
       CLKFBOUT_PHASE => 0.0,           -- Phase offset in degrees of CLKFB
       CLKFBOUT_USE_FINE_PS => "FALSE", -- Fine phase shift enable (TRUE/FALSE)
       CLKIN1_PERIOD => 16.0,            -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
-      CLKOUT0_DIVIDE_F => 100.0,         -- Divide amount for CLKOUT0
+      CLKOUT0_DIVIDE_F => 3.125,         -- Divide amount for CLKOUT0
       CLKOUT0_DUTY_CYCLE => 0.5,       -- Duty cycle for CLKOUT0
       CLKOUT0_PHASE => 0.0,            -- Phase offset for CLKOUT0
       CLKOUT0_USE_FINE_PS => "FALSE",  -- Fine phase shift enable (TRUE/FALSE)
@@ -191,13 +205,13 @@ begin
       STARTUP_WAIT => "FALSE"          -- Delays DONE until MMCM is locked
    )
    port map (
-      CLKFBOUT => clk_10MHz_fb,         -- 1-bit output: Feedback clock
-      CLKOUT0 => clk_10MHz,           -- 1-bit output: CLKOUT0
-      LOCKED => clk_10MHz_locked,             -- 1-bit output: LOCK
+      CLKFBOUT => clk_500MHz_fb,         -- 1-bit output: Feedback clock
+      CLKOUT0 => clk_500MHz,           -- 1-bit output: CLKOUT0
+      LOCKED => clk_500MHz_locked,             -- 1-bit output: LOCK
       PSDONE => open,             -- 1-bit output: Phase shift done
       CDDCREQ => '0',           -- 1-bit input: Request to dynamic divide clock
-      CLKFBIN => clk_10MHz_fb,           -- 1-bit input: Feedback clock
-      CLKIN1 => clk_ref_125m,             -- 1-bit input: Primary clock
+      CLKFBIN => clk_500MHz_fb,           -- 1-bit input: Feedback clock
+      CLKIN1 => clk_sys_62m5,             -- 1-bit input: Primary clock
       CLKIN2 => '0',             -- 1-bit input: Primary clock
       CLKINSEL => '1',         -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
       DADDR => (others => '0'),               -- 7-bit input: DRP address
@@ -211,6 +225,17 @@ begin
       PWRDWN => '0',             -- 1-bit input: Power-down
       RST => rst_n                    -- 1-bit input: Reset
    );
+
+  cmp_gen_10_mhz: gen_x_mhz
+    generic map (
+      g_divide => 50
+    )
+    port map (
+      clk_500m_i  => clk_500Mhz,
+      rst_n_i     => rst_n,
+      pps_i       => pps_p_buf,
+      clk_x_mhz_o => clk_10Mhz
+    );
 
    clk_ref_10m_o <= clk_10MHz;
 

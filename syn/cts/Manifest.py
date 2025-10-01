@@ -23,6 +23,7 @@ files = [
     "cts.xdc",
     "gtwizard_ultrascale_0.xci",
     "CTSExtensionMux.vhd",
+    "gen_x_mhz.vhd",
 ]
 
 modules = {

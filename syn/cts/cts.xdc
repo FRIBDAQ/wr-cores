@@ -40,8 +40,8 @@ set_property PACKAGE_PIN F12    [get_ports P2_HDIO1]         ;# Bank  45 VCCO - 
 # CN1D
 #set_property PACKAGE_PIN F2     [get_ports HP_SI5344_in_p]    ;# Bank  66 VCCO - som240_1_d4 - IO_L3P_T0L_N4_AD15P_66
 #set_property PACKAGE_PIN E2     [get_ports HP_SI5344_in_n]    ;# Bank  66 VCCO - som240_1_d5 - IO_L3N_T0L_N5_AD15N_66
-#set_property PACKAGE_PIN E1     [get_ports HP_SI5344_2_in_p]  ;# Bank  66 VCCO - som240_1_d7 - IO_L2P_T0L_N2_66
-#set_property PACKAGE_PIN D1     [get_ports HP_SI5344_2_in_n]  ;# Bank  66 VCCO - som240_1_d8 - IO_L2N_T0L_N3_66
+set_property PACKAGE_PIN E1     [get_ports HP_SI5344_2_in_p]  ;# Bank  66 VCCO - som240_1_d7 - IO_L2P_T0L_N2_66
+set_property PACKAGE_PIN D1     [get_ports HP_SI5344_2_in_n]  ;# Bank  66 VCCO - som240_1_d8 - IO_L2N_T0L_N3_66
 set_property PACKAGE_PIN F10    [get_ports LED_FPGA_DS0]     ;# Bank  45 VCCO - som240_1_d17 - IO_L5N_HDGC_45
 set_property PACKAGE_PIN J11    [get_ports LED_FPGA_DS1]     ;# Bank  45 VCCO - som240_1_d18 - IO_L1P_AD15P_45
 #set_property PACKAGE_PIN E10    [get_ports I2C_SDA_OSC2_HD]  ;# Bank  45 VCCO - som240_1_d20 - IO_L7P_HDGC_45
@@ -159,6 +159,8 @@ set_property DIFF_TERM true  [get_ports SI5344_2_HP_p]
 set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_GC_p]
 set_property DIFF_TERM true  [get_ports SI5344_2_HP_GC_p]
 
+set_property IOSTANDARD LVDS [get_ports HP_SI5344_2_in_p]
+
 set_property IOSTANDARD LVDS [get_ports LEMO_HDGC_IN0_p]
 set_property DIFF_TERM true  [get_ports LEMO_HDGC_IN0_p]
 set_property IOSTANDARD LVDS [get_ports LEMO_HDGC_IN1_p]
@@ -199,6 +201,19 @@ create_clock -period  8.000 -name WR_MAIN           -waveform {0.000  4.000} [ge
 create_clock -period  8.000 -name WR_HELPER         -waveform {0.000  4.000} [get_ports {SI5344_2_HP_GC_p}]
 create_clock -period 16.000 -name gth_txclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_tx_usrclk2_out[0]}]
 create_clock -period 16.000 -name gth_rxclk        -waveform {0.000  8.000} [get_nets {design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus.cmp_gth/U_gtwizard_gthe4/gtwiz_userclk_rx_usrclk2_out[0]}]
+
+# clk_ref_62m5_div2 = 16 ns = 8 clock periods of clk_500m which has 2 ns period
+# Setup requirement at edge 8, hold requirement at edge 7
+# See also:
+# https://www.xilinx.com/video/hardware/timing-exception-multicycle-path-constraints.html
+# See: "Multicycle Path and Positive phase shift" (due to the clk_ref_62m5_div2 to clk_500 delay through MMCME2_ADV)
+# Note:
+# If clk_ref_gth is sourced from BUFG_GT then use [get_clocks clk_ref_gth] <=> [get_clocks  "*clk_500m*"]
+# else if sourced from TXOUTCLK then use [get_clocks TXOUTCLK] <=> [get_clocks  "*clk_500m*"].
+set_multicycle_path 2 -setup -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500Mhz*"]
+set_multicycle_path 1 -hold -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500Mhz*"]
+set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
+set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 
 create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_default_plls.gen_zynqus_default_plls.cmp_clk_dmtd_buf_o/O]
 
