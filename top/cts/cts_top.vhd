@@ -144,7 +144,7 @@ begin
     cmp_xwrc_board_cts : xwrc_board_cts
     generic map (
       g_simulation   => g_SIMULATION,
-      g_dpram_initf  => "/home/geniejhang/work/wr-cores/syn/cts/wrc_cts.bram")
+      g_dpram_initf  => "../../wrc_cts.bram")
     port map (
       areset_n_i             => rst_n,
       wr_clk_helper_125m_p_i => wr_clk_helper_125m_p_i,
