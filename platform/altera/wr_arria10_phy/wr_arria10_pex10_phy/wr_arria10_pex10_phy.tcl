@@ -1,0 +1,5 @@
+qsys-generate wr_arria10_pex10_phy
+qsys-generate wr_arria10_pex10_atx_pll
+qsys-generate wr_arria10_pex10_rst_ctl
+qsys-generate wr_arria10_pex10_det_phy
+qsys-generate wr_arria10_pex10_cmu_pll

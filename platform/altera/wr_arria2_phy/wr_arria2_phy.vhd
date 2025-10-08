@@ -15,22 +15,22 @@
 --
 -- Copyright (c) 2013 GSI / Wesley W. Terpstra
 --
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
 --
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
 --
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
 -- from http://www.gnu.org/licenses/lgpl-2.1.html
--- 
+--
 --
 -------------------------------------------------------------------------------
 -- Revisions  :
@@ -46,7 +46,7 @@
 --   Recommended Design Practices (Clock Gating)      <http://www.altera.com/literature/hb/qts/qts_qii51006.pdf>
 --   AN 610: Implementing Deterministic Latency for CPRI and OBSAI Protocols in Altera Devices
 --                                                    <http://www.altera.com/literature/an/an610.pdf>
---   Achieving Timing Closure in Basic (PMA Direct) Functional Mode 
+--   Achieving Timing Closure in Basic (PMA Direct) Functional Mode
 --                                                    <http://www.altera.com/literature/an/an580.pdf>
 
 library ieee;
@@ -80,7 +80,7 @@ entity wr_arria2_phy is
     tx_enc_err_o   : out std_logic;  -- error encoding
 
     rx_rbclk_o    : out std_logic;  -- RX recovered clock
-    rx_data_o     : out std_logic_vector(7 downto 0);  -- 8b10b-decoded data output. 
+    rx_data_o     : out std_logic_vector(7 downto 0);  -- 8b10b-decoded data output.
     rx_k_o        : out std_logic;   -- 1 when the byte on rx_data_o is a control code
     rx_enc_err_o  : out std_logic;   -- encoding error indication
     rx_bitslide_o : out std_logic_vector(3 downto 0); -- RX bitslide indication, indicating the delay of the RX path of the transceiver (in UIs). Must be valid when rx_data_o is valid.
@@ -128,8 +128,8 @@ architecture rtl of wr_arria2_phy is
       busy             : out std_logic;
       reconfig_togxb   : out std_logic_vector (3 downto 0));
   end component;
-  
-  component dec_8b10b
+
+  component gc_dec_8b10b
     port (
       clk_i       : in  std_logic;
       rst_n_i     : in  std_logic;
@@ -140,7 +140,7 @@ architecture rtl of wr_arria2_phy is
       out_8b_o    : out std_logic_vector(7 downto 0));
   end component;
 
-  component enc_8b10b
+  component gc_enc_8b10b
     port (
       clk_i     : in  std_logic;
       rst_n_i   : in  std_logic;
@@ -157,43 +157,43 @@ architecture rtl of wr_arria2_phy is
   signal clk_tx        : std_logic; -- local  clock
   signal pll_locked    : std_logic;
   signal rx_freqlocked : std_logic;
-  
+
   type t_state is (WAIT_POWER, WAIT_CMU, WAIT_CONFIG, WAIT_LOCK, DONE);
-  
+
   signal rst_state         : t_state := WAIT_POWER;
   signal rst_delay         : unsigned(6 downto 0) := (others => '1'); -- must span >= 4us (128@20MHz=6.4us)
   signal pll_powerdown     : std_logic;
   signal tx_digitalreset   : std_logic; -- sys domain
   signal rx_analogreset    : std_logic; -- sys domain
   signal rx_digitalreset   : std_logic; -- sys domain
-  
+
   signal free_rstn          : std_logic_vector(2 downto 0);
   signal free_pll_locked    : std_logic_vector(2 downto 0);
   signal free_reconfig_busy : std_logic_vector(2 downto 0);
   signal free_rx_freqlocked : std_logic_vector(2 downto 0);
   signal free_drop_link     : std_logic_vector(2 downto 0);
-  
+
   signal tx_8b10b_rstn : std_logic_vector(2 downto 0); -- tx domain
   signal rx_8b10b_rstn : std_logic_vector(2 downto 0); -- rx domain
-  
+
   signal reconfig_busy    : std_logic;
   signal reconfig_togxb   : std_logic_vector (3 downto 0);
   signal reconfig_fromgxb : std_logic_vector (16 downto 0);
-  
+
   signal rx_dump_link                : std_logic_vector(6 downto 0); -- Long enough to kill ep_sync_detect
   signal rx_enc_err                  : std_logic;
   signal rx_bitslipboundaryselectout : std_logic_vector (4 downto 0);
-  
+
   signal rx_gxb_dataout              : std_logic_vector (9 downto 0); -- signal out of GXB
   signal rx_glbl_dataout             : std_logic_vector (9 downto 0); -- globally clocked register
-  
+
   signal rx_gxb_syncstatus           : std_logic;
   signal rx_glbl_syncstatus          : std_logic;
-  
+
   signal tx_enc_datain               : std_logic_vector (9 downto 0); -- registered encoder output (tx_clk_i)
   signal tx_reg_datain               : std_logic_vector (9 downto 0); -- clock transfer register   (tx_clk_i)
   signal tx_gxb_datain               : std_logic_vector (9 downto 0); -- clock transfer register   (clk_tx)
-  
+
 begin
 
   rx_rbclk_o   <= clk_rx;
@@ -201,12 +201,12 @@ begin
     port map (
       inclk  => clk_rx_gxb,
       outclk => clk_rx);
-  
+
   U_TxClkout : single_region
     port map (
       inclk  => clk_tx_gxb,
       outclk => clk_tx);
-  
+
   -- Altera PHY calibration block
   U_Reconf : arria2_phy_reconf
     port map (
@@ -249,9 +249,9 @@ begin
       rx_dataout                  => rx_gxb_dataout,
       tx_dataout(0)               => pad_txp_o,
       tx_datain                   => tx_gxb_datain);
-  
+
   -- Encode the TX data
-  encoder : enc_8b10b
+  encoder : gc_enc_8b10b
     port map(
       clk_i     => tx_clk_i,
       rst_n_i   => tx_8b10b_rstn(0),
@@ -260,9 +260,9 @@ begin
       err_o     => tx_enc_err_o,
       dispar_o  => tx_disparity_o,
       out_10b_o => tx_enc_datain);
-  
+
   -- Decode the RX data
-  decoder : dec_8b10b
+  decoder : gc_dec_8b10b
     port map(
       clk_i       => clk_rx,
       rst_n_i     => rx_8b10b_rstn(0),
@@ -272,7 +272,7 @@ begin
       rdisp_err_o => open,
       out_8b_o    => rx_data_o);
   rx_enc_err_o <= rx_enc_err or rx_dump_link(0);
-  
+
   p_sync : process(clk_free_i, rst_i) is
   begin
     if rst_i = '1' then
@@ -281,7 +281,7 @@ begin
       free_rstn <= '1' & free_rstn(free_rstn'left downto 1);
     end if;
   end process;
-  
+
   -- Reset procedure follows Figure 4-4 of Reset Control and Power Down in Arria II Devices
   p_reset : process(clk_free_i, free_rstn(0)) is
   begin
@@ -299,7 +299,7 @@ begin
       free_reconfig_busy <= reconfig_busy & free_reconfig_busy(free_reconfig_busy'left downto 1);
       free_rx_freqlocked <= rx_freqlocked & free_rx_freqlocked(free_rx_freqlocked'left downto 1);
       free_drop_link     <= drop_link_i   & free_drop_link    (free_drop_link'left     downto 1);
-      
+
       case rst_state is
         when WAIT_POWER =>
           pll_powerdown   <= '1';
@@ -307,82 +307,82 @@ begin
           locked_o        <= '0';
           tx_digitalreset <= '1';
           rx_digitalreset <= '1';
-          
+
           rst_delay <= rst_delay - 1;
-          
+
           if rst_delay = 0 then
             rst_delay <= (others => '1');
             rst_state <= WAIT_CMU;
           end if;
-          
+
         when WAIT_CMU =>
           pll_powerdown <= '0';
-          
+
           if free_pll_locked(0) = '0' then
             rst_delay <= (others => '1');
           else
             rst_delay <= rst_delay - 1;
           end if;
-          
+
           if rst_delay = 0 then
             rst_delay <= (others => '1');
             rst_state <= WAIT_CONFIG;
           end if;
-          
+
         when WAIT_CONFIG =>
           if free_reconfig_busy(0) = '1' then
             rst_delay <= (others => '1');
           else
             rst_delay <= rst_delay - 1;
           end if;
-          
+
           if rst_delay = 0 then
             rst_delay <= (others => '1');
             rst_state <= WAIT_LOCK;
           end if;
-          
+
           if free_pll_locked(0) = '0' then
             rst_delay <= (others => '1');
             rst_state <= WAIT_POWER;
           end if;
-        
+
         when WAIT_LOCK =>
           rx_analogreset <= '0';
-          
+
           if free_rx_freqlocked(0) = '0' then
             rst_delay <= (others => '1');
           else
             rst_delay <= rst_delay - 1;
           end if;
-          
+
           if rst_delay = 0 then
             rst_delay <= (others => '1');
             rst_state <= DONE;
           end if;
-          
+
           if free_pll_locked(0) = '0' then
             rst_delay <= (others => '1');
             rst_state <= WAIT_POWER;
           end if;
-        
+
         when DONE =>
           -- RX clock is now locked and safe
           locked_o <= '1';
-          
+
           -- Kill the link upon request
           tx_digitalreset <= free_drop_link(0);
           rx_digitalreset <= free_drop_link(0);
-          
+
           if free_pll_locked(0) = '0' then
             rst_delay <= (others => '1');
             rst_state <= WAIT_POWER;
           end if;
-          
+
       end case;
     end if;
   end process;
-  
-  
+
+
   -- Generate reset for 8b10b encoder
   p_pll_reset : process(tx_clk_i) is
   begin
@@ -390,7 +390,7 @@ begin
       tx_8b10b_rstn <= (not tx_digitalreset) & tx_8b10b_rstn(tx_8b10b_rstn'left downto 1);
     end if;
   end process;
-  
+
   -- Generate reset for the 8b10b decoder and ep_sync_detect
   -- should use global version of clk_rx
   p_rx_reset : process(clk_rx) is
@@ -399,7 +399,7 @@ begin
       rx_8b10b_rstn <= (not rx_digitalreset) & rx_8b10b_rstn(rx_8b10b_rstn'left downto 1);
     end if;
   end process;
-  
+
   -- Dump the link if the bitslide changes
   p_dump_link : process(clk_rx) is
   begin
@@ -411,7 +411,7 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- Cross clock domain from tx_clk_i to tx_clk
   -- These clocks must be phase aligned
   -- Registers tx_reg_datain and tx_gxb_datain must be logic locked
@@ -428,7 +428,7 @@ begin
       tx_gxb_datain <= tx_reg_datain;
     end if;
   end process;
-  
+
   -- Additional register to improve timings
   p_rx_path : process(clk_rx) is
   begin
@@ -437,7 +437,7 @@ begin
       rx_glbl_syncstatus <= rx_gxb_syncstatus;
     end if;
   end process;
-  
+
   -- Slow registered signals out of the GXB
   p_rx_regs : process(clk_rx) is
   begin
@@ -445,5 +445,5 @@ begin
       rx_bitslide_o <= rx_bitslipboundaryselectout(3 downto 0);
     end if;
   end process;
-  
+
 end rtl;
