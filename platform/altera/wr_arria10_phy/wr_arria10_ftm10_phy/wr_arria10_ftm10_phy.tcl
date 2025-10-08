@@ -1,0 +1,5 @@
+qsys-generate wr_arria10_ftm10_phy
+qsys-generate wr_arria10_ftm10_atx_pll
+qsys-generate wr_arria10_ftm10_rst_ctl
+qsys-generate wr_arria10_ftm10_det_phy
+qsys-generate wr_arria10_ftm10_cmu_pll
