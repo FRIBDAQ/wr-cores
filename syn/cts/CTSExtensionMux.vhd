@@ -32,7 +32,7 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity CTSExtensionMux is
-    Port ( clk_10MHz_i    : in    STD_LOGIC;
+    Port ( clk_sys        : in    STD_LOGIC;
            A0_i           : in    STD_LOGIC;
            A1_i           : in    STD_LOGIC;
            eeprom_scl_i   : in    STD_LOGIC;
@@ -54,7 +54,7 @@ end CTSExtensionMux;
 architecture RTL of CTSExtensionMux is
 
     signal i2c_priority   : std_logic;
-    signal busy_counter   : unsigned(9 downto 0);
+    signal busy_counter   : unsigned(12 downto 0);
 
     signal dacpll_off     : std_logic;
     signal A0_out, A1_out : std_logic;
@@ -64,9 +64,9 @@ architecture RTL of CTSExtensionMux is
 
 begin
 
-    process (clk_10MHz_i)
+    process (clk_sys)
     begin
-        if rising_edge(clk_10MHz_i)
+        if rising_edge(clk_sys)
         then
             if eeprom_scl_i = '0' or eeprom_sda_i = '0' or sfp_scl_i = '0' or sfp_sda_i = '0' then
                 i2c_priority <= '1';
@@ -75,7 +75,7 @@ begin
             else
                 busy_counter <= busy_counter + 1;
 
-                if busy_counter >= 1000 then
+                if busy_counter >= 5000 then
                     i2c_priority <= '0';
                 end if;
             end if;

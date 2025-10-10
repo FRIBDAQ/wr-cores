@@ -103,7 +103,8 @@ entity cts_top is
     ---------------------------------------------------------------------------
     -- Clock out
     ---------------------------------------------------------------------------
-    clk_ref_10m_o       : out std_logic;
+    clk_sys_o       : out std_logic;
+    clk_10m_o       : out std_logic;
 
     ---------------------------------------------------------------------------
     -- LEDs
@@ -130,6 +131,7 @@ architecture Behavioral of cts_top is
 
     signal rst_n: std_logic;
     signal clk_sys_62m5 : std_logic;
+    signal clk_ref : std_logic;
 
     signal clk_500Mhz_fb : std_logic;
     signal clk_500Mhz_locked : std_logic;
@@ -154,7 +156,7 @@ begin
       wr_clk_sfp_125m_p_i    => wr_clk_sfp_125m_p_i,
       wr_clk_sfp_125m_n_i    => wr_clk_sfp_125m_n_i,
       clk_sys_62m5_o         => clk_sys_62m5,
-
+      clk_ref_125m_o         => clk_ref,
 
       plldac_sclk_o   => plldac_sclk_o,
       plldac_din_o    => plldac_din_o,
@@ -186,6 +188,7 @@ begin
       pps_p_o    => pps_p_buf
     );
 
+   clk_sys_o <= clk_sys_62m5;
 
    clk_10m_mmcme4_inst : MMCME4_ADV
    generic map (
@@ -211,7 +214,7 @@ begin
       PSDONE => open,             -- 1-bit output: Phase shift done
       CDDCREQ => '0',           -- 1-bit input: Request to dynamic divide clock
       CLKFBIN => clk_500MHz_fb,           -- 1-bit input: Feedback clock
-      CLKIN1 => clk_sys_62m5,             -- 1-bit input: Primary clock
+      CLKIN1 => clk_ref,             -- 1-bit input: Primary clock
       CLKIN2 => '0',             -- 1-bit input: Primary clock
       CLKINSEL => '1',         -- 1-bit input: Clock select, High=CLKIN1 Low=CLKIN2
       DADDR => (others => '0'),               -- 7-bit input: DRP address
@@ -237,7 +240,13 @@ begin
       clk_x_mhz_o => clk_10Mhz
     );
 
-   clk_ref_10m_o <= clk_10MHz;
+   clk_10mhz_oddr: ODDRE1
+   port map(
+     Q  => clk_10m_o,
+     C  => clk_500Mhz,
+     D1 => clk_10MHz,
+     D2 => clk_10MHz,
+     SR => '0');
 
    act_led_inst : OBUF
    port map (
@@ -249,9 +258,12 @@ begin
      I => led_link_buf,
      O => led_link_o);
 
-   pps_p_inst : OBUF
+   oddr_pps_inst : ODDRE1
    port map(
-     I => pps_p_buf,
-     O => pps_p_o);
+     Q  => pps_p_o,
+     C  => clk_500Mhz,
+     D1 => pps_p_buf,
+     D2 => pps_p_buf,
+     SR => '0');
 
 end Behavioral;
