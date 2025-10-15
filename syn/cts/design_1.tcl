@@ -139,9 +139,11 @@ if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:util_ds_buf:2.2\
-xilinx.com:ip:util_vector_logic:2.0\
 xilinx.com:ip:clk_wiz:6.0\
 xilinx.com:ip:xlconstant:1.1\
+xilinx.com:ip:axi_dwidth_converter:2.1\
+xilinx.com:ip:axi_protocol_converter:2.1\
+xilinx.com:ip:proc_sys_reset:5.0\
 "
 
    set list_ips_missing ""
@@ -509,7 +511,8 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__CRL_APB__GEM1_REF_CTRL__ACT_FREQMHZ {124.998749} \
     CONFIG.PSU__CRL_APB__GEM3_REF_CTRL__FREQMHZ {125} \
     CONFIG.PSU__CRL_APB__GEM3_REF_CTRL__SRCSEL {IOPLL} \
-    CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__ACT_FREQMHZ {249.997498} \
+    CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__ACT_FREQMHZ {62.499374} \
+    CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__FREQMHZ {62.5} \
     CONFIG.PSU__CRL_APB__GEM_TSU_REF_CTRL__SRCSEL {IOPLL} \
     CONFIG.PSU__CRL_APB__I2C0_REF_CTRL__ACT_FREQMHZ {99.999001} \
     CONFIG.PSU__CRL_APB__I2C0_REF_CTRL__FREQMHZ {100} \
@@ -643,6 +646,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__IOU_SLCR__TTC3__ACT_FREQMHZ {100.000000} \
     CONFIG.PSU__IOU_SLCR__WDT0__ACT_FREQMHZ {99.999001} \
     CONFIG.PSU__LPD_SLCR__CSUPMU__ACT_FREQMHZ {100.000000} \
+    CONFIG.PSU__MAXIGP2__DATA_WIDTH {128} \
     CONFIG.PSU__OVERRIDE__BASIC_CLOCK {0} \
     CONFIG.PSU__PL_CLK0_BUF {TRUE} \
     CONFIG.PSU__PL_CLK1_BUF {FALSE} \
@@ -747,7 +751,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
     CONFIG.PSU__USE__IRQ0 {1} \
     CONFIG.PSU__USE__M_AXI_GP0 {0} \
     CONFIG.PSU__USE__M_AXI_GP1 {0} \
-    CONFIG.PSU__USE__M_AXI_GP2 {0} \
+    CONFIG.PSU__USE__M_AXI_GP2 {1} \
     CONFIG.PSU__USE__S_AXI_GP0 {0} \
   ] $zynq_ultra_ps_e_0
 
@@ -838,22 +842,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: util_vector_logic_0, and set properties
-  set util_vector_logic_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0 ]
-  set_property -dict [list \
-    CONFIG.C_OPERATION {or} \
-    CONFIG.C_SIZE {1} \
-  ] $util_vector_logic_0
-
-
-  # Create instance: util_vector_logic_1, and set properties
-  set util_vector_logic_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_1 ]
-  set_property -dict [list \
-    CONFIG.C_OPERATION {not} \
-    CONFIG.C_SIZE {1} \
-  ] $util_vector_logic_1
-
-
   # Create instance: clk_wiz_0, and set properties
   set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
   set_property -dict [list \
@@ -873,11 +861,22 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   set_property CONFIG.C_BUF_TYPE {OBUFDS} $util_ds_buf_1
 
 
-  # Create instance: xlconstant_0, and set properties
-  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-
   # Create instance: xlconstant_1, and set properties
   set xlconstant_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_1 ]
+
+  # Create instance: axi_dwidth_converter_0, and set properties
+  set axi_dwidth_converter_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dwidth_converter:2.1 axi_dwidth_converter_0 ]
+
+  # Create instance: axi_protocol_convert_0, and set properties
+  set axi_protocol_convert_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_protocol_converter:2.1 axi_protocol_convert_0 ]
+
+  # Create instance: proc_sys_reset_0, and set properties
+  set proc_sys_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0 ]
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net axi_dwidth_converter_0_M_AXI [get_bd_intf_pins axi_dwidth_converter_0/M_AXI] [get_bd_intf_pins axi_protocol_convert_0/S_AXI]
+  connect_bd_intf_net -intf_net axi_protocol_convert_0_M_AXI [get_bd_intf_pins cts_top_0/S_AXI] [get_bd_intf_pins axi_protocol_convert_0/M_AXI]
+  connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_LPD [get_bd_intf_pins axi_dwidth_converter_0/S_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_LPD]
 
   # Create port connections
   connect_bd_net -net CTSExtensionMux_0_A0_o [get_bd_pins CTSExtensionMux_0/A0_o] [get_bd_ports P2_HDIO2]
@@ -907,7 +906,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net SI5344_HP_GC_n_1 [get_bd_ports SI5344_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_main_125m_n_i]
   connect_bd_net -net SI5344_HP_GC_p_1 [get_bd_ports SI5344_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_main_125m_p_i]
   connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins util_ds_buf_1/OBUF_IN]
-  connect_bd_net -net cts_top_0_clk_ref_10m_o [get_bd_pins cts_top_0/clk_ref_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN] [get_bd_pins CTSExtensionMux_0/clk_10MHz_i]
+  connect_bd_net -net cts_top_0_clk_125m_o [get_bd_pins cts_top_0/clk_125m_o] [get_bd_pins LEMO_OUT_2/OBUF_IN]
+  connect_bd_net -net cts_top_0_clk_ref_10m_o [get_bd_pins cts_top_0/clk_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN]
+  connect_bd_net -net cts_top_0_clk_sys_o [get_bd_pins cts_top_0/clk_sys_o] [get_bd_pins CTSExtensionMux_0/clk_sys] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins axi_protocol_convert_0/aclk] [get_bd_pins axi_dwidth_converter_0/s_axi_aclk] [get_bd_pins proc_sys_reset_0/slowest_sync_clk] [get_bd_pins cts_top_0/S_AXI_aclk]
   connect_bd_net -net cts_top_0_eeprom_scl_out [get_bd_pins cts_top_0/eeprom_scl_out] [get_bd_pins CTSExtensionMux_0/eeprom_scl_i]
   connect_bd_net -net cts_top_0_eeprom_sda_out [get_bd_pins cts_top_0/eeprom_sda_out] [get_bd_pins CTSExtensionMux_0/eeprom_sda_i]
   connect_bd_net -net cts_top_0_led_act_o [get_bd_pins cts_top_0/led_act_o] [get_bd_ports LED_FPGA_DS1]
@@ -923,6 +924,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net cts_top_0_sfp_txn_o [get_bd_pins cts_top_0/sfp_txn_o] [get_bd_ports GTH_SFP_TX0_n]
   connect_bd_net -net cts_top_0_sfp_txp_o [get_bd_pins cts_top_0/sfp_txp_o] [get_bd_ports GTH_SFP_TX0_p]
   connect_bd_net -net cts_top_0_uart_txd_o [get_bd_pins cts_top_0/uart_txd_o] [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_rxd]
+  connect_bd_net -net proc_sys_reset_0_peripheral_aresetn [get_bd_pins proc_sys_reset_0/peripheral_aresetn] [get_bd_pins axi_dwidth_converter_0/s_axi_aresetn] [get_bd_pins axi_protocol_convert_0/aresetn] [get_bd_pins cts_top_0/S_AXI_aresetn]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_N [get_bd_pins LEMO_OUT_0/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT0_n]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_P [get_bd_pins LEMO_OUT_0/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT0_p]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_N [get_bd_pins LEMO_OUT_1/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT1_n]
@@ -933,21 +935,20 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_ds_buf_2_OBUF_DS_P [get_bd_pins LEMO_OUT_2/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT2_p]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_N [get_bd_pins LEMO_OUT_3/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT3_n]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_P [get_bd_pins LEMO_OUT_3/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT3_p]
-  connect_bd_net -net util_vector_logic_0_Res [get_bd_pins util_vector_logic_0/Res] [get_bd_pins cts_top_0/ps_por_i]
-  connect_bd_net -net util_vector_logic_1_Res [get_bd_pins util_vector_logic_1/Res] [get_bd_pins util_vector_logic_0/Op2]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins xlconstant_0/dout] [get_bd_pins LEMO_OUT_2/OBUF_IN]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins LEMO_OUT_3/OBUF_IN]
-  connect_bd_net -net zynq_ultra_ps_e_0_emio_gpio_o [get_bd_pins zynq_ultra_ps_e_0/emio_gpio_o] [get_bd_pins util_vector_logic_0/Op1]
+  connect_bd_net -net zynq_ultra_ps_e_0_emio_gpio_o [get_bd_pins zynq_ultra_ps_e_0/emio_gpio_o] [get_bd_pins cts_top_0/ps_por_i]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_uart0_txd [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_txd] [get_bd_pins cts_top_0/uart_rxd_i]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins clk_wiz_0/clk_in1]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins util_vector_logic_1/Op1] [get_bd_pins clk_wiz_0/resetn]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins clk_wiz_0/resetn] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
   # Create address segments
+  assign_bd_address -offset 0x80000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs cts_top_0/S_AXI/reg0] -force
 
 
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -959,6 +960,4 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
-
-common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
