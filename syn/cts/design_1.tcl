@@ -139,7 +139,6 @@ if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:util_ds_buf:2.2\
-xilinx.com:ip:clk_wiz:6.0\
 xilinx.com:ip:xlconstant:1.1\
 xilinx.com:ip:axi_dwidth_converter:2.1\
 xilinx.com:ip:axi_protocol_converter:2.1\
@@ -270,8 +269,6 @@ proc create_root_design { parentCell } {
   set P2_HDIO4 [ create_bd_port -dir IO P2_HDIO4 ]
   set P2_HDIO2 [ create_bd_port -dir O P2_HDIO2 ]
   set P2_HDIO3 [ create_bd_port -dir O P2_HDIO3 ]
-  set HP_SI5344_2_in_p [ create_bd_port -dir O -from 0 -to 0 -type clk HP_SI5344_2_in_p ]
-  set HP_SI5344_2_in_n [ create_bd_port -dir O -from 0 -to 0 -type clk HP_SI5344_2_in_n ]
 
   # Create instance: zynq_ultra_ps_e_0, and set properties
   set zynq_ultra_ps_e_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.5 zynq_ultra_ps_e_0 ]
@@ -677,6 +674,7 @@ proc create_root_design { parentCell } {
     CONFIG.PSU__PROTECTION__SLAVES {LPD;USB3_1_XHCI;FE300000;FE3FFFFF;1|LPD;USB3_1;FF9E0000;FF9EFFFF;1|LPD;USB3_0_XHCI;FE200000;FE2FFFFF;0|LPD;USB3_0;FF9D0000;FF9DFFFF;0|LPD;UART1;FF010000;FF01FFFF;1|LPD;UART0;FF000000;FF00FFFF;1|LPD;TTC3;FF140000;FF14FFFF;1|LPD;TTC2;FF130000;FF13FFFF;1|LPD;TTC1;FF120000;FF12FFFF;1|LPD;TTC0;FF110000;FF11FFFF;1|FPD;SWDT1;FD4D0000;FD4DFFFF;1|LPD;SWDT0;FF150000;FF15FFFF;1|LPD;SPI1;FF050000;FF05FFFF;1|LPD;SPI0;FF040000;FF04FFFF;0|FPD;SMMU_REG;FD5F0000;FD5FFFFF;1|FPD;SMMU;FD800000;FDFFFFFF;1|FPD;SIOU;FD3D0000;FD3DFFFF;1|FPD;SERDES;FD400000;FD47FFFF;1|LPD;SD1;FF170000;FF17FFFF;0|LPD;SD0;FF160000;FF16FFFF;1|FPD;SATA;FD0C0000;FD0CFFFF;0|LPD;RTC;FFA60000;FFA6FFFF;1|LPD;RSA_CORE;FFCE0000;FFCEFFFF;1|LPD;RPU;FF9A0000;FF9AFFFF;1|LPD;R5_TCM_RAM_GLOBAL;FFE00000;FFE3FFFF;1|LPD;R5_1_Instruction_Cache;FFEC0000;FFECFFFF;1|LPD;R5_1_Data_Cache;FFED0000;FFEDFFFF;1|LPD;R5_1_BTCM_GLOBAL;FFEB0000;FFEBFFFF;1|LPD;R5_1_ATCM_GLOBAL;FFE90000;FFE9FFFF;1|LPD;R5_0_Instruction_Cache;FFE40000;FFE4FFFF;1|LPD;R5_0_Data_Cache;FFE50000;FFE5FFFF;1|LPD;R5_0_BTCM_GLOBAL;FFE20000;FFE2FFFF;1|LPD;R5_0_ATCM_GLOBAL;FFE00000;FFE0FFFF;1|LPD;QSPI_Linear_Address;C0000000;DFFFFFFF;1|LPD;QSPI;FF0F0000;FF0FFFFF;1|LPD;PMU_RAM;FFDC0000;FFDDFFFF;1|LPD;PMU_GLOBAL;FFD80000;FFDBFFFF;1|FPD;PCIE_MAIN;FD0E0000;FD0EFFFF;0|FPD;PCIE_LOW;E0000000;EFFFFFFF;0|FPD;PCIE_HIGH2;8000000000;BFFFFFFFFF;0|FPD;PCIE_HIGH1;600000000;7FFFFFFFF;0|FPD;PCIE_DMA;FD0F0000;FD0FFFFF;0|FPD;PCIE_ATTRIB;FD480000;FD48FFFF;0|LPD;OCM_XMPU_CFG;FFA70000;FFA7FFFF;1|LPD;OCM_SLCR;FF960000;FF96FFFF;1|OCM;OCM;FFFC0000;FFFFFFFF;1|LPD;NAND;FF100000;FF10FFFF;0|LPD;MBISTJTAG;FFCF0000;FFCFFFFF;1|LPD;LPD_XPPU_SINK;FF9C0000;FF9CFFFF;1|LPD;LPD_XPPU;FF980000;FF98FFFF;1|LPD;LPD_SLCR_SECURE;FF4B0000;FF4DFFFF;1|LPD;LPD_SLCR;FF410000;FF4AFFFF;1|LPD;LPD_GPV;FE100000;FE1FFFFF;1|LPD;LPD_DMA_7;FFAF0000;FFAFFFFF;1|LPD;LPD_DMA_6;FFAE0000;FFAEFFFF;1|LPD;LPD_DMA_5;FFAD0000;FFADFFFF;1|LPD;LPD_DMA_4;FFAC0000;FFACFFFF;1|LPD;LPD_DMA_3;FFAB0000;FFABFFFF;1|LPD;LPD_DMA_2;FFAA0000;FFAAFFFF;1|LPD;LPD_DMA_1;FFA90000;FFA9FFFF;1|LPD;LPD_DMA_0;FFA80000;FFA8FFFF;1|LPD;IPI_CTRL;FF380000;FF3FFFFF;1|LPD;IOU_SLCR;FF180000;FF23FFFF;1|LPD;IOU_SECURE_SLCR;FF240000;FF24FFFF;1|LPD;IOU_SCNTRS;FF260000;FF26FFFF;1|LPD;IOU_SCNTR;FF250000;FF25FFFF;1|LPD;IOU_GPV;FE000000;FE0FFFFF;1|LPD;I2C1;FF030000;FF03FFFF;1|LPD;I2C0;FF020000;FF02FFFF;0|FPD;GPU;FD4B0000;FD4BFFFF;1|LPD;GPIO;FF0A0000;FF0AFFFF;1|LPD;GEM3;FF0E0000;FF0EFFFF;0|LPD;GEM2;FF0D0000;FF0DFFFF;0|LPD;GEM1;FF0C0000;FF0CFFFF;1|LPD;GEM0;FF0B0000;FF0BFFFF;0|FPD;FPD_XMPU_SINK;FD4F0000;FD4FFFFF;1|FPD;FPD_XMPU_CFG;FD5D0000;FD5DFFFF;1|FPD;FPD_SLCR_SECURE;FD690000;FD6CFFFF;1|FPD;FPD_SLCR;FD610000;FD68FFFF;1|FPD;FPD_DMA_CH7;FD570000;FD57FFFF;1|FPD;FPD_DMA_CH6;FD560000;FD56FFFF;1|FPD;FPD_DMA_CH5;FD550000;FD55FFFF;1|FPD;FPD_DMA_CH4;FD540000;FD54FFFF;1|FPD;FPD_DMA_CH3;FD530000;FD53FFFF;1|FPD;FPD_DMA_CH2;FD520000;FD52FFFF;1|FPD;FPD_DMA_CH1;FD510000;FD51FFFF;1|FPD;FPD_DMA_CH0;FD500000;FD50FFFF;1|LPD;EFUSE;FFCC0000;FFCCFFFF;1|FPD;Display\
 Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD050000;FD05FFFF;1|FPD;DDR_XMPU4_CFG;FD040000;FD04FFFF;1|FPD;DDR_XMPU3_CFG;FD030000;FD03FFFF;1|FPD;DDR_XMPU2_CFG;FD020000;FD02FFFF;1|FPD;DDR_XMPU1_CFG;FD010000;FD01FFFF;1|FPD;DDR_XMPU0_CFG;FD000000;FD00FFFF;1|FPD;DDR_QOS_CTRL;FD090000;FD09FFFF;1|FPD;DDR_PHY;FD080000;FD08FFFF;1|DDR;DDR_LOW;0;7FFFFFFF;1|DDR;DDR_HIGH;800000000;87FFFFFFF;1|FPD;DDDR_CTRL;FD070000;FD070FFF;1|LPD;Coresight;FE800000;FEFFFFFF;1|LPD;CSU_DMA;FFC80000;FFC9FFFF;1|LPD;CSU;FFCA0000;FFCAFFFF;1|LPD;CRL_APB;FF5E0000;FF85FFFF;1|FPD;CRF_APB;FD1A0000;FD2DFFFF;1|FPD;CCI_REG;FD5E0000;FD5EFFFF;1|LPD;CAN1;FF070000;FF07FFFF;0|LPD;CAN0;FF060000;FF06FFFF;0|FPD;APU;FD5C0000;FD5CFFFF;1|LPD;APM_INTC_IOU;FFA20000;FFA2FFFF;1|LPD;APM_FPD_LPD;FFA30000;FFA3FFFF;1|FPD;APM_5;FD490000;FD49FFFF;1|FPD;APM_0;FD0B0000;FD0BFFFF;1|LPD;APM2;FFA10000;FFA1FFFF;1|LPD;APM1;FFA00000;FFA0FFFF;1|LPD;AMS;FFA50000;FFA5FFFF;1|FPD;AFI_5;FD3B0000;FD3BFFFF;1|FPD;AFI_4;FD3A0000;FD3AFFFF;1|FPD;AFI_3;FD390000;FD39FFFF;1|FPD;AFI_2;FD380000;FD38FFFF;1|FPD;AFI_1;FD370000;FD37FFFF;1|FPD;AFI_0;FD360000;FD36FFFF;1|LPD;AFIFM6;FF9B0000;FF9BFFFF;1|FPD;ACPU_GIC;F9010000;F907FFFF;1}\
 \
+    CONFIG.PSU__PSS_ALT_REF_CLK__ENABLE {0} \
     CONFIG.PSU__PSS_REF_CLK__FREQMHZ {33.333} \
     CONFIG.PSU__QSPI_COHERENCY {0} \
     CONFIG.PSU__QSPI_ROUTE_THROUGH_FPD {0} \
@@ -842,25 +840,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: clk_wiz_0, and set properties
-  set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
-  set_property -dict [list \
-    CONFIG.CLKOUT1_JITTER {266.768} \
-    CONFIG.CLKOUT1_PHASE_ERROR {354.315} \
-    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {25} \
-    CONFIG.MMCM_CLKFBOUT_MULT_F {107.750} \
-    CONFIG.MMCM_CLKOUT0_DIVIDE_F {47.875} \
-    CONFIG.MMCM_DIVCLK_DIVIDE {9} \
-    CONFIG.RESET_PORT {resetn} \
-    CONFIG.RESET_TYPE {ACTIVE_LOW} \
-  ] $clk_wiz_0
-
-
-  # Create instance: util_ds_buf_1, and set properties
-  set util_ds_buf_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_1 ]
-  set_property CONFIG.C_BUF_TYPE {OBUFDS} $util_ds_buf_1
-
-
   # Create instance: xlconstant_1, and set properties
   set xlconstant_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_1 ]
 
@@ -897,6 +876,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net LEMO_HDGC_IN2_p_1 [get_bd_ports LEMO_HDGC_IN2_p] [get_bd_pins LEMO_IN_2/IBUF_DS_P]
   connect_bd_net -net LEMO_HDGC_IN3_n_1 [get_bd_ports LEMO_HDGC_IN3_n] [get_bd_pins LEMO_IN_3/IBUF_DS_N]
   connect_bd_net -net LEMO_HDGC_IN3_p_1 [get_bd_ports LEMO_HDGC_IN3_p] [get_bd_pins LEMO_IN_3/IBUF_DS_P]
+  connect_bd_net -net LEMO_IN_3_IBUF_OUT [get_bd_pins LEMO_IN_3/IBUF_OUT] [get_bd_pins cts_top_0/ps_por_i]
   connect_bd_net -net Net2 [get_bd_ports P2_HDIO1] [get_bd_pins CTSExtensionMux_0/DA_b]
   connect_bd_net -net Net3 [get_bd_ports P2_HDIO4] [get_bd_pins CTSExtensionMux_0/DB_b]
   connect_bd_net -net SFP_MOD_ABS0_1 [get_bd_ports SFP_MOD_ABS0] [get_bd_pins cts_top_0/sfp_det_i]
@@ -905,9 +885,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net SI5344_2_HP_GC_p_1 [get_bd_ports SI5344_2_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_helper_125m_p_i]
   connect_bd_net -net SI5344_HP_GC_n_1 [get_bd_ports SI5344_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_main_125m_n_i]
   connect_bd_net -net SI5344_HP_GC_p_1 [get_bd_ports SI5344_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_main_125m_p_i]
-  connect_bd_net -net clk_wiz_0_clk_out1 [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins util_ds_buf_1/OBUF_IN]
+  connect_bd_net -net cts_top_0_clk_10m_o [get_bd_pins cts_top_0/clk_10m_o] [get_bd_pins LEMO_OUT_1/OBUF_IN]
   connect_bd_net -net cts_top_0_clk_125m_o [get_bd_pins cts_top_0/clk_125m_o] [get_bd_pins LEMO_OUT_2/OBUF_IN]
-  connect_bd_net -net cts_top_0_clk_ref_10m_o [get_bd_pins cts_top_0/clk_10m_o] [get_bd_pins LEMO_OUT_0/OBUF_IN]
   connect_bd_net -net cts_top_0_clk_sys_o [get_bd_pins cts_top_0/clk_sys_o] [get_bd_pins CTSExtensionMux_0/clk_sys] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins axi_protocol_convert_0/aclk] [get_bd_pins axi_dwidth_converter_0/s_axi_aclk] [get_bd_pins proc_sys_reset_0/slowest_sync_clk] [get_bd_pins cts_top_0/S_AXI_aclk]
   connect_bd_net -net cts_top_0_eeprom_scl_out [get_bd_pins cts_top_0/eeprom_scl_out] [get_bd_pins CTSExtensionMux_0/eeprom_scl_i]
   connect_bd_net -net cts_top_0_eeprom_sda_out [get_bd_pins cts_top_0/eeprom_sda_out] [get_bd_pins CTSExtensionMux_0/eeprom_sda_i]
@@ -917,7 +896,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net cts_top_0_pll25dac_cs_n_o [get_bd_pins cts_top_0/pll25dac_cs_n_o] [get_bd_pins CTSExtensionMux_0/A0_i]
   connect_bd_net -net cts_top_0_plldac_din_o [get_bd_pins cts_top_0/plldac_din_o] [get_bd_pins CTSExtensionMux_0/plldac_din_i]
   connect_bd_net -net cts_top_0_plldac_sclk_o [get_bd_pins cts_top_0/plldac_sclk_o] [get_bd_pins CTSExtensionMux_0/plldac_sclk_i]
-  connect_bd_net -net cts_top_0_pps_p_o [get_bd_pins cts_top_0/pps_p_o] [get_bd_pins LEMO_OUT_1/OBUF_IN]
+  connect_bd_net -net cts_top_0_pps_p_o [get_bd_pins cts_top_0/pps_p_o] [get_bd_pins LEMO_OUT_0/OBUF_IN]
   connect_bd_net -net cts_top_0_sfp_scl_out [get_bd_pins cts_top_0/sfp_scl_out] [get_bd_pins CTSExtensionMux_0/sfp_scl_i]
   connect_bd_net -net cts_top_0_sfp_sda_out [get_bd_pins cts_top_0/sfp_sda_out] [get_bd_pins CTSExtensionMux_0/sfp_sda_i]
   connect_bd_net -net cts_top_0_sfp_tx_disable_o [get_bd_pins cts_top_0/sfp_tx_disable_o] [get_bd_ports SFP_DISABLE0]
@@ -928,18 +907,14 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_ds_buf_0_OBUF_DS_N [get_bd_pins LEMO_OUT_0/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT0_n]
   connect_bd_net -net util_ds_buf_0_OBUF_DS_P [get_bd_pins LEMO_OUT_0/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT0_p]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_N [get_bd_pins LEMO_OUT_1/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT1_n]
-  connect_bd_net -net util_ds_buf_1_OBUF_DS_N1 [get_bd_pins util_ds_buf_1/OBUF_DS_N] [get_bd_ports HP_SI5344_2_in_n]
   connect_bd_net -net util_ds_buf_1_OBUF_DS_P [get_bd_pins LEMO_OUT_1/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT1_p]
-  connect_bd_net -net util_ds_buf_1_OBUF_DS_P1 [get_bd_pins util_ds_buf_1/OBUF_DS_P] [get_bd_ports HP_SI5344_2_in_p]
   connect_bd_net -net util_ds_buf_2_OBUF_DS_N [get_bd_pins LEMO_OUT_2/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT2_n]
   connect_bd_net -net util_ds_buf_2_OBUF_DS_P [get_bd_pins LEMO_OUT_2/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT2_p]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_N [get_bd_pins LEMO_OUT_3/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT3_n]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_P [get_bd_pins LEMO_OUT_3/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT3_p]
   connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins LEMO_OUT_3/OBUF_IN]
-  connect_bd_net -net zynq_ultra_ps_e_0_emio_gpio_o [get_bd_pins zynq_ultra_ps_e_0/emio_gpio_o] [get_bd_pins cts_top_0/ps_por_i]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_uart0_txd [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_txd] [get_bd_pins cts_top_0/uart_rxd_i]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins clk_wiz_0/clk_in1]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins clk_wiz_0/resetn] [get_bd_pins proc_sys_reset_0/ext_reset_in]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
   # Create address segments
   assign_bd_address -offset 0x80000000 -range 0x20000000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs cts_top_0/S_AXI/reg0] -force
@@ -948,7 +923,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -960,4 +934,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
