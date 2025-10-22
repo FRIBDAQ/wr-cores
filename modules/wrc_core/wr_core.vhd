@@ -845,6 +845,7 @@ begin
       g_with_vlans          => false,
       g_with_rtu            => false,
       g_with_leds           => true,
+      g_with_dmtd           => false,
       g_with_packet_injection => false,
       g_use_new_rxcrc       => true,
       g_use_new_txcrc       => false)
