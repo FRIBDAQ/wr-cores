@@ -845,17 +845,14 @@ begin
       g_with_vlans          => false,
       g_with_rtu            => false,
       g_with_leds           => true,
-      g_with_dmtd           => false,
       g_with_packet_injection => false,
       g_use_new_rxcrc       => true,
       g_use_new_txcrc       => false)
     port map (
       clk_ref_i      => clk_ref_i,
       clk_sys_i      => clk_sys_i,
-      clk_dmtd_i     => clk_dmtd_i,
       rst_sys_n_i    => rst_net_n,
       rst_ref_n_i    => rst_net_resync_ref_n,
-      rst_dmtd_n_i   => rst_net_resync_dmtd_n,
       rst_txclk_n_i  => rst_net_resync_txclk_n,
       rst_rxclk_n_i  => rst_net_resync_rxclk_n,
       pps_csync_p1_i => s_pps_csync,

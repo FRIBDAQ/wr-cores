@@ -70,7 +70,6 @@ entity wr_endpoint is
     g_with_vlans            : boolean                        := true;
     g_with_rtu              : boolean                        := true;
     g_with_leds             : boolean                        := true;
-    g_with_dmtd             : boolean                        := false;
     g_with_packet_injection : boolean                        := false;
     g_use_new_rxcrc         : boolean                        := false;
     g_use_new_txcrc         : boolean                        := false;
@@ -90,13 +89,9 @@ entity wr_endpoint is
 -- reference clock / 2 (62.5 MHz, in-phase with refclk)
     clk_sys_i : in std_logic;
 
--- DMTD offset clock for phase tracking - used only if g_with_dmtd == true
-    clk_dmtd_i : in std_logic;
-
 -- resets for various clock domains
     rst_sys_n_i   : in std_logic;
     rst_ref_n_i   : in std_logic;
-    rst_dmtd_n_i  : in std_logic;
     rst_txclk_n_i : in std_logic;
     rst_rxclk_n_i : in std_logic;
 
@@ -395,13 +390,6 @@ architecture syn of wr_endpoint is
   signal wb_out : t_wishbone_slave_out;
 
   signal extended_ADDR : std_logic_vector(c_wishbone_address_width-1 downto 0);
-
-  signal phase_meas    : std_logic_vector(31 downto 0);
-  signal phase_meas_p  : std_logic;
-  signal validity_cntr : unsigned(1 downto 0);
-  signal r_dmcr_en     : std_logic;
-  signal r_dmcr_n_avg  : std_logic_vector(11 downto 0);
-
 
   signal rtu_rq               : t_ep_internal_rtu_request;
   signal dvalid_tx, dvalid_rx : std_logic;
@@ -837,75 +825,10 @@ begin
   regs_towb_ep.inj_ctrl_pic_mode_id_i    <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_mode_valid_i <= '0';
   regs_towb_ep.inj_ctrl_pic_ena_i        <= '0';
+  regs_towb_ep.dmsr_ps_rdy_i             <= '0';
+  regs_towb_ep.dmsr_ps_val_i             <= (others => 'X');
+  regs_towb_dmtd                         <= c_ep_in_registers_init_value;
 
--------------------------------------------------------------------------------
--- DMTD phase meter
-------------------------------------------------------------------------------  
-
-  gen_with_dmtd : if(g_with_dmtd) generate
-    U_DMTD : entity work.dmtd_phase_meas
-      generic map (
-        g_counter_bits         => 14,
-        g_deglitcher_threshold => 1000)
-      port map (
-        clk_sys_i => clk_sys_i,
-
-        clk_a_i    => phy_ref_clk_i,
-        clk_b_i    => phy_rx_clk_i,
-        clk_dmtd_i => clk_dmtd_i,
-
-        rst_sys_n_i  => rst_sys_n_i,
-        rst_dmtd_n_i => rst_dmtd_n_i,
-
-        en_i           => r_dmcr_en,
-        navg_i         => r_dmcr_n_avg,
-        phase_meas_o   => phase_meas,
-        phase_meas_p_o => phase_meas_p);
-
-
-
-    regs_towb_dmtd.dmcr_en_i    <= r_dmcr_en;
-    regs_towb_dmtd.dmcr_n_avg_i <= r_dmcr_n_avg;
-
-    p_dmtd_update : process(clk_sys_i)
-    begin
-      if rising_edge(clk_sys_i) then
-        if rst_sys_n_i = '0' then
-          validity_cntr              <= (others => '0');
-          regs_towb_ep.dmsr_ps_rdy_i <= '0';
-        else
-
-          if(regs_fromwb.dmcr_en_load_o = '1') then
-            r_dmcr_en    <= regs_fromwb.dmcr_en_o;
-            r_dmcr_n_avg <= regs_fromwb.dmcr_n_avg_o;
-          end if;
-
-          if(r_dmcr_en = '0') then
-            validity_cntr              <= (others => '0');
-            regs_towb_ep.dmsr_ps_rdy_i <= '0';
-          elsif(regs_fromwb.dmsr_ps_rdy_o = '1' and regs_fromwb.dmsr_ps_rdy_load_o = '1') then
-            regs_towb_ep.dmsr_ps_rdy_i <= '0';
-          elsif(phase_meas_p = '1') then
-
-            if(validity_cntr = "11") then
-              regs_towb_ep.dmsr_ps_rdy_i <= '1';
-              regs_towb_ep.dmsr_ps_val_i <= phase_meas(23 downto 0);  -- discard few
-            else
-              regs_towb_ep.dmsr_ps_rdy_i <= '0';
-              validity_cntr              <= validity_cntr + 1;
-            end if;
-          end if;
-        end if;
-      end if;
-    end process;
-
-  end generate gen_with_dmtd;
-
-  gen_without_dmtd : if(not g_with_dmtd) generate
-    regs_towb_ep.dmsr_ps_rdy_i <= '0';
-    regs_towb_ep.dmsr_ps_val_i <= (others => 'X');
-    regs_towb_dmtd             <= c_ep_in_registers_init_value;
-  end generate gen_without_dmtd;
 
   dvalid_tx <= snk_cyc_i and snk_stb_i and link_ok;
   dvalid_rx <= src_out.cyc and src_out.stb and link_ok;

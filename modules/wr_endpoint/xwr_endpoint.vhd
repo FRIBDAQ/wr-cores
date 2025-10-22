@@ -61,7 +61,6 @@ entity xwr_endpoint is
     g_with_vlans            : boolean                        := true;
     g_with_rtu              : boolean                        := true;
     g_with_leds             : boolean                        := true;
-    g_with_dmtd             : boolean                        := true;
     g_with_packet_injection : boolean                        := false;
     g_use_new_rxcrc         : boolean                        := false;
     g_use_new_txcrc         : boolean                        := false;
@@ -81,12 +80,9 @@ entity xwr_endpoint is
 -- reference clock / 2 (62.5 MHz, in-phase with refclk)
     clk_sys_i : in std_logic;
 
-    clk_dmtd_i : in std_logic := '0';
-
 -- resets for various clock domains
     rst_sys_n_i   : in std_logic;
     rst_ref_n_i   : in std_logic;
-    rst_dmtd_n_i  : in std_logic;
     rst_txclk_n_i : in std_logic;
     rst_rxclk_n_i : in std_logic;
 
@@ -320,7 +316,6 @@ begin
       g_with_vlans            => g_with_vlans,
       g_with_rtu              => g_with_rtu,
       g_with_leds             => g_with_leds,
-      g_with_dmtd             => g_with_dmtd,
       g_with_packet_injection => g_with_packet_injection,
       g_use_new_rxcrc         => g_use_new_rxcrc,
       g_use_new_txcrc         => g_use_new_txcrc,
@@ -330,10 +325,8 @@ begin
     port map (
       clk_ref_i            => clk_ref_i,
       clk_sys_i            => clk_sys_i,
-      clk_dmtd_i           => clk_dmtd_i,
       rst_sys_n_i          => rst_sys_n_i,
       rst_ref_n_i          => rst_ref_n_i,
-      rst_dmtd_n_i         => rst_dmtd_n_i,
       rst_txclk_n_i        => rst_txclk_n_i,
       rst_rxclk_n_i        => rst_rxclk_n_i,
       pps_csync_p1_i       => pps_csync_p1_i,
@@ -345,15 +338,15 @@ begin
       phy_tx_prbs_sel_o    => phy_tx_prbs_sel,
       phy_rdy_i            => phy_rdy,
 
-      phy_mdio_master_cyc_o       => phy_mdio_master_o.cyc,
-      phy_mdio_master_stb_o       => phy_mdio_master_o.stb,
-      phy_mdio_master_we_o       => phy_mdio_master_o.we,
-      phy_mdio_master_sel_o       => phy_mdio_master_o.sel,
-      phy_mdio_master_adr_o       => phy_mdio_master_o.adr,
-      phy_mdio_master_dat_o       => phy_mdio_master_o.dat,
-      phy_mdio_master_dat_i       => phy_mdio_master_i.dat,
-      phy_mdio_master_stall_i       => phy_mdio_master_i.stall,
-      phy_mdio_master_ack_i       => phy_mdio_master_i.ack,
+      phy_mdio_master_cyc_o     => phy_mdio_master_o.cyc,
+      phy_mdio_master_stb_o     => phy_mdio_master_o.stb,
+      phy_mdio_master_we_o      => phy_mdio_master_o.we,
+      phy_mdio_master_sel_o     => phy_mdio_master_o.sel,
+      phy_mdio_master_adr_o     => phy_mdio_master_o.adr,
+      phy_mdio_master_dat_o     => phy_mdio_master_o.dat,
+      phy_mdio_master_dat_i     => phy_mdio_master_i.dat,
+      phy_mdio_master_stall_i   => phy_mdio_master_i.stall,
+      phy_mdio_master_ack_i     => phy_mdio_master_i.ack,
 
       phy_sfp_tx_fault_i   => sfp_tx_fault,
       phy_sfp_los_i        => sfp_los,
