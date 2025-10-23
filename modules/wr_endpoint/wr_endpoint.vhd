@@ -767,7 +767,7 @@ begin
     port map (
       rst_n_i    => rst_sys_n_i,
       clk_sys_i  => clk_sys_i,
-      wb_adr_i   => wb_in.adr(4 downto 0),
+      wb_adr_i   => wb_in.adr(3 downto 0),
       wb_dat_i   => wb_in.dat,
       wb_dat_o   => wb_out.dat,
       wb_cyc_i   => wb_in.cyc,
@@ -817,16 +817,12 @@ begin
   regs_towb_ep.dsr_lstatus_i             <= link_ok;
   regs_towb_ep.dsr_rxsync_i              <= rx_synced;
   regs_towb_ep.dsr_gtready_i             <= phy_rdy_resync_sys;
-  regs_towb_ep.dmcr_en_i                 <= '0';
-  regs_towb_ep.dmcr_n_avg_i              <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_conf_ifg_i   <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_conf_sel_i   <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_conf_valid_i <= '0';
   regs_towb_ep.inj_ctrl_pic_mode_id_i    <= (others => '0');
   regs_towb_ep.inj_ctrl_pic_mode_valid_i <= '0';
   regs_towb_ep.inj_ctrl_pic_ena_i        <= '0';
-  regs_towb_ep.dmsr_ps_rdy_i             <= '0';
-  regs_towb_ep.dmsr_ps_val_i             <= (others => 'X');
   regs_towb_dmtd                         <= c_ep_in_registers_init_value;
 
 
