@@ -52,7 +52,6 @@ use ieee.numeric_std.all;
 library work;
 use work.gencores_pkg.all;
 use work.wishbone_pkg.all;
-use work.gn4124_core_pkg.all;
 use work.wr_board_pkg.all;
 use work.wr_pxie_fmc_pkg.all;
 

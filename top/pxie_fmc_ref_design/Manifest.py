@@ -7,8 +7,8 @@ modules = {
         "../../",
     ],
     "git" : [
-        "git://gitlab.com/ohwr/hdl-core-lib/general-cores.git",
-        "git://gitlab.com/ohwr/hdl-core-lib/gn4124-core.git",
-        "git://gitlab.com/ohwr/hdl-core-lib/etherbone-core.git",
+        "https://gitlab.com/ohwr/project/general-cores.git",
+        "https://gitlab.com/ohwr/project/etherbone-core.git",
+        "https://gitlab.com/ohwr/project/urv-core.git",
     ],
 }
