@@ -128,20 +128,6 @@ entity xwr_endpoint is
     phy16_o           : out t_phy_16bits_from_wrc;
     phy16_i           : in  t_phy_16bits_to_wrc := c_dummy_phy16_to_wrc;
 
--------------------------------------------------------------------------------
--- GMII Interface (8-bit)
--------------------------------------------------------------------------------
-
-    gmii_tx_clk_i : in  std_logic := '0';
-    gmii_txd_o    : out std_logic_vector(7 downto 0);
-    gmii_tx_en_o  : out std_logic;
-    gmii_tx_er_o  : out std_logic;
-
-    gmii_rx_clk_i : in std_logic                    := '0';
-    gmii_rxd_i    : in std_logic_vector(7 downto 0) := x"00";
-    gmii_rx_er_i  : in std_logic                    := '0';
-    gmii_rx_dv_i  : in std_logic                    := '0';
-
     ---------------------------------------------------------------------------
     -- Wishbone I/O
     ---------------------------------------------------------------------------
@@ -363,14 +349,6 @@ begin
       phy_rx_enc_err_i     => phy_rx_enc_err,
       phy_rx_bitslide_i    => phy_rx_bts,
 
-      gmii_tx_clk_i        => gmii_tx_clk_i,
-      gmii_txd_o           => gmii_txd_o,
-      gmii_tx_en_o         => gmii_tx_en_o,
-      gmii_tx_er_o         => gmii_tx_er_o,
-      gmii_rx_clk_i        => gmii_rx_clk_i,
-      gmii_rxd_i           => gmii_rxd_i,
-      gmii_rx_er_i         => gmii_rx_er_i,
-      gmii_rx_dv_i         => gmii_rx_dv_i,
       src_dat_o            => src_o.dat,
       src_adr_o            => src_o.adr,
       src_sel_o            => src_o.sel,

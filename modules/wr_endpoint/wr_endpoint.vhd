@@ -15,27 +15,27 @@
 -- features such as:
 -- - VLANs: inserting/removing tags (for ACCESS/TRUNK port support)
 -- - RX/TX precise timestaping
--- - full PCS for optical Gigabit Ethernet 
+-- - full PCS for optical Gigabit Ethernet
 -- - decodes MAC addresses, VIDs and priorities and passes them to the RTU.
 -- Refer to the manual for more details.
 -------------------------------------------------------------------------------
 --
 -- Copyright (c) 2011 - 2017 CERN / BE-CO-HT
 --
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
 --
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
 --
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
 -- from http://www.gnu.org/licenses/lgpl-2.1.html
 --
 -------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 
 entity wr_endpoint is
-  
+
   generic (
     g_interface_mode        : t_wishbone_interface_mode      := CLASSIC;
     g_address_granularity   : t_wishbone_address_granularity := WORD;
@@ -104,7 +104,7 @@ entity wr_endpoint is
 
 -------------------------------------------------------------------------------
 -- PHY Interace (8/16 bit PCS)
--------------------------------------------------------------------------------    
+-------------------------------------------------------------------------------
 
     phy_rst_o            : out std_logic;
     phy_loopen_o         : out std_logic;
@@ -125,7 +125,7 @@ entity wr_endpoint is
     phy_mdio_master_ack_i : in std_logic := '0';
     phy_mdio_master_stall_i : in std_logic := '0';
     phy_mdio_master_dat_i : in std_logic_vector(31 downto 0) := x"00000000";
-    
+
     phy_ref_clk_i      : in  std_logic;
     phy_tx_data_o      : out std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
     phy_tx_k_o         : out std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
@@ -137,20 +137,6 @@ entity wr_endpoint is
     phy_rx_k_i        : in std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
     phy_rx_enc_err_i  : in std_logic;
     phy_rx_bitslide_i : in std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
-
--------------------------------------------------------------------------------
--- GMII Interface (8-bit)
--------------------------------------------------------------------------------
-
-    gmii_tx_clk_i : in  std_logic := '0';
-    gmii_txd_o    : out std_logic_vector(7 downto 0);
-    gmii_tx_en_o  : out std_logic;
-    gmii_tx_er_o  : out std_logic;
-
-    gmii_rx_clk_i : in std_logic                    := '0';
-    gmii_rxd_i    : in std_logic_vector(7 downto 0) := x"00";
-    gmii_rx_er_i  : in std_logic                    := '0';
-    gmii_rx_dv_i  : in std_logic                    := '0';
 
     ---------------------------------------------------------------------------
     -- Wishbone I/O
@@ -179,7 +165,7 @@ entity wr_endpoint is
 
 -------------------------------------------------------------------------------
 -- TX timestamping unit interface
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 
 -- Port ID value
     txtsu_port_id_o  : out std_logic_vector(4 downto 0);
@@ -210,9 +196,9 @@ entity wr_endpoint is
 -- 1 indicates that coresponding RTU port is almost full.
     rtu_almost_full_i : in std_logic;
 
--- request strobe, single HI pulse begins evaluation of the request. 
+-- request strobe, single HI pulse begins evaluation of the request.
     rtu_rq_strobe_p1_o : out std_logic;
-    
+
     rtu_rq_abort_o : out std_logic;
 
 -- source and destination MAC addresses extracted from the packet header
@@ -232,7 +218,7 @@ entity wr_endpoint is
 -- HI indicates that packet has assigned priority.
     rtu_rq_has_prio_o : out std_logic;
 
--------------------------------------------------------------------------------   
+-------------------------------------------------------------------------------
 -- Wishbone bus
 -------------------------------------------------------------------------------
 
@@ -255,7 +241,7 @@ entity wr_endpoint is
    pfilter_done_o   : out std_logic;
 
 -------------------------------------------------------------------------------
--- control of PAUSE sending (ML: not used and not tested... TRU uses packet injection) -- 
+-- control of PAUSE sending (ML: not used and not tested... TRU uses packet injection) --
 -------------------------------------------------------------------------------
 
    fc_tx_pause_req_i   : in  std_logic                     := '0';
@@ -303,7 +289,7 @@ entity wr_endpoint is
 -- HI physically kills the link (turn of laser)
     link_kill_i : in std_logic := '0';
 
--- HI indicates that link is up (so cable connected), LOW indicates that link is faulty 
+-- HI indicates that link is up (so cable connected), LOW indicates that link is faulty
 -- (e.g.: cable disconnected)
     link_up_o : out std_logic;
 
@@ -416,31 +402,9 @@ architecture syn of wr_endpoint is
 
   signal phy_mdio_master_out : t_wishbone_master_out;
   signal phy_mdio_master_in : t_wishbone_master_in;
-    
--------------------------------------------------------------------------------
--- chipscope (for desperates)
--------------------------------------------------------------------------------
-  signal CONTROL0                   : std_logic_vector(35 downto 0);
-  signal TRIG0, TRIG1, TRIG2, TRIG3 : std_logic_vector(31 downto 0);
-
-  component chipscope_icon
-    port (
-      CONTROL0 : inout std_logic_vector(35 downto 0));
-  end component;
-
-  component chipscope_ila
-    port (
-      CONTROL : inout std_logic_vector(35 downto 0);
-      CLK     : in    std_logic;
-      TRIG0   : in    std_logic_vector(31 downto 0);
-      TRIG1   : in    std_logic_vector(31 downto 0);
-      TRIG2   : in    std_logic_vector(31 downto 0);
-      TRIG3   : in    std_logic_vector(31 downto 0));
-  end component;
 
   attribute mark_debug : string;
   attribute mark_debug of rmon_events_o : signal is "true";
-
 begin
 
   U_Sync_phy_rdy_sysclk : gc_sync
@@ -538,7 +502,7 @@ begin
   phy_mdio_master_in.ack <= phy_mdio_master_ack_i;
   phy_mdio_master_in.stall <= phy_mdio_master_stall_i;
   phy_mdio_master_in.rty <= '0';
-  phy_mdio_master_in.err <= '0'; 
+  phy_mdio_master_in.err <= '0';
 
 
 -------------------------------------------------------------------------------
@@ -587,7 +551,9 @@ begin
       inject_req_i        => inject_req_i,
       inject_user_value_i => inject_user_value_i,
       inject_packet_sel_i => inject_packet_sel_i,
-      inject_ready_o      => inject_ready_o);
+      inject_ready_o      => inject_ready_o,
+
+      dbg_o => open);
 
 
   txfra_flow_enable <= '1';
@@ -725,6 +691,7 @@ begin
 
       txts_timestamp_o       => txts_timestamp_value,
       txts_timestamp_valid_o => txts_timestamp_valid,
+      txts_timestamp_stb_o   => open,
 
       txts_o                 => txts_o,                   -- 2013-Nov-28 peterj added for debugging/calibration
       rxts_o                 => rxts_o, 		              -- 2013-Nov-28 peterj added for debugging/calibration
@@ -759,6 +726,8 @@ begin
       sl_dat_o   => wb_dat_o,
       sl_ack_o   => wb_ack_o,
       sl_stall_o => wb_stall_o,
+      sl_err_o   => open,
+      sl_rty_o   => open,
       master_i   => wb_out,
       master_o   => wb_in);
 
@@ -781,7 +750,7 @@ begin
 
       regs_o => regs_fromwb,
       regs_i => regs_towb
-      );     
+      );
 
   wb_out.stall <= '0';
   wb_out.rty   <= '0';
@@ -919,27 +888,4 @@ begin
       ppulse_o => rmon.rx_frame);
 
   f_pack_rmon_triggers(rmon, rmon_events_o(c_epevents_sz-1 downto 0));
-
---   CS_ICON : chipscope_icon
---    port map (
---     CONTROL0 => CONTROL0);
---   CS_ILA : chipscope_ila
---    port map (
---      CONTROL => CONTROL0,
---      CLK     => phy_ref_clk_i,
---      TRIG0   => TRIG0,
---      TRIG1   => TRIG1,
---      TRIG2   => TRIG2,
---      TRIG3   => TRIG3);
--- 
---   TRIG0(15    downto   0) <= phy_rx_data_i;
---   TRIG0(17    downto  16) <= phy_rx_k_i;
---   TRIG0(              18) <= phy_rx_enc_err_i;
---   TRIG0(23    downto  19) <= phy_rx_bitslide_i;
-
-  -- Drive unsued GMII outputs
-  gmii_txd_o   <= (others => '0');
-  gmii_tx_en_o <= '0';
-  gmii_tx_er_o <= '0';
-
 end syn;
