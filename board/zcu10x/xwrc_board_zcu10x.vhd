@@ -218,14 +218,14 @@ end entity xwrc_board_zcu10x;
 architecture struct of xwrc_board_zcu10x is
 
   -- PLLs, clocks
+  signal wr_clk_main_125m     : std_logic;
   signal wr_clk_main_125m_buf : std_logic;
-  signal clk_125m_pllref_buf : std_logic;
-  signal clk_125m_dmtdref_buf   : std_logic;
-  signal clk_pll_62m5        : std_logic;
-  signal clk_pll_125m        : std_logic;
-  signal clk_pll_dmtd        : std_logic;
-  signal pll_locked          : std_logic;
-  signal clk_10m_ext         : std_logic;
+  signal wr_clk_main_62m5     : std_logic;
+  signal wr_clk_helper_125m   : std_logic;
+  signal wr_clk_ref_125m      : std_logic;
+  signal clk_pll_dmtd         : std_logic;
+  signal pll_locked           : std_logic;
+  signal clk_10m_ext          : std_logic;
 
 
   -- Reset logic
@@ -317,7 +317,7 @@ begin  -- architecture struct
     generic map (
       DQS_BIAS     => "FALSE")
     port map (
-      O  => wr_clk_main_125m_buf,
+      O  => wr_clk_main_125m,
       I  => wr_clk_main_125m_p_i,
       IB => wr_clk_main_125m_n_i);
 
@@ -325,8 +325,8 @@ begin  -- architecture struct
   -- preventing Vivado from automatically adding it.
   cmp_bufg_pllmain: BUFG
     port map (
-      I => wr_clk_main_125m_buf,
-      O => clk_125m_pllref_buf);
+      I => wr_clk_main_125m,
+      O => wr_clk_main_125m_buf);
 
   cmp_ibufds_gte4_dmtd : IBUFDS_GTE4
     generic map (
@@ -336,11 +336,11 @@ begin  -- architecture struct
       CEB  => '0',
       I  => wr_clk_helper_125m_p_i,
       IB => wr_clk_helper_125m_n_i,
-      O  => clk_125m_dmtdref_buf,
+      O  => wr_clk_helper_125m,
       ODIV2  => open);
 
-  clk_ref_125m_o <= clk_pll_125m;
-  clk_sys_62m5_o <= clk_pll_62m5;
+  clk_ref_125m_o <= wr_clk_ref_125m;
+  clk_sys_62m5_o <= wr_clk_main_62m5;
 
   ---------------------------------------------------------------------------
   --   Zynq US+ PHY + DMTD QPLLs with SDM tuning
@@ -356,9 +356,9 @@ begin  -- architecture struct
   begin
 
     -- DAC to SDM control data
-    tm_dac_h_to_sdm : process(clk_pll_62m5)
+    tm_dac_h_to_sdm : process(wr_clk_main_62m5)
     begin
-      if (rising_edge(clk_pll_62m5)) then
+      if (rising_edge(wr_clk_main_62m5)) then
         sdm_toggle_shift_h <=
             sdm_toggle_shift_h(sdm_toggle_shift_h'left - 1 downto 0) &
             dac_hpll_load_p1;
@@ -378,9 +378,9 @@ begin  -- architecture struct
       end if;
     end process;
 
-    tm_dac_d_to_sdm : process(clk_pll_62m5)
+    tm_dac_d_to_sdm : process(wr_clk_main_62m5)
     begin
-      if (rising_edge(clk_pll_62m5)) then
+      if (rising_edge(wr_clk_main_62m5)) then
         sdm_toggle_shift_d <=
             sdm_toggle_shift_d(sdm_toggle_shift_d'left - 1 downto 0) &
             dac_dpll_load_p1;
@@ -416,10 +416,10 @@ begin  -- architecture struct
     generic map (
       BUFGCE_DIVIDE => 2)
       port map (
-        I => clk_125m_pllref_buf,
+        I => wr_clk_main_125m_buf,
         CLR => '0',
         CE => '1',
-        O => clk_pll_62m5);
+        O => wr_clk_main_62m5);
 
     -- PHY
     cmp_gth: wr_gthe4_phy_family7_xilinx_ip
@@ -429,8 +429,8 @@ begin  -- architecture struct
         g_use_gclk_as_refclk => false)
       port map (
         clk_gth_i      => clk_125m_gth_buf,
-        clk_freerun_i  => clk_pll_62m5,
-        tx_out_clk_o   => clk_pll_125m,
+        clk_freerun_i  => wr_clk_main_62m5,
+        tx_out_clk_o   => wr_clk_ref_125m,
         tx_locked_o    => open,
         tx_sdm_data_i  => sdm_data_d,
         tx_sdm_toggle_i => sdm_toggle_d,
@@ -453,7 +453,7 @@ begin  -- architecture struct
         pad_rxp_i      => sfp_rxp_i,
         rdy_o          => phy16_to_wrc.rdy);
 
-    phy16_to_wrc.ref_clk      <= clk_pll_125m;
+    phy16_to_wrc.ref_clk      <= wr_clk_ref_125m;
     phy16_to_wrc.sfp_tx_fault <= sfp_tx_fault_i;
     phy16_to_wrc.sfp_los      <= sfp_los_i;
 
@@ -483,7 +483,7 @@ begin  -- architecture struct
         gtwiz_userclk_rx_usrclk_out => open,
         gtwiz_userclk_rx_usrclk2_out => open,
         gtwiz_userclk_rx_active_out => open,
-        gtwiz_reset_clk_freerun_in => (0 => clk_pll_62m5),
+        gtwiz_reset_clk_freerun_in => (0 => wr_clk_main_62m5),
         gtwiz_reset_all_in => (0 => phy16_from_wrc.rst),
         gtwiz_reset_tx_pll_and_datapath_in => "0",
         gtwiz_reset_tx_datapath_in => "0",
@@ -494,17 +494,17 @@ begin  -- architecture struct
         gtwiz_reset_rx_done_out => open,
         gtwiz_userdata_tx_in => (31 downto 0 => '0'),
         gtwiz_userdata_rx_out => open,
-        gtrefclk00_in => (0 => clk_125m_dmtdref_buf),
+        gtrefclk00_in => (0 => wr_clk_helper_125m),
         sdm0data_in => sdm_data_h,
         sdm0toggle_in => (0 => sdm_toggle_h),
         sdm1data_in => sdm_data_d,
         sdm1toggle_in => (0 => sdm_toggle_d),
         qpll0outclk_out => open,
         qpll0outrefclk_out => open,
-        drpclk_in => (0 => clk_pll_62m5, 1 => clk_pll_62m5),
+        drpclk_in => (0 => wr_clk_main_62m5, 1 => wr_clk_main_62m5),
         gthrxn_in => dummy_gthrxn_i(1 downto 0),
         gthrxp_in => dummy_gthrxp_i(1 downto 0),
-        gtrefclk0_in => (0 => clk_125m_dmtdref_buf, 1 => clk_125m_dmtdref_buf),
+        gtrefclk0_in => (0 => wr_clk_helper_125m, 1 => wr_clk_helper_125m),
         rx8b10ben_in => "11",
         rxbufreset_in => "00",
         rxcommadeten_in => "00",
@@ -609,7 +609,7 @@ begin  -- architecture struct
       generic map (
         g_width => 1000)
       port map (
-        clk_i      => clk_pll_62m5,
+        clk_i      => wr_clk_main_62m5,
         rst_n_i    => '1',
         pulse_i    => ext_ref_rst,
         extended_o => pll_ext_rst);
@@ -635,7 +635,7 @@ begin  -- architecture struct
     generic map (
       g_sync_edge => "positive")
     port map (
-      clk_i    => clk_pll_62m5,
+      clk_i    => wr_clk_main_62m5,
       rst_n_i  => '1',
       data_i   => areset_edge_n_i,
       ppulse_o => areset_edge_ppulse);
@@ -644,8 +644,8 @@ begin  -- architecture struct
   rstlogic_arst <= (not pll_locked) or (not areset_n_i) or areset_edge_ppulse;
 
   -- concatenation of all clocks required to have synced resets
-  rstlogic_clk_in(0)          <= clk_pll_62m5;
-  rstlogic_clk_in(1)          <= clk_pll_125m;
+  rstlogic_clk_in(0)          <= wr_clk_main_62m5;
+  rstlogic_clk_in(1)          <= wr_clk_ref_125m;
 
   cmp_rstlogic_reset : gc_reset_multi_aasd
     generic map (
@@ -692,9 +692,9 @@ begin  -- architecture struct
       g_fabric_iface              => plain,
       g_dac_bits                  => g_dac_bits)
     port map (
-      clk_sys_i            => clk_pll_62m5,
+      clk_sys_i            => wr_clk_main_62m5,
       clk_dmtd_i           => clk_pll_dmtd,
-      clk_ref_i            => clk_pll_125m,
+      clk_ref_i            => wr_clk_ref_125m,
       clk_10m_ext_i        => clk_10m_ext,
       clk_ext_mul_i        => ext_ref_mul,
       clk_ext_mul_locked_i => ext_ref_mul_locked,
@@ -763,7 +763,7 @@ begin  -- architecture struct
       g_sdb_addr    => c_tertbar_sdb_address
       )
     port map(
-      clk_sys_i  => clk_pll_62m5,
+      clk_sys_i  => wr_clk_main_62m5,
       rst_n_i    => rst_62m5_n,
       -- Master connections (INTERCON is a slave)
       slave_i(0) => aux_master_out,
@@ -792,7 +792,7 @@ begin  -- architecture struct
       g_num_pins               => g_num_fmc_enable,
       g_with_builtin_tristates => false)
     port map(
-      clk_sys_i         => clk_pll_62m5,
+      clk_sys_i         => wr_clk_main_62m5,
       rst_n_i           => rst_62m5_n,
 
       gpio_out_o        => fmc_enable_o,
@@ -810,7 +810,7 @@ begin  -- architecture struct
     generic map(
       g_simulation      => g_simulation)
     port map(
-      clk_sys_i         => clk_pll_62m5,
+      clk_sys_i         => wr_clk_main_62m5,
       rst_n_i           => rst_62m5_n,
 
       scl_pad_oen_o     => si570_scl_oen_o,
@@ -837,7 +837,7 @@ begin  -- architecture struct
       g_RX_FIFO_SIZE => 1024
     )
     port map(
-      clk_sys_i => clk_pll_62m5,
+      clk_sys_i => wr_clk_main_62m5,
       rst_n_i   => rst_62m5_n,
 
       -- Wishbone
