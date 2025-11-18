@@ -22,6 +22,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library work;
 use work.gencores_pkg.all;
@@ -246,6 +247,15 @@ architecture struct of xwrc_board_zcu10x is
 
   signal sfp_tx_disable_n : std_logic;
 
+  -- Initialize the SDM interface to the center of our 19 bit tuning range.
+  -- This allows to use almost the entire allowed +/- 200 ppm range around
+  -- 125 MHz with 124.975605 MHz refclock and integral part of 80 for N.
+  signal sdm_data_h : std_logic_vector(24 downto 0) :=
+      std_logic_vector(to_unsigned(262143, 25));
+  signal sdm_data_d : std_logic_vector(24 downto 0) :=
+      std_logic_vector(to_unsigned(262143, 25));
+  signal sdm_toggle_d : std_logic := '0';
+
   -- External reference
   signal ext_ref_mul         : std_logic;
   signal ext_ref_mul_locked  : std_logic;
@@ -329,52 +339,290 @@ begin  -- architecture struct
       O  => clk_125m_dmtdref_buf,
       ODIV2  => open);
 
-  cmp_xwrc_platform : xwrc_platform_xilinx
-    generic map (
-      g_fpga_family               => "zynqus_qpll_sdm",
-      g_with_external_clock_input => g_with_external_clock_input,
-      g_use_default_plls          => TRUE,
-      g_simulation                => g_simulation,
-      g_dac_bits                  => g_dac_bits)
-    port map (
-      areset_n_i            => areset_n_i,
-      clk_10m_ext_i         => clk_10m_ext_i,
-      clk_125m_pllref_i     => clk_125m_pllref_buf,
-      clk_125m_gtp_p_i      => wr_clk_sfp_125m_p_i,
-      clk_125m_gtp_n_i      => wr_clk_sfp_125m_n_i,
-      clk_125m_dmtd_i       => clk_125m_dmtdref_buf,
-      dac_hpll_data_i       => dac_hpll_data,
-      dac_hpll_load_p1_i    => dac_hpll_load_p1,
-      dac_dpll_data_i       => dac_dpll_data,
-      dac_dpll_load_p1_i    => dac_dpll_load_p1,
-      dummy_gthtxp_o        => dummy_gthtxp_o,
-      dummy_gthtxn_o        => dummy_gthtxn_o,
-      dummy_gthrxp_i        => dummy_gthrxp_i,
-      dummy_gthrxn_i        => dummy_gthrxn_i,
-      sfp_txn_o             => sfp_txn_o,
-      sfp_txp_o             => sfp_txp_o,
-      sfp_rxn_i             => sfp_rxn_i,
-      sfp_rxp_i             => sfp_rxp_i,
-      sfp_tx_fault_i        => sfp_tx_fault_i,
-      sfp_los_i             => sfp_los_i,
-      sfp_tx_disable_o      => sfp_tx_disable_n,
-      clk_62m5_sys_o        => clk_pll_62m5,
-      clk_125m_ref_o        => clk_pll_125m,
-      clk_62m5_dmtd_o       => clk_pll_dmtd,
-      pll_locked_o          => pll_locked,
-      clk_10m_ext_o         => clk_10m_ext,
-      phy16_o               => phy16_to_wrc,
-      phy16_i               => phy16_from_wrc,
-      ext_ref_mul_o         => ext_ref_mul,
-      ext_ref_mul_locked_o  => ext_ref_mul_locked,
-      ext_ref_mul_stopped_o => ext_ref_mul_stopped,
-      ext_ref_rst_i         => ext_ref_rst);
-
-  --  the board invert the tx_disable signal.
-  sfp_tx_disable_o <= not sfp_tx_disable_n;
-
   clk_ref_125m_o <= clk_pll_125m;
   clk_sys_62m5_o <= clk_pll_62m5;
+
+  ---------------------------------------------------------------------------
+  --   Zynq US+ PHY + DMTD QPLLs with SDM tuning
+  ---------------------------------------------------------------------------
+  gen_zynqus_sdm_qplls: if (g_board_name = "X102" or g_board_name = "X106") generate
+    signal sdm_toggle_shift_h : std_logic_vector(31 downto 0) := (others => '0');
+    signal sdm_toggle_shift_d : std_logic_vector(31 downto 0) := (others => '0');
+    signal sdm_toggle_h : std_logic := '0';
+
+    signal clk_125m_gth_buf  : std_logic;
+
+    signal txoutclk_dmtd : std_logic;
+  begin
+
+    -- DAC to SDM control data
+    tm_dac_h_to_sdm : process(clk_pll_62m5)
+    begin
+      if (rising_edge(clk_pll_62m5)) then
+        sdm_toggle_shift_h <=
+            sdm_toggle_shift_h(sdm_toggle_shift_h'left - 1 downto 0) &
+            dac_hpll_load_p1;
+
+        if (sdm_toggle_shift_h(0) = '1') then
+          -- FIXME we should check that the softpll really only uses 16 bits
+          sdm_data_h <= (sdm_data_h'left downto (16 + 3) => '0') &
+              dac_hpll_data(15 downto 0) &
+              "011";
+        end if;
+
+        if (sdm_toggle_shift_h(23 downto 8) /= x"0000") then
+          sdm_toggle_h <= '1';
+        else
+          sdm_toggle_h <= '0';
+        end if;
+      end if;
+    end process;
+
+    tm_dac_d_to_sdm : process(clk_pll_62m5)
+    begin
+      if (rising_edge(clk_pll_62m5)) then
+        sdm_toggle_shift_d <=
+            sdm_toggle_shift_d(sdm_toggle_shift_d'left - 1 downto 0) &
+            dac_dpll_load_p1;
+
+        if (sdm_toggle_shift_d(0) = '1') then
+          -- FIXME we should check that the softpll really only uses 16 bits
+          sdm_data_d <= (sdm_data_d'left downto (16 + 3) => '0') &
+              dac_dpll_data(15 downto 0) &
+              "011";
+        end if;
+
+        if (sdm_toggle_shift_d(23 downto 8) /= x"0000") then
+          sdm_toggle_d <= '1';
+        else
+          sdm_toggle_d <= '0';
+        end if;
+      end if;
+    end process;
+
+    U_Ref_Clock_Buffer : IBUFDS_GTE4
+      generic map (
+        REFCLK_EN_TX_PATH  => '0',
+        REFCLK_HROW_CK_SEL => "00",
+        REFCLK_ICNTL_RX    => "00")
+      port map (
+        O     => clk_125m_gth_buf,
+        ODIV2 => open,
+        CEB   => '0',
+        I     => wr_clk_sfp_125m_p_i,
+        IB    => wr_clk_sfp_125m_n_i);
+
+    cmp_clk_freerun_buf_o : BUFGCE_DIV
+    generic map (
+      BUFGCE_DIVIDE => 2)
+      port map (
+        I => clk_125m_pllref_buf,
+        CLR => '0',
+        CE => '1',
+        O => clk_pll_62m5);
+
+    -- PHY
+    cmp_gth: wr_gthe4_phy_family7_xilinx_ip
+      generic map (
+        g_simulation         => g_simulation,
+        g_use_qpll_sdm       => true,
+        g_use_gclk_as_refclk => false)
+      port map (
+        clk_gth_i      => clk_125m_gth_buf,
+        clk_freerun_i  => clk_pll_62m5,
+        tx_out_clk_o   => clk_pll_125m,
+        tx_locked_o    => open,
+        tx_sdm_data_i  => sdm_data_d,
+        tx_sdm_toggle_i => sdm_toggle_d,
+        tx_data_i      => phy16_from_wrc.tx_data,
+        tx_k_i         => phy16_from_wrc.tx_k,
+        tx_disparity_o => phy16_to_wrc.tx_disparity,
+        tx_enc_err_o   => phy16_to_wrc.tx_enc_err,
+        rx_rbclk_o     => phy16_to_wrc.rx_clk,
+        rx_data_o      => phy16_to_wrc.rx_data,
+        rx_k_o         => phy16_to_wrc.rx_k,
+        rx_enc_err_o   => phy16_to_wrc.rx_enc_err,
+        rx_bitslide_o  => phy16_to_wrc.rx_bitslide,
+        rst_i          => phy16_from_wrc.rst,
+        loopen_i       => "000",
+        debug_i        => x"0000",
+        debug_o        => open,
+        pad_txn_o      => sfp_txn_o,
+        pad_txp_o      => sfp_txp_o,
+        pad_rxn_i      => sfp_rxn_i,
+        pad_rxp_i      => sfp_rxp_i,
+        rdy_o          => phy16_to_wrc.rdy);
+
+    phy16_to_wrc.ref_clk      <= clk_pll_125m;
+    phy16_to_wrc.sfp_tx_fault <= sfp_tx_fault_i;
+    phy16_to_wrc.sfp_los      <= sfp_los_i;
+
+    --  the board invert the tx_disable signal.
+    sfp_tx_disable_o     <= not phy16_from_wrc.sfp_tx_disable;
+
+    -- DMTD
+    cmp_clk_dmtd_bufg_gt_o : BUFG_GT
+      port map (
+        CE => '1',
+        CEMASK => '0',
+        CLR => '0',
+        CLRMASK => '0',
+        DIV => "000",
+        O => clk_pll_dmtd,
+        I => txoutclk_dmtd);
+
+    gtwizard_dmtd_inst : gtwizard_v1_7_gthe4_sdm_dmtd
+      port map (
+        gtwiz_userclk_tx_reset_in => "0",
+        gtwiz_userclk_tx_srcclk_out => open,
+        gtwiz_userclk_tx_usrclk_out => open,
+        gtwiz_userclk_tx_usrclk2_out => open,
+        gtwiz_userclk_tx_active_out => open,
+        gtwiz_userclk_rx_reset_in => "0",
+        gtwiz_userclk_rx_srcclk_out => open,
+        gtwiz_userclk_rx_usrclk_out => open,
+        gtwiz_userclk_rx_usrclk2_out => open,
+        gtwiz_userclk_rx_active_out => open,
+        gtwiz_reset_clk_freerun_in => (0 => clk_pll_62m5),
+        gtwiz_reset_all_in => (0 => phy16_from_wrc.rst),
+        gtwiz_reset_tx_pll_and_datapath_in => "0",
+        gtwiz_reset_tx_datapath_in => "0",
+        gtwiz_reset_rx_pll_and_datapath_in => "0",
+        gtwiz_reset_rx_datapath_in => "0",
+        gtwiz_reset_rx_cdr_stable_out => open,
+        gtwiz_reset_tx_done_out => open,
+        gtwiz_reset_rx_done_out => open,
+        gtwiz_userdata_tx_in => (31 downto 0 => '0'),
+        gtwiz_userdata_rx_out => open,
+        gtrefclk00_in => (0 => clk_125m_dmtdref_buf),
+        sdm0data_in => sdm_data_h,
+        sdm0toggle_in => (0 => sdm_toggle_h),
+        sdm1data_in => sdm_data_d,
+        sdm1toggle_in => (0 => sdm_toggle_d),
+        qpll0outclk_out => open,
+        qpll0outrefclk_out => open,
+        drpclk_in => (0 => clk_pll_62m5, 1 => clk_pll_62m5),
+        gthrxn_in => dummy_gthrxn_i(1 downto 0),
+        gthrxp_in => dummy_gthrxp_i(1 downto 0),
+        gtrefclk0_in => (0 => clk_125m_dmtdref_buf, 1 => clk_125m_dmtdref_buf),
+        rx8b10ben_in => "11",
+        rxbufreset_in => "00",
+        rxcommadeten_in => "00",
+        rxmcommaalignen_in => "00",
+        rxpcommaalignen_in => "00",
+        tx8b10ben_in => "11",
+        txctrl0_in => (31 downto 0 => '0'),
+        txctrl1_in => (31 downto 0 => '0'),
+        txctrl2_in => (15 downto 0 => '0'),
+        -- txoutclk0 is sourced by QPLL0, and txoutclk1 is sourced by QPLL1
+        txpllclksel_in => "1011",
+        gthtxn_out => dummy_gthtxn_o(1 downto 0),
+        gthtxp_out => dummy_gthtxp_o(1 downto 0),
+        gtpowergood_out => open,
+        rxbufstatus_out => open,
+        rxbyteisaligned_out => open,
+        rxbyterealign_out => open,
+        rxclkcorcnt_out => open,
+        rxcommadet_out => open,
+        rxctrl0_out => open,
+        rxctrl1_out => open,
+        rxctrl2_out => open,
+        rxctrl3_out => open,
+        rxpmaresetdone_out => open,
+        txoutclk_out(0) => txoutclk_dmtd,
+        txoutclk_out(1) => open,
+        txpmaresetdone_out => open,
+        txprgdivresetdone_out => open);
+
+    pll_locked <= '1'; -- txprgdivresetdone(0) and txprgdivresetdone(1);
+  end generate gen_zynqus_sdm_qplls;
+
+  ---------------------------------------------------------------------------
+  --   Zynq US+ External 10MHz reference PLL
+  ---------------------------------------------------------------------------
+  gen_zynqus_ext_ref_pll: if (g_with_external_clock_input = TRUE) generate
+      signal clk_ext_fbi : std_logic;
+      signal clk_ext_fbo : std_logic;
+      signal clk_ext_buf : std_logic;
+      signal clk_ext_mul : std_logic;
+      signal pll_ext_rst : std_logic;
+  begin
+    ext_ref_pll : MMCME4_ADV
+      generic map (
+        BANDWIDTH            => "OPTIMIZED",
+        CLKOUT4_CASCADE      => "FALSE",
+        COMPENSATION         => "AUTO",
+        STARTUP_WAIT         => "FALSE",
+        DIVCLK_DIVIDE        => 1,
+        CLKFBOUT_MULT_F      => 118.750,
+        CLKFBOUT_PHASE       => 0.000,
+        CLKFBOUT_USE_FINE_PS => "FALSE",
+        CLKIN1_PERIOD        => 100.000,
+
+        CLKOUT0_DIVIDE_F     => 19.000,
+        CLKOUT0_PHASE        => 0.000,
+        CLKOUT0_DUTY_CYCLE   => 0.500,
+        CLKOUT0_USE_FINE_PS  => "FALSE"
+        )
+      port map (
+        CLKFBOUT     => clk_ext_fbo,
+        CLKOUT0      => clk_ext_mul,
+        CLKFBIN      => clk_ext_fbi,
+        CLKIN1       => clk_ext_buf,
+        CLKIN2       => '0',
+        CLKINSEL     => '1',
+        DADDR        => (others => '0'),
+        DCLK         => '0',
+        DEN          => '0',
+        DI           => (others => '0'),
+        DWE          => '0',
+        CDDCREQ      => '0',
+        PSCLK        => '0',
+        PSEN         => '0',
+        PSINCDEC     => '0',
+        LOCKED       => ext_ref_mul_locked,
+        CLKINSTOPPED => ext_ref_mul_stopped,
+        PWRDWN       => '0',
+        RST          => pll_ext_rst);
+
+    -- External reference input buffer
+    cmp_clk_ext_buf_i : BUFG
+      port map (
+        O => clk_ext_buf,
+        I => clk_10m_ext_i);
+
+    clk_10m_ext <= clk_ext_buf;
+
+    -- External reference feedback buffer
+    cmp_clk_ext_buf_fb : BUFG
+      port map (
+        O => clk_ext_fbi,
+        I => clk_ext_fbo);
+
+    -- External reference output buffer
+    cmp_clk_ext_buf_o : BUFG
+      port map (
+        O => ext_ref_mul,
+        I => clk_ext_mul);
+
+    cmp_extend_ext_reset : gc_extend_pulse
+      generic map (
+        g_width => 1000)
+      port map (
+        clk_i      => clk_pll_62m5,
+        rst_n_i    => '1',
+        pulse_i    => ext_ref_rst,
+        extended_o => pll_ext_rst);
+
+  end generate gen_zynqus_ext_ref_pll;
+
+  gen_no_ext_ref_pll : if (g_with_external_clock_input = FALSE) generate
+    clk_10m_ext         <= '0';
+    ext_ref_mul         <= '0';
+    ext_ref_mul_locked  <= '1';
+    ext_ref_mul_stopped <= '1';
+  end generate gen_no_ext_ref_pll;
+
 
   -----------------------------------------------------------------------------
   -- Reset logic
