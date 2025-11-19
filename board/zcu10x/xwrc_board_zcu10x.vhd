@@ -274,39 +274,10 @@ architecture struct of xwrc_board_zcu10x is
   signal gps_uart_wb_in  : t_wishbone_slave_in;
   signal gps_uart_wb_out : t_wishbone_slave_out;
 
-  constant c_xwb_si5xx_sdb : t_sdb_device := (
-    abi_class     => x"0000",              -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"7",
-    sdb_component => (
-    addr_first  => x"0000000000000000",
-    addr_last   => x"00000000000000ff",
-    product     => (
-    vendor_id => x"000000000000CE42",  -- CERN TODO
-    device_id => x"deadbee0",          -- TODO
-    version   => x"00000001",
-    date      => x"20240604",
-    name      => "Si5xx              ")));
-
-  -- Tertiary crossbar for board peripherals
+  -- aux wishbone
   signal aux_master_out : t_wishbone_master_out;
   signal aux_master_in : t_wishbone_master_in := cc_dummy_master_in;
 
-  signal tertbar_master_i : t_wishbone_master_in_array(2 downto 0);
-  signal tertbar_master_o : t_wishbone_master_out_array(2 downto 0);
-
-  constant c_tertbar_layout : t_sdb_record_array(2 downto 0) :=
-    (0  => f_sdb_embed_device(c_xwb_gpio_port_sdb, x"00000000"),
-     1  => f_sdb_embed_device(c_wrc_periph1_sdb,   x"00000100"),
-     2  => f_sdb_embed_device(c_xwb_si5xx_sdb,     x"00000200")
-     --                     tertbar sdb            x"00000300"
-   );
-
-  constant c_tertbar_sdb_address : t_wishbone_address := x"00000300";
-  constant c_tertbar_bridge_sdb  : t_sdb_bridge       :=
-    f_xwb_bridge_layout_sdb(true, c_tertbar_layout, c_tertbar_sdb_address);
 begin  -- architecture struct
 
   -----------------------------------------------------------------------------
@@ -752,35 +723,23 @@ begin  -- architecture struct
       pps_led_o            => pps_led_o,
       link_ok_o            => link_ok_o);
 
-  cmp_board_crossbar : xwb_sdb_crossbar
-    generic map(
-      g_verbose     => TRUE,
-      g_num_masters => 1,
-      g_num_slaves  => 3,
-      g_registered  => true,
-      g_wraparound  => true,
-      g_layout      => c_tertbar_layout,
-      g_sdb_addr    => c_tertbar_sdb_address
-      )
+  cmp_board_crossbar : entity work.board_zcu10x_bus_wb
     port map(
-      clk_sys_i  => wr_clk_main_62m5,
+      clk_i      => wr_clk_main_62m5,
       rst_n_i    => rst_62m5_n,
       -- Master connections (INTERCON is a slave)
-      slave_i(0) => aux_master_out,
-      slave_o(0) => aux_master_in,
+      wb_i       => aux_master_out,
+      wb_o       => aux_master_in,
       -- Slave connections (INTERCON is a master)
-      master_i   => tertbar_master_i,
-      master_o   => tertbar_master_o
+      fmc_enable_o   => enfmc_wb_in,
+      fmc_enable_i   => enfmc_wb_out,
+
+      gnss_uart_o    => gps_uart_wb_in,
+      gnss_uart_i    => gps_uart_wb_out,
+
+      si5xx_o        => si570_wb_in,
+      si5xx_i        => si570_wb_out
       );
-
-  tertbar_master_i(0) <= enfmc_wb_out;
-  enfmc_wb_in         <= tertbar_master_o(0);
-
-  tertbar_master_i(1) <= gps_uart_wb_out;
-  gps_uart_wb_in      <= tertbar_master_o(1);
-
-  tertbar_master_i(2) <= si570_wb_out;
-  si570_wb_in         <= tertbar_master_o(2);
 
   -----------------------------------------------------------------------------
   -- Enable FMC pins
