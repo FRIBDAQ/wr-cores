@@ -1,5 +1,6 @@
 set module_name {gtwizard_v1_7_gthe4_sdm_dmtd}
 
+set_part ${device}
 create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name "${module_name}"
 
 set_property CONFIG.preset {GTH-Gigabit_Ethernet} [get_ips "${module_name}"]
@@ -29,10 +30,5 @@ set_property -dict [list \
   CONFIG.SECONDARY_QPLL_REFCLK_FREQUENCY {124.975605} \
   CONFIG.TX_QPLL_FRACN_NUMERATOR {261990} \
 ] [get_ips "${module_name}"]
-
-generate_target all [get_ips "${module_name}"]
-catch { config_ip_cache -export [get_ips "${module_name}"] }
-export_ip_user_files -of_objects [get_ips "${module_name}"] -no_script -sync -force -quiet
-create_ip_run [get_ips "${module_name}"]
 
 unset module_name

@@ -23,6 +23,8 @@ read_xdc $projDir/zcu106_ref_design.xdc
 
 set start_time [clock seconds]
 
+synth_ip [get_ips]
+
 synth_design -top ${top} -part ${device} -generic g_BOARD_NAME="X106" > ${top}_synth.log
 write_checkpoint -force ${top}_synth
 
