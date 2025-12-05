@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# cts_top, CTSExtensionMux
+# CTSExtensionMux, cts_top, clkMux
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -139,7 +139,6 @@ if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:zynq_ultra_ps_e:3.5\
 xilinx.com:ip:util_ds_buf:2.2\
-xilinx.com:ip:xlconstant:1.1\
 xilinx.com:ip:axi_dwidth_converter:2.1\
 xilinx.com:ip:axi_protocol_converter:2.1\
 xilinx.com:ip:proc_sys_reset:5.0\
@@ -168,8 +167,9 @@ xilinx.com:ip:proc_sys_reset:5.0\
 set bCheckModules 1
 if { $bCheckModules == 1 } {
    set list_check_mods "\ 
-cts_top\
 CTSExtensionMux\
+cts_top\
+clkMux\
 "
 
    set list_mods_missing ""
@@ -818,17 +818,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   ] $LEMO_IN_3
 
 
-  # Create instance: cts_top_0, and set properties
-  set block_name cts_top
-  set block_cell_name cts_top_0
-  if { [catch {set cts_top_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $cts_top_0 eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
   # Create instance: CTSExtensionMux_0, and set properties
   set block_name CTSExtensionMux
   set block_cell_name CTSExtensionMux_0
@@ -840,9 +829,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
      return 1
    }
   
-  # Create instance: xlconstant_1, and set properties
-  set xlconstant_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_1 ]
-
   # Create instance: axi_dwidth_converter_0, and set properties
   set axi_dwidth_converter_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dwidth_converter:2.1 axi_dwidth_converter_0 ]
 
@@ -852,6 +838,28 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: proc_sys_reset_0, and set properties
   set proc_sys_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0 ]
 
+  # Create instance: cts_top_0, and set properties
+  set block_name cts_top
+  set block_cell_name cts_top_0
+  if { [catch {set cts_top_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $cts_top_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: clkMux_0, and set properties
+  set block_name clkMux
+  set block_cell_name clkMux_0
+  if { [catch {set clkMux_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $clkMux_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create interface connections
   connect_bd_intf_net -intf_net axi_dwidth_converter_0_M_AXI [get_bd_intf_pins axi_dwidth_converter_0/M_AXI] [get_bd_intf_pins axi_protocol_convert_0/S_AXI]
   connect_bd_intf_net -intf_net axi_protocol_convert_0_M_AXI [get_bd_intf_pins cts_top_0/S_AXI] [get_bd_intf_pins axi_protocol_convert_0/M_AXI]
@@ -876,6 +884,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net LEMO_HDGC_IN2_p_1 [get_bd_ports LEMO_HDGC_IN2_p] [get_bd_pins LEMO_IN_2/IBUF_DS_P]
   connect_bd_net -net LEMO_HDGC_IN3_n_1 [get_bd_ports LEMO_HDGC_IN3_n] [get_bd_pins LEMO_IN_3/IBUF_DS_N]
   connect_bd_net -net LEMO_HDGC_IN3_p_1 [get_bd_ports LEMO_HDGC_IN3_p] [get_bd_pins LEMO_IN_3/IBUF_DS_P]
+  connect_bd_net -net LEMO_IN_0_IBUF_OUT [get_bd_pins LEMO_IN_0/IBUF_OUT] [get_bd_pins clkMux_0/IN0_i]
+  connect_bd_net -net LEMO_IN_1_IBUF_OUT [get_bd_pins LEMO_IN_1/IBUF_OUT] [get_bd_pins clkMux_0/IN1_i]
+  connect_bd_net -net LEMO_IN_2_IBUF_OUT [get_bd_pins LEMO_IN_2/IBUF_OUT] [get_bd_pins clkMux_0/IN2_i]
   connect_bd_net -net LEMO_IN_3_IBUF_OUT [get_bd_pins LEMO_IN_3/IBUF_OUT] [get_bd_pins cts_top_0/ps_por_i]
   connect_bd_net -net Net2 [get_bd_ports P2_HDIO1] [get_bd_pins CTSExtensionMux_0/DA_b]
   connect_bd_net -net Net3 [get_bd_ports P2_HDIO4] [get_bd_pins CTSExtensionMux_0/DB_b]
@@ -885,8 +896,14 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net SI5344_2_HP_GC_p_1 [get_bd_ports SI5344_2_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_helper_125m_p_i]
   connect_bd_net -net SI5344_HP_GC_n_1 [get_bd_ports SI5344_HP_GC_n] [get_bd_pins cts_top_0/wr_clk_main_125m_n_i]
   connect_bd_net -net SI5344_HP_GC_p_1 [get_bd_ports SI5344_HP_GC_p] [get_bd_pins cts_top_0/wr_clk_main_125m_p_i]
+  connect_bd_net -net clkMux_0_clk_o [get_bd_pins clkMux_0/clk_o] [get_bd_pins LEMO_OUT_3/OBUF_IN]
+  connect_bd_net -net cts_top_0_clk_100m_o [get_bd_pins cts_top_0/clk_100m_o] [get_bd_pins clkMux_0/clk3_i]
   connect_bd_net -net cts_top_0_clk_10m_o [get_bd_pins cts_top_0/clk_10m_o] [get_bd_pins LEMO_OUT_1/OBUF_IN]
   connect_bd_net -net cts_top_0_clk_125m_o [get_bd_pins cts_top_0/clk_125m_o] [get_bd_pins LEMO_OUT_2/OBUF_IN]
+  connect_bd_net -net cts_top_0_clk_20m_o [get_bd_pins cts_top_0/clk_20m_o] [get_bd_pins clkMux_0/clk0_i]
+  connect_bd_net -net cts_top_0_clk_25m_o [get_bd_pins cts_top_0/clk_25m_o] [get_bd_pins clkMux_0/clk1_i]
+  connect_bd_net -net cts_top_0_clk_500m_o [get_bd_pins cts_top_0/clk_500m_o] [get_bd_pins clkMux_0/clk_500m_i]
+  connect_bd_net -net cts_top_0_clk_50m_o [get_bd_pins cts_top_0/clk_50m_o] [get_bd_pins clkMux_0/clk2_i]
   connect_bd_net -net cts_top_0_clk_sys_o [get_bd_pins cts_top_0/clk_sys_o] [get_bd_pins CTSExtensionMux_0/clk_sys] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_lpd_aclk] [get_bd_pins axi_protocol_convert_0/aclk] [get_bd_pins axi_dwidth_converter_0/s_axi_aclk] [get_bd_pins proc_sys_reset_0/slowest_sync_clk] [get_bd_pins cts_top_0/S_AXI_aclk]
   connect_bd_net -net cts_top_0_eeprom_scl_out [get_bd_pins cts_top_0/eeprom_scl_out] [get_bd_pins CTSExtensionMux_0/eeprom_scl_i]
   connect_bd_net -net cts_top_0_eeprom_sda_out [get_bd_pins cts_top_0/eeprom_sda_out] [get_bd_pins CTSExtensionMux_0/eeprom_sda_i]
@@ -912,7 +929,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_ds_buf_2_OBUF_DS_P [get_bd_pins LEMO_OUT_2/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT2_p]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_N [get_bd_pins LEMO_OUT_3/OBUF_DS_N] [get_bd_ports LEMO_HP_OUT3_n]
   connect_bd_net -net util_ds_buf_3_OBUF_DS_P [get_bd_pins LEMO_OUT_3/OBUF_DS_P] [get_bd_ports LEMO_HP_OUT3_p]
-  connect_bd_net -net xlconstant_1_dout [get_bd_pins xlconstant_1/dout] [get_bd_pins LEMO_OUT_3/OBUF_IN]
   connect_bd_net -net zynq_ultra_ps_e_0_emio_uart0_txd [get_bd_pins zynq_ultra_ps_e_0/emio_uart0_txd] [get_bd_pins cts_top_0/uart_rxd_i]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0] [get_bd_pins proc_sys_reset_0/ext_reset_in]
 
@@ -923,6 +939,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -934,6 +951,4 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
 
 create_root_design ""
 
-
-common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 

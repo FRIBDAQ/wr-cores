@@ -215,6 +215,11 @@ set_multicycle_path 1 -hold -from [get_clocks gth_txclk] -to [get_clocks  "*clk_
 set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 
+set_multicycle_path 2 -setup -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500m*"]
+set_multicycle_path 1 -hold -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500m*"]
+set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500m*"] -to [get_clocks gth_txclk]
+set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500m*"] -to [get_clocks gth_txclk]
+
 #create_generated_clock -name clk_pll_dmtd -source [get_ports {SI5344_2_HP_GC_p}] -divide_by 2 [get_pins design_1_i/cts_top_0/U0/cmp_xwrc_board_cts/cmp_xwrc_platform/gen_phy_zynqus_lpdc.cmp_clk_dmtd_buf_o/O]
 
-set_clock_groups -asynchronous -group {SFP_125MHz} -group {WR_MAIN} -group {WR_HELPER} -group {gth_txclk} -group {gth_rxclk} -group {clk_pll_dmtd}
+set_clock_groups -asynchronous -group {SFP_125MHz WR_MAIN} -group {WR_HELPER clk_pll_dmtd} -group {gth_txclk} -group {gth_rxclk}

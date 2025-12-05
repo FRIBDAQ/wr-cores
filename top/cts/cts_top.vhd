@@ -111,6 +111,11 @@ entity cts_top is
     clk_sys_o           : out std_logic;
     clk_10m_o           : out std_logic;
     clk_125m_o          : out std_logic;
+    clk_500m_o          : out std_logic;
+    clk_20m_o           : out std_logic;
+    clk_25m_o           : out std_logic;
+    clk_50m_o           : out std_logic;
+    clk_100m_o          : out std_logic;
 
     ---------------------------------------------------------------------------
     -- LEDs
@@ -170,6 +175,10 @@ architecture Behavioral of cts_top is
 
     signal clk_10MHz : std_logic;
     signal clk_125MHz : std_logic;
+    signal clk_20MHz : std_logic;
+    signal clk_25MHz : std_logic;
+    signal clk_50MHz : std_logic;
+    signal clk_100MHz : std_logic;
 
     signal led_act_buf, led_link_buf, pps_p_buf: std_logic;
 
@@ -273,6 +282,8 @@ begin
       PWRDWN => '0',             -- 1-bit input: Power-down
       RST => rst_n                    -- 1-bit input: Reset
    );
+   
+   clk_500m_o <= clk_500MHz;
 
    inst_mpsoc_map: entity work.mpsoc_map
    port map (
@@ -301,6 +312,7 @@ begin
      wrpc_i   => wb_wrpc_in,
      wrpc_o   => wb_wrpc_out);
 
+  -- OUT1
   cmp_gen_10_mhz: gen_x_mhz
     generic map (
       g_divide => 50
@@ -320,6 +332,7 @@ begin
      D2 => clk_10MHz,
      SR => '0');
 
+  -- OUT2
   cmp_gen_125_mhz: gen_x_mhz
     generic map (
       g_divide => 4
@@ -339,6 +352,61 @@ begin
      D2 => clk_125MHz,
      SR => '0');
 
+  -- MUX CLK0
+  cmp_gen_20_mhz: gen_x_mhz
+    generic map (
+      g_divide => 25
+    )
+    port map (
+      clk_500m_i  => clk_500Mhz,
+      rst_n_i     => rst_n,
+      pps_i       => pps_p_buf,
+      clk_x_mhz_o => clk_20Mhz
+    );
+
+  clk_20m_o <= clk_20MHz;
+
+  -- MUX CLK1
+  cmp_gen_25_mhz: gen_x_mhz
+    generic map (
+      g_divide => 20
+    )
+    port map (
+      clk_500m_i  => clk_500Mhz,
+      rst_n_i     => rst_n,
+      pps_i       => pps_p_buf,
+      clk_x_mhz_o => clk_25Mhz
+    );
+
+  clk_25m_o <= clk_25MHz;
+
+  -- MUX CLK2
+  cmp_gen_50_mhz: gen_x_mhz
+    generic map (
+      g_divide => 10
+    )
+    port map (
+      clk_500m_i  => clk_500Mhz,
+      rst_n_i     => rst_n,
+      pps_i       => pps_p_buf,
+      clk_x_mhz_o => clk_50Mhz
+    );
+
+  clk_50m_o <= clk_50MHz;
+
+  -- MUX CLK3
+  cmp_gen_100_mhz: gen_x_mhz
+    generic map (
+      g_divide => 5
+    )
+    port map (
+      clk_500m_i  => clk_500Mhz,
+      rst_n_i     => rst_n,
+      pps_i       => pps_p_buf,
+      clk_x_mhz_o => clk_100Mhz
+    );
+
+  clk_100m_o <= clk_100MHz;
 
    act_led_inst : OBUF
    port map (

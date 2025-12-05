@@ -1,6 +1,6 @@
 fetchto = "../../ip_cores"
 
-files = [ "cts_top.vhd", "mpsoc_map.vhd" ]
+files = [ "cts_top.vhd", "mpsoc_map.vhd", "clkMux.vhd" ]
 
 modules = {
     "local" : [
