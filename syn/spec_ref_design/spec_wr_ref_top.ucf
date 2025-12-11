@@ -1,3 +1,9 @@
+##-----------------------------------------------------------------------------
+## SPDX-FileCopyrightText: 2017 CERN (home.cern)
+##
+## SPDX-License-Identifier: CERN-OHL-W-2.0+
+##-----------------------------------------------------------------------------
+
 #bank 0
 NET "clk_20m_vcxo_i" LOC = H12;
 NET "clk_20m_vcxo_i" IOSTANDARD = "LVCMOS25";

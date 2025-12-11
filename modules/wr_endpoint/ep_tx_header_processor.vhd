@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2009 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : 1000base-X MAC/Endpoint - TX packet header processing unit
 -- Project    : White Rabbit
 -------------------------------------------------------------------------------
@@ -14,26 +18,6 @@
 -- - provides a Wishbone-B4 interface to the host
 -- - embeds source MAC addresses if they aren't defined by the host
 -- - decodes TX OOB data and passes it to the timestamping unit
--------------------------------------------------------------------------------
---
--- Copyright (c) 2009 - 2017 CERN
---
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
---
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
---
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
--- from http://www.gnu.org/licenses/lgpl-2.1.html
---
 -------------------------------------------------------------------------------
 
 

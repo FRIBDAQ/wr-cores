@@ -1,3 +1,9 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
+
 /* Some basic definitions: types, abstract BusAccessor class */
 `include "simdrv_defs.svh"
 

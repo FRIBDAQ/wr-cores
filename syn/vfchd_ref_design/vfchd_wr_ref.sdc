@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: CERN-OHL-W-2.0+
+###############################################################################
 # Clock inputs
 create_clock -name clk_10m_ext -period 100.0 [get_ports dio5_clk_i]
 create_clock -name clk_125m    -period   8.0 [get_ports clk_board_125m_i]

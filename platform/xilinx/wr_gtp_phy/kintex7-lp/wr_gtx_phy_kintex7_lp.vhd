@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2010 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Deterministic Xilinx GTX LPDC wrapper - kintex-7 top module
 -- Project    : White Rabbit Switch
 -------------------------------------------------------------------------------

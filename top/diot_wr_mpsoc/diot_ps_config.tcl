@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 proc getPresetInfo {} {
   return [dict create name {diot_ps_config} description {diot_ps_config}  vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 display_name {diot_ps_config} ]
 }

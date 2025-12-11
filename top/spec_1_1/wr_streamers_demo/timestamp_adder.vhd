@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2011 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Pipelined timestamp adder with normalization
 -- Project    : Fine Delay Core (FmcDelay1ns4cha)
 -------------------------------------------------------------------------------
@@ -17,25 +21,6 @@
 -- following constraints:
 -- 1. 0 <= (a/b)_frac_i <= 2**g_frac_bits-1
 -- 2. -g_coarse_range+1 <= (a_coarse_i + b_coarse_i) <= 3*g_coarse_range-1
--------------------------------------------------------------------------------
---
--- Copyright (c) 2011 CERN / BE-CO-HT
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
---
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
---
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
--- from http://www.gnu.org/licenses/lgpl-2.1.html
---
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author          Description

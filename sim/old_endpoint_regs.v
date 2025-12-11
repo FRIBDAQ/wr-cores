@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define OLD_ADDR_EP_ECR                    8'h0
 `define OLD_EP_ECR_PORTID_OFFSET 0
 `define OLD_EP_ECR_PORTID 32'h0000001f

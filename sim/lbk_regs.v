@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_LBK_MCR                   5'h0
 `define LBK_MCR_ENA_OFFSET 0
 `define LBK_MCR_ENA 32'h00000001

@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 files = [	"endpoint_private_pkg.vhd",
                 "ep_rx_pcs_8bit.vhd",
                 "ep_tx_pcs_8bit.vhd",

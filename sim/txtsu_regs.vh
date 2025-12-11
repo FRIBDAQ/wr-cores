@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_TXTSU_EIC_IDR             5'h0
 `define TXTSU_EIC_IDR_NEMPTY_OFFSET 0
 `define TXTSU_EIC_IDR_NEMPTY 32'h00000001

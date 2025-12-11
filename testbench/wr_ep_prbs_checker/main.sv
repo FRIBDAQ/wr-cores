@@ -1,3 +1,9 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
+
 `include "if_wb_master.svh"
 `include "if_wb_slave.svh"
 `include "wb_packet_source.svh"

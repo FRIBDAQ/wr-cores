@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2010 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Comma detection for Low Phase noise GTX implermentation
 -- Project    : White Rabbit
 -------------------------------------------------------------------------------
@@ -13,27 +17,6 @@
 -- Description: Low Phase noise GTX implementation does not use the serializer
 -- 8B/10B decoder. gtx_comma_detect_lp scans for a valid comma in the
 -- 20 bit received raw data.
--------------------------------------------------------------------------------
---
--- Copyright (c) 2010 CERN
---
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
---
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
---
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
--- from http://www.gnu.org/licenses/lgpl-2.1.html
--- 
---
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author    Description

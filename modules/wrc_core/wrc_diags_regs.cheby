@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later, CERN-OHL-W-2.0+
+###############################################################################
 memory-map:
   name: wrc_diags
   description: WR Core Diagnostics

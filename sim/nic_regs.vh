@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_NIC_CR                    9'h0
 `define NIC_CR_RX_EN_OFFSET 0
 `define NIC_CR_RX_EN 32'h00000001

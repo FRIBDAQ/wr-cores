@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 files  = [  "nic_constants_pkg.vhd" ,
 						"nic_descriptors_pkg.vhd" ,
 						"nic_wishbone_slave.vhd" ,

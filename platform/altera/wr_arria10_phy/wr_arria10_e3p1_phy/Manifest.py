@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 files = [
   "wr_arria10_e3p1_atx_pll/wr_arria10_e3p1_atx_pll.qsys",
   "wr_arria10_e3p1_cmu_pll/wr_arria10_e3p1_cmu_pll.qsys",

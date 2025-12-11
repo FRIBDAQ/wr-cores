@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_MINIC_MCR                 7'h0
 `define MINIC_MCR_TX_START_OFFSET 0
 `define MINIC_MCR_TX_START 32'h00000001

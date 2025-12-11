@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2014 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Auxiliary clock generation (10MHz by default)
 -- Project    : White Rabbit Switch
 -------------------------------------------------------------------------------
@@ -14,26 +18,6 @@
 -- Module used to generate aux clock of configured frequency and phase. It can
 -- be used with WRS hardware >= 3.4. The clk_aux_p/n_o is there wired to CLK2
 -- SMC connector on the front panel. By default 10MHz signal is generated.
--------------------------------------------------------------------------------
---
--- Copyright (c) 2014 CERN / BE-CO-HT
---
--- This source file is free software; you can redistribute it
--- and/or modify it under the terms of the GNU Lesser General
--- Public License as published by the Free Software Foundation;
--- either version 2.1 of the License, or (at your option) any
--- later version.
---
--- This source is distributed in the hope that it will be
--- useful, but WITHOUT ANY WARRANTY; without even the implied
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
--- PURPOSE.  See the GNU Lesser General Public License for more
--- details.
---
--- You should have received a copy of the GNU Lesser General
--- Public License along with this source; if not, download it
--- from http://www.gnu.org/licenses/lgpl-2.1.html
---
 -------------------------------------------------------------------------------
 -- Revisions  :
 -- Date        Version  Author          Description
