@@ -227,6 +227,8 @@ architecture rtl of xrx_streamer is
   signal fifo_target_ts_error  : std_logic;
   signal timestamp_pushed_to_fifo : std_logic;
 
+  signal fixed_latency_delay_reset_n : std_logic;
+  signal fifo_reset_n : std_logic;
   
 begin  -- rtl
 
@@ -320,6 +322,8 @@ begin  -- rtl
 
   fifo_last_int <= fifo_last or ((not pending_write) and is_escape);  -- when word is 16 bit
 
+  fixed_latency_delay_reset_n <= rst_int_n and fifo_reset_n;
+
   U_FixLatencyDelay : entity work.fixed_latency_delay
     generic map (
       g_data_width             => g_data_width,
@@ -329,7 +333,7 @@ begin  -- rtl
       g_sim_cycle_counter_range => g_sim_cycle_counter_range,
       g_simulation => g_simulation)
     port map (
-      rst_n_i          => rst_int_n,
+      rst_n_i          => fixed_latency_delay_reset_n,
       clk_sys_i        => clk_sys_i,
       clk_ref_i        => clk_ref_i,
       tm_time_valid_i  => tm_time_valid_i,
@@ -416,8 +420,10 @@ begin  -- rtl
         blocks_lost            <= '0';
         pack_data              <= (others=>'0');
         is_vlan                <= '0';
-        tx_tag_present       <= '0';
-        tx_tag_valid         <= '0';
+        tx_tag_present         <= '0';
+        tx_tag_valid           <= '0';
+        fifo_reset_n           <= '1';
+
       else
         case state is
           when IDLE =>
@@ -441,6 +447,8 @@ begin  -- rtl
             is_vlan              <= '0';
             tx_tag_present       <= '0';
             tx_tag_valid         <= '0';
+            fifo_reset_n         <= '1';
+
 
             if(fsm_in.sof = '1') then
 
@@ -453,6 +461,9 @@ begin  -- rtl
 
           when DROP_FRAME =>
             if (fsm_in.eof = '1' or fsm_in.error = '1') then
+              state <= IDLE;
+            else
+              fifo_reset_n <= '0';
               state <= IDLE;
             end if;
 
@@ -568,8 +579,6 @@ begin  -- rtl
               end if;
             end if;
 
-
-
           when PAYLOAD =>
             frames_lost <= '0';
             rx_lost_frames_cnt_o <= (others => '0');
@@ -583,8 +592,6 @@ begin  -- rtl
               
             elsif(fsm_in.dvalid = '1') then
 
-              
-              
               if(is_escape = '1') then
                 ser_count <= (others => '0');
                 fifo_last <= '1';
@@ -668,6 +675,10 @@ begin  -- rtl
                 end if;
                 
               end if;
+
+            elsif(fifo_full = '1') then -- case where the message gets stuck and fills the FIFO
+              state       <= DROP_FRAME;
+  
             else --of:  elsif(fsm_in.dvalid = '1') then
               fifo_dvalid <= '0';
             end if;
