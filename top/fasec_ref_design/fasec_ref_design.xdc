@@ -1,3 +1,9 @@
+##-----------------------------------------------------------------------------
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: CERN-OHL-W-2.0+
+##-----------------------------------------------------------------------------
+
 set_property PACKAGE_PIN K11 [get_ports areset_n_i]
 set_property IOSTANDARD LVCMOS18 [get_ports areset_n_i]
 

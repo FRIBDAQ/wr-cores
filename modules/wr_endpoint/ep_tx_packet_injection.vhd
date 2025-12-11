@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2012 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : 1000base-X MAC/Endpoint - TX packet injection unit
 -- Project    : White Rabbit
 -------------------------------------------------------------------------------
@@ -15,26 +19,6 @@
 -- is shared with the TX VLAN unit and can contain templates of up to 8 packets
 -- of up to 128 bytes of size. It is possible to replace a selected 16-bit word
 -- within each template with a user-provided value.
--------------------------------------------------------------------------------
---
--- Copyright (c) 2012 CERN
---
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
---
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
---
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
--- from http://www.gnu.org/licenses/lgpl-2.1.html
---
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -- Revisions  :

@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2011 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
 `ifndef __FABRIC_EMU_DEFS_SV
 `define __FABRIC_EMU_DEFS_SV
 

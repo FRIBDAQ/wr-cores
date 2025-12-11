@@ -1,4 +1,8 @@
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2019 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- CERN
 -- wr-cores/wr-streamers
 -- https://gitlab.com/ohwr/project/wr-cores
@@ -15,10 +19,6 @@
 -- situation in which current TAI time is already passed the delayed timestamp.
 --
 --
---------------------------------------------------------------------------------
--- Copyright (c) 2019 CERN BE/CO/HT
---------------------------------------------------------------------------------
--- GNU LESSER GENERAL PUBLIC LICENSE
 --------------------------------------------------------------------------------
 -- This source file is free software; you can redistribute it
 -- and/or modify it under the terms of the GNU Lesser General

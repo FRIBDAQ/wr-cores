@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gtwizard_ultrascale_0
 set_property CONFIG.preset {GTH-Gigabit_Ethernet} [get_ips gtwizard_ultrascale_0]
 set_property -dict [list \

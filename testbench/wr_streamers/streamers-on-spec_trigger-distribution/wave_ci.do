@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 onerror {resume}
 
 add wave  -radix hexadecimal /main/link_up_a

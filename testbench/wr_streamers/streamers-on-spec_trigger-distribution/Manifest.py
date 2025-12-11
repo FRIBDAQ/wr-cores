@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 fetchto="../../ip_cores"
 vlog_opt="+incdir+../../../sim +incdir"
 include_dirs = ["../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src" ]

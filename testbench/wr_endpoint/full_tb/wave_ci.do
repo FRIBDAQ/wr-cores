@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 onerror {resume}
 
 add wave  -group tx-pcs /main/U_Wrapped_EP/DUT/U_PCS_1000BASEX/gen_8bit/U_TX_PCS/rst_n_i

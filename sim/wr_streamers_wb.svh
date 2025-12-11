@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+///////////////////////////////////////////////////////////////////////////////
 `define WBGEN2_WR_STREAMERS_VERSION 32'h00000002
 `define ADDR_WR_STREAMERS_VER          8'h0
 `define WR_STREAMERS_VER_ID_OFFSET 0

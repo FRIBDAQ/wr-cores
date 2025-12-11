@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_SPLL_CSR                  8'h0
 `define SPLL_CSR_UNUSED0_OFFSET 8
 `define SPLL_CSR_UNUSED0 32'h00003f00

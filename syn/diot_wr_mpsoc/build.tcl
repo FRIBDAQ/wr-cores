@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 # Create Vivado project
 source ../../top/diot_wr_mpsoc/diot_wr_mpsoc.tcl
 

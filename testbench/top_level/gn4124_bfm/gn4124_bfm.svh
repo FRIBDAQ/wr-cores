@@ -1,3 +1,8 @@
+///////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+///////////////////////////////////////////////////////////////////////////////
 /* Crude wrapper for Gennum-provided GN4124x BFM. Supports only single CSR reads/writes so far. */
 
 `ifndef __GN4124_BFM_SVH

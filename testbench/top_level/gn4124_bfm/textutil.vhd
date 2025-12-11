@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 1993 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 library IEEE;
 use IEEE.std_logic_1164.all;
 use std.textio.all;

@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2011 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
 /* Linux TAP driver interface to WR fabric */
 
 `timescale 1ns/1ps

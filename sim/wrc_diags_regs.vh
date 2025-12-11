@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define WBGEN2_WRC_DIAGS_VERSION 32'h00000001
 `define ADDR_WRC_DIAGS_VER             7'h0
 `define WRC_DIAGS_VER_ID_OFFSET 0

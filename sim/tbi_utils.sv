@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2011 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
 
 `timescale 1ps/1ps
 // Clock/reset generator module for the TBI interface.

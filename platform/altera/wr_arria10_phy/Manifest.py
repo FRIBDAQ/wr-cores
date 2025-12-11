@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 def __helper():
   dirs = []
   if syn_device[:4] == "10as":      dirs.extend(["wr_arria10_phy"])

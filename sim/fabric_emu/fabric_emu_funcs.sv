@@ -1,3 +1,8 @@
+//-----------------------------------------------------------------------------
+// SPDX-FileCopyrightText: 2011 CERN (home.cern)
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+//-----------------------------------------------------------------------------
 `timescale 1ns/1ps
 
 /* Ethernet FCS calculator class */

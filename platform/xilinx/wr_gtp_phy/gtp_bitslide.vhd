@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2010 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Deterministic Xilinx GTP wrapper - bitslide state machine
 -- Project    : White Rabbit Switch
 -------------------------------------------------------------------------------

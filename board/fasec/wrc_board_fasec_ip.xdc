@@ -1,3 +1,8 @@
+##-----------------------------------------------------------------------------
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: CERN-OHL-W-2.0+
+##-----------------------------------------------------------------------------
 create_clock -period 50.000 -name clk_20m_vcxo -waveform {0.000 25.000} [get_ports clk_20m_vcxo_i]
 create_clock -period 8.000 -name clk_125m_pllref -waveform {0.000 4.000} [get_ports clk_125m_pllref_p_i]
 create_clock -period 8.000 -name clk_125m_gtp -waveform {0.000 4.000} [get_ports clk_125m_gtp_p_i]

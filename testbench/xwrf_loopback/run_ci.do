@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 #vlog -dpiheader dpi/minic_dpi.h -sv main.sv +incdir+"." +incdir+../../sim
 vlog  main.sv +incdir+"." +incdir+../../sim
 null make -f Makefile

@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 onerror {resume}
 quiet WaveActivateNextPane {} 0
 add wave -noupdate /main/U_TX_Streamer/tx_flush_i

@@ -1,3 +1,8 @@
+////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2025 CERN (home.cern)
+// 
+// SPDX-License-Identifier: CERN-OHL-W-2.0+
+////////////////////////////////////////////////
 `define ADDR_SYSC_RSTR                 6'h0
 `define SYSC_RSTR_TRIG_OFFSET 0
 `define SYSC_RSTR_TRIG 32'h0fffffff

@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2010 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : DMTD Helper PLL (HPLL) - linear frequency/period detector.
 -- Project    : White Rabbit Switch
 -------------------------------------------------------------------------------
@@ -17,12 +21,6 @@
 -- is updated with a new value. freq_err_o value is:
 -- - positive when clk_fbck_i is slower than selected frequency setpoint
 -- - negative when clk_fbck_i is faster than selected frequency setpoint
--------------------------------------------------------------------------------
--- Copyright (c) 2010 CERN
--------------------------------------------------------------------------------
--- Revisions  :
--- Date        Version  Author          Description
--- 2010-06-14  1.0      twlostow        Created
 -------------------------------------------------------------------------------
 
 library ieee;
