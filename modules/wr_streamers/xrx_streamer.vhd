@@ -460,13 +460,9 @@ begin  -- rtl
             end if;
 
           when DROP_FRAME =>
-            if (fsm_in.eof = '1' or fsm_in.error = '1') then
-              state <= IDLE;
-            else
-              fifo_reset_n <= '0';
-              state <= IDLE;
-            end if;
-
+          -- FIFO is full, flushing it and dropping the frame
+            fifo_reset_n <= '0';
+            state <= IDLE;
 
           when HEADER =>
             if(fsm_in.eof = '1') then
@@ -584,7 +580,11 @@ begin  -- rtl
             rx_lost_frames_cnt_o <= (others => '0');
             fifo_sync <= got_next_subframe;
 
-            if(fsm_in.eof = '1') then
+            if(fifo_full = '1') then 
+              -- case where the message gets stuck and fills the FIFO
+              state       <= DROP_FRAME;
+
+            elsif(fsm_in.eof = '1') then
               state       <= IDLE;
               fifo_drop   <= '1';
               fifo_accept <= '0';
@@ -675,9 +675,6 @@ begin  -- rtl
                 end if;
                 
               end if;
-
-            elsif(fifo_full = '1') then -- case where the message gets stuck and fills the FIFO
-              state       <= DROP_FRAME;
   
             else --of:  elsif(fsm_in.dvalid = '1') then
               fifo_dvalid <= '0';
