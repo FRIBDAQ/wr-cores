@@ -14,12 +14,10 @@ package softpll_pkg is
 
   type t_softpll_channel_config is record
     oversample : boolean;
-    divider : integer;
   end record;
 
   constant c_softpll_default_channel_config : t_softpll_channel_config :=
-    ( oversample => false,
-      divider => 1 );
+    (oversample => false);
 
   type t_softpll_channels_config_array is array(0 to c_softpll_max_aux_clocks-1) of t_softpll_channel_config;
 
