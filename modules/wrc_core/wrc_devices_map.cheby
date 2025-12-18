@@ -1,0 +1,91 @@
+memory-map:
+  name: wrc_devices_map
+  comment: Memory map for devices
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+  children:
+  - submap:
+     name: minic
+     address: 0x0000
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: endpoint
+     address: 0x0100
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: softpll
+     address: 0x0200
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: ppsgen
+     address: 0x0300
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: syscon
+     address: 0x0400
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: uart
+     address: 0x0500
+     size: 0x80
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: vuart
+     address: 0x0580
+     size: 0x80
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: onewire
+     address: 0x0600
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: timing
+     address: 0x0700
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: wdiag
+     address: 0x0800
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: freqmon
+     address: 0x0a00
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: aux
+     address: 0x8000
+     size: 0x8000
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True

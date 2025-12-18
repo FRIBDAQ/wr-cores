@@ -436,35 +436,32 @@ architecture struct of wr_core is
   -----------------------------------------------------------------------------
   --WB Peripherials
   -----------------------------------------------------------------------------
-  signal periph_slave_i : t_wishbone_slave_in_array(0 to 4);
-  signal periph_slave_o : t_wishbone_slave_out_array(0 to 4);
+  signal syscon_wb_in : t_wishbone_slave_in;
+  signal syscon_wb_out : t_wishbone_slave_out;
 
-  -----------------------------------------------------------------------------
-  --WB Secondary Crossbar
-  -----------------------------------------------------------------------------
-  constant c_secbar_layout : t_sdb_record_array(12 downto 0) :=
-    (0  => f_sdb_embed_device(c_xwr_mini_nic_sdb,   x"00000000"),
-     1  => f_sdb_embed_device(c_xwr_endpoint_sdb,   x"00000100"),
-     2  => f_sdb_embed_device(c_xwr_softpll_ng_sdb, x"00000200"),
-     3  => f_sdb_embed_device(c_xwr_pps_gen_sdb,    x"00000300"),
-     4  => f_sdb_embed_device(c_wrc_periph0_sdb,    x"00000400"),  -- Syscon
-     5  => f_sdb_embed_device(c_wrc_periph1_sdb,    x"00000500"),  -- UART
-     6  => f_sdb_embed_device(c_wrc_periph2_sdb,    x"00000600"),  -- 1-Wire
-     7  => f_sdb_embed_device(c_wrc_tc_sdb,         x"00000700"),  -- timing outputs
-     8  => f_sdb_embed_device(c_wrc_periph4_sdb,    x"00000800"),  -- wdiag (usr)
-     9  => f_sdb_embed_device(c_wrc_periph5_sdb,    x"00000900"),  -- wdiag (cpu)
-     10 => f_sdb_embed_device(c_wrc_periph6_sdb,    x"00000a00"),  -- freq mon
-     11 => f_sdb_embed_device(c_wrc_cpu_csr_sdb,    x"00000b00"),  -- cpu csr
-     --                       secbar sdb            x"00000c00"
-     12 => f_sdb_embed_device(g_aux_sdb,            x"00008000")   -- aux WB bus
-   );
+  signal uart_wb_in : t_wishbone_slave_in;
+  signal uart_wb_out : t_wishbone_slave_out;
 
-  constant c_secbar_sdb_address : t_wishbone_address := x"00000c00";
-  constant c_secbar_bridge_sdb  : t_sdb_bridge       :=
-    f_xwb_bridge_layout_sdb(true, c_secbar_layout, c_secbar_sdb_address);
+  signal onewire_wb_in : t_wishbone_slave_in;
+  signal onewire_wb_out : t_wishbone_slave_out;
 
-  signal secbar_master_i : t_wishbone_master_in_array(12 downto 0);
-  signal secbar_master_o : t_wishbone_master_out_array(12 downto 0);
+  signal timing_wb_in : t_wishbone_slave_in;
+  signal timing_wb_out : t_wishbone_slave_out;
+
+  signal diags_cpu_wb_in : t_wishbone_slave_in;
+  signal diags_cpu_wb_out : t_wishbone_slave_out;
+
+  signal diags_usr_wb_in : t_wishbone_slave_in;
+  signal diags_usr_wb_out : t_wishbone_slave_out;
+
+  signal freqmon_wb_in : t_wishbone_slave_in;
+  signal freqmon_wb_out : t_wishbone_slave_out;
+
+  signal vuart_host_wb_in : t_wishbone_slave_in;
+  signal vuart_host_wb_out : t_wishbone_slave_out;
+
+  signal vuart_cpu_wb_in : t_wishbone_slave_in;
+  signal vuart_cpu_wb_out : t_wishbone_slave_out;
 
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
@@ -871,7 +868,7 @@ begin
 
       phy_mdio_master_o => phy_mdio_master_out,
       phy_mdio_master_i => phy_mdio_master_in,
-            
+
       phy8_o  => phy8_o,
       phy8_i  => phy8_i,
       phy16_o => phy16_o,
@@ -916,8 +913,8 @@ begin
   phy_mdio_master_in.ack <= phy_mdio_master_ack_i;
   phy_mdio_master_in.stall <= phy_mdio_master_stall_i;
   phy_mdio_master_in.rty <= '0';
-  phy_mdio_master_in.err <= '0'; 
-  
+  phy_mdio_master_in.err <= '0';
+
   -----------------------------------------------------------------------------
   -- Mini-NIC
   -----------------------------------------------------------------------------
@@ -1009,8 +1006,26 @@ begin
       spi_mosi_o  => spi_mosi_o,
       spi_miso_i  => spi_miso_i,
 
-      slave_i => periph_slave_i,
-      slave_o => periph_slave_o,
+      syscon_wb_i => syscon_wb_in,
+      syscon_wb_o => syscon_wb_out,
+
+      uart_wb_i => uart_wb_in,
+      uart_wb_o => uart_wb_out,
+
+      vuart_cpu_wb_i => vuart_cpu_wb_in,
+      vuart_cpu_wb_o => vuart_cpu_wb_out,
+
+      vuart_host_wb_i => vuart_host_wb_in,
+      vuart_host_wb_o => vuart_host_wb_out,
+
+      onewire_wb_i => onewire_wb_in,
+      onewire_wb_o => onewire_wb_out,
+
+      diags_usr_wb_i => diags_usr_wb_in,
+      diags_usr_wb_o => diags_usr_wb_out,
+
+      diags_cpu_wb_i => diags_cpu_wb_in,
+      diags_cpu_wb_o => diags_cpu_wb_out,
 
       uart_rxd_i => uart_rxd_i,
       uart_txd_o => uart_txd_o,
@@ -1048,78 +1063,63 @@ begin
       sl_rty_o   => wb_rty_o,
       sl_stall_o => wb_stall_o);
 
+  inst_host_map: entity work.wrc_host_map
+    port map (
+      rst_n_i => rst_n_i,
+      clk_i => clk_sys_i,
+      wb_i => ext_wb_in,
+      wb_o => ext_wb_out,
+      vuart_i => vuart_host_wb_out,
+      vuart_o => vuart_host_wb_in,
+      wdiags_i => diags_usr_wb_out,
+      wdiags_o => diags_usr_wb_in,
+      cpu_i => cpu_csr_wb_out,
+      cpu_o => cpu_csr_wb_in
+      );
+
   -----------------------------------------------------------------------------
   -- WB Secondary Crossbar
   -----------------------------------------------------------------------------
-  WB_SECONDARY_CON : xwb_sdb_crossbar
-    generic map(
-      g_verbose     => g_verbose,
-      g_num_masters => 2,
-      g_num_slaves  => 13,
-      g_registered  => true,
-      g_wraparound  => true,
-      g_layout      => c_secbar_layout,
-      g_sdb_addr    => c_secbar_sdb_address
-      )
-    port map(
-      clk_sys_i  => clk_sys_i,
-      rst_n_i    => rst_n_i,
-      -- Master connections (INTERCON is a slave)
-      slave_i(0) => cpu_dwb_out,
-      slave_i(1) => ext_wb_in,
-      slave_o(0) => cpu_dwb_in,
-      slave_o(1) => ext_wb_out,
-      -- Slave connections (INTERCON is a master)
-      master_i   => secbar_master_i,
-      master_o   => secbar_master_o
-      );
-
-  secbar_master_i(0) <= minic_wb_out;
-  minic_wb_in        <= secbar_master_o(0);
-
-  secbar_master_i(1) <= ep_wb_out;
-  ep_wb_in           <= secbar_master_o(1);
-
-  secbar_master_i(2) <= spll_wb_out;
-  spll_wb_in         <= secbar_master_o(2);
-
-  secbar_master_i(3) <= ppsg_wb_out;
-  ppsg_wb_in         <= secbar_master_o(3);
-
-  --peripherials
-  secbar_master_i(4) <= periph_slave_o(0);
-  periph_slave_i(0)  <= secbar_master_o(4);
-
-  secbar_master_i(5) <= periph_slave_o(1);
-  periph_slave_i(1)  <= secbar_master_o(5);
-
-  secbar_master_i(6) <= periph_slave_o(2);
-  periph_slave_i(2)  <= secbar_master_o(6);
-
-  secbar_master_i(8) <= periph_slave_o(3);
-  periph_slave_i(3)  <= secbar_master_o(8);
-
-  secbar_master_i(9) <= periph_slave_o(4);
-  periph_slave_i(4)  <= secbar_master_o(9);
-
-  cpu_csr_wb_in <= secbar_master_o(11);
-  secbar_master_i(11) <= cpu_csr_wb_out;
-
-  secbar_master_i(7) <= timecode_wb_out;
-  timecode_wb_in      <= secbar_master_o(7);
-
-  aux_adr_o <= secbar_master_o(12).adr;
-  aux_dat_o <= secbar_master_o(12).dat;
-  aux_sel_o <= secbar_master_o(12).sel;
-  aux_cyc_o <= secbar_master_o(12).cyc;
-  aux_stb_o <= secbar_master_o(12).stb;
-  aux_we_o  <= secbar_master_o(12).we;
-
-  secbar_master_i(12).dat   <= aux_dat_i;
-  secbar_master_i(12).ack   <= aux_ack_i;
-  secbar_master_i(12).stall <= aux_stall_i;
-  secbar_master_i(12).err   <= '0';
-  secbar_master_i(12).rty   <= '0';
+  inst_wrc_map: entity work.wrc_devices_map
+    port map (
+      rst_n_i => rst_n_i,
+      clk_i => clk_sys_i,
+      wb_i => cpu_dwb_out,
+      wb_o => cpu_dwb_in,
+      minic_i => minic_wb_out,
+      minic_o => minic_wb_in,
+      endpoint_i => ep_wb_out,
+      endpoint_o => ep_wb_in,
+      softpll_i => spll_wb_out,
+      softpll_o => spll_wb_in,
+      ppsgen_i => ppsg_wb_out,
+      ppsgen_o => ppsg_wb_in,
+      syscon_i => syscon_wb_out,
+      syscon_o => syscon_wb_in,
+      uart_i => uart_wb_out,
+      uart_o => uart_wb_in,
+      vuart_i => vuart_cpu_wb_out,
+      vuart_o => vuart_cpu_wb_in,
+      onewire_i => onewire_wb_out,
+      onewire_o => onewire_wb_in,
+      timing_i => timing_wb_out,
+      timing_o => timing_wb_in,
+      wdiag_i => diags_cpu_wb_out,
+      wdiag_o => diags_cpu_wb_in,
+      freqmon_i => freqmon_wb_out,
+      freqmon_o => freqmon_wb_in,
+      aux_i.ack => aux_ack_i,
+      aux_i.err => '0',
+      aux_i.rty => '0',
+      aux_i.stall => aux_stall_i,
+      aux_i.dat  => aux_dat_i,
+      aux_o.dat => aux_dat_o,
+      aux_o.cyc => aux_cyc_o,
+      aux_o.adr => aux_adr_o,
+      aux_o.stb => aux_stb_o,
+      aux_o.sel => aux_sel_o,
+      aux_o.we => aux_we_o
+    );
 
   -----------------------------------------------------------------------------
   -- WBP MUX
@@ -1194,8 +1194,8 @@ begin
         clk_sys_i => clk_sys_i,
         clk_in_i  => freqmon_in,
         pps_p1_i  => '0',
-        slave_i   => secbar_master_o(10),
-        slave_o   => secbar_master_i(10));
+        slave_i   => freqmon_wb_in,
+        slave_o   => freqmon_wb_out);
 
     freqmon_in(0) <= clk_sys_i;
     freqmon_in(1) <= clk_dmtd_i;
@@ -1213,10 +1213,10 @@ begin
   end generate gen_with_clock_monitor;
 
   gen_without_clock_monitor : if not g_with_clock_freq_monitor generate
-    secbar_master_i(10) <= (dat => (others => '0'),
-                           stall => '0',
-                           err => '0',
-                           rty => '0',
-                           ack => '1' );
+    freqmon_wb_out <= (dat => (others => '0'),
+                       stall => '0',
+                       err => '0',
+                       rty => '0',
+                       ack => '1' );
   end generate gen_without_clock_monitor;
 end struct;

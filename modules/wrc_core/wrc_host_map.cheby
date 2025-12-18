@@ -1,0 +1,22 @@
+memory-map:
+  name: wrc_host_map
+  comment: Memory map for host
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+  children:
+  - submap:
+     name: vuart
+     address: 0x0510
+     filename: ../../../general-cores/modules/wishbone/wb_vuart/vuart_host_map.cheby
+  - submap:
+     name: wdiags
+     address: 0x0900
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: cpu
+     address: 0x0b00
+     filename: wrc_cpu_csr.cheby
