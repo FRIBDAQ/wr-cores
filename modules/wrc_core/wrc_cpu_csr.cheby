@@ -1,0 +1,77 @@
+memory-map:
+  name: wrc_cpu_csr
+  description: Mock Turtle CPU Control/Status registers block
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+    iogroup: wrc_cpu_csr_regs
+  children:
+  - reg:
+      name: RESET
+      description: Core Reset Register
+      width: 8
+      access: rw
+      address: 0x0
+  - reg:
+      name: UADDR
+      description: Core Upload Address Register
+      width: 32
+      access: rw
+      address: 0x4
+  - reg:
+      name: UDATA
+      description: Core Upload Data Register
+      comment: The address to read/write from/to is specified in the UADDR register.
+      width: 32
+      access: rw
+      address: 0x8
+      x-hdl:
+        type: wire
+        write-strobe: True
+  - reg:
+      name: DBG_STATUS
+      description: Debug Interface Status Register
+      width: 8
+      access: ro
+      address: 0x80
+  - reg:
+      name: DBG_FORCE
+      description: Debug Interface Force Register
+      width: 8
+      access: rw
+      address: 0x84
+  - reg:
+      name: DBG_INSN_READY
+      description: Debug Interface Instruction Ready Register
+      width: 8
+      access: ro
+      address: 0x88
+  - reg:
+      name: DBG_CORE0_INSN
+      description: 'Debug Interface Core[0] Instruction Register'
+      width: 32
+      access: rw
+      address: 0x8c
+      x-wbgen:
+        access_bus: READ_WRITE
+        access_dev: READ_WRITE
+        field_description: Instruction to be executed
+        load: LOAD_EXT
+        type: PASS_THROUGH
+      x-hdl:
+        write-strobe: True
+  - reg:
+      name: DBG_CORE0_MBX
+      description: 'Debug Interface Core[0] Mailbox Data Register'
+      width: 32
+      access: rw
+      address: 0x90
+      x-wbgen:
+        access_bus: READ_WRITE
+        access_dev: READ_WRITE
+        field_description: Mailbox data
+        load: LOAD_EXT
+        type: SLV
+      x-hdl:
+        type: wire
+        write-strobe: True
