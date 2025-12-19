@@ -9,6 +9,30 @@ memory-map:
      name: spll
      address: 0x270
      filename: ../wr_softpll_ng/spll_host_map.cheby
+  - block:
+     name: syscon
+     address: 0x400
+     children:
+     - reg:
+        name: hwfr
+        comment: HW feature register
+        address: 0x0c
+        access: ro
+        width: 32
+        children:
+        - field:
+           name: memory
+           comment: Memory size (in 64KB units)
+           range: 3-0
+        - field:
+           name: STORAGE_SEC
+           range: 31-16
+     - reg:
+        name: hwir
+        comment: HW identification (name of the board)
+        address: 0x10
+        access: ro
+        width: 32
   - submap:
      name: vuart
      address: 0x0510

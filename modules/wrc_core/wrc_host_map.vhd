@@ -18,6 +18,14 @@ entity wrc_host_map is
     spll_i               : in    t_wishbone_master_in;
     spll_o               : out   t_wishbone_master_out;
 
+    -- HW feature register
+    -- Memory size (in 64KB units)
+    syscon_hwfr_memory_i : in    std_logic_vector(3 downto 0);
+    syscon_hwfr_STORAGE_SEC_i : in    std_logic_vector(15 downto 0);
+
+    -- HW identification (name of the board)
+    syscon_hwir_i        : in    std_logic_vector(31 downto 0);
+
     -- WB bus vuart
     vuart_i              : in    t_wishbone_master_in;
     vuart_o              : out   t_wishbone_master_out;
@@ -174,6 +182,10 @@ begin
   spll_o.we <= spll_wt;
   spll_o.dat <= wr_dat_d0;
 
+  -- Register syscon_hwfr
+
+  -- Register syscon_hwir
+
   -- Interface vuart
   vuart_tr <= vuart_wt or vuart_rt;
   process (clk_i) begin
@@ -293,6 +305,17 @@ begin
       -- Submap spll
       spll_we <= wr_req_d0;
       wr_ack_int <= spll_wack;
+    when "0100" =>
+      case wr_adr_d0(7 downto 2) is
+      when "000011" =>
+        -- Reg syscon_hwfr
+        wr_ack_int <= wr_req_d0;
+      when "000100" =>
+        -- Reg syscon_hwir
+        wr_ack_int <= wr_req_d0;
+      when others =>
+        wr_ack_int <= wr_req_d0;
+      end case;
     when "0101" =>
       -- Submap vuart
       vuart_we <= wr_req_d0;
@@ -311,7 +334,8 @@ begin
   end process;
 
   -- Process for read requests.
-  process (adr_int, rd_req_int, spll_i.dat, spll_rack, vuart_i.dat, vuart_rack,
+  process (adr_int, rd_req_int, spll_i.dat, spll_rack, syscon_hwfr_memory_i,
+           syscon_hwfr_STORAGE_SEC_i, syscon_hwir_i, vuart_i.dat, vuart_rack,
            wdiags_i.dat, wdiags_rack, cpu_i.dat, cpu_rack) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
@@ -325,6 +349,21 @@ begin
       spll_re <= rd_req_int;
       rd_dat_d0 <= spll_i.dat;
       rd_ack_d0 <= spll_rack;
+    when "0100" =>
+      case adr_int(7 downto 2) is
+      when "000011" =>
+        -- Reg syscon_hwfr
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0(3 downto 0) <= syscon_hwfr_memory_i;
+        rd_dat_d0(15 downto 4) <= (others => '0');
+        rd_dat_d0(31 downto 16) <= syscon_hwfr_STORAGE_SEC_i;
+      when "000100" =>
+        -- Reg syscon_hwir
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= syscon_hwir_i;
+      when others =>
+        rd_ack_d0 <= rd_req_int;
+      end case;
     when "0101" =>
       -- Submap vuart
       vuart_re <= rd_req_int;

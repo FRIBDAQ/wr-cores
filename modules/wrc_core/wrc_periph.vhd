@@ -29,7 +29,7 @@ use work.sysc_wbgen2_pkg.all;
 
 entity wrc_periph is
   generic(
-    g_board_name      : string  := "NA  ";
+    g_board_name      : std_logic_vector(31 downto 0);
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr : integer := 16#600000#; -- default for SVEC (M25P128)
     g_phys_uart       : boolean := true;
@@ -116,18 +116,6 @@ architecture struct of wrc_periph is
     -- /16 -1 - to get size in format of MEMSIZE@sysc_hwfr register
   end f_cnt_memsize;
 
-  function f_board_name_conv(name : string) return std_logic_vector is
-    variable ret : std_logic_vector(31 downto 0);
-  begin
-    assert (name'length= 4)
-    report "Board name has to be exactly 4 letters string" severity failure;
-    ret(31 downto 24) := std_logic_vector(to_unsigned(character'pos(name(1)), 8));
-    ret(23 downto 16) := std_logic_vector(to_unsigned(character'pos(name(2)), 8));
-    ret(15 downto  8) := std_logic_vector(to_unsigned(character'pos(name(3)), 8));
-    ret( 7 downto  0) := std_logic_vector(to_unsigned(character'pos(name(4)), 8));
-    return ret;
-  end f_board_name_conv;
-
   signal sysc_regs_i : t_sysc_in_registers;
   signal sysc_regs_o : t_sysc_out_registers;
 
@@ -199,7 +187,7 @@ begin
   -------------------------------------
   -- BOARD NAME and Flash info
   -------------------------------------
-  sysc_regs_i.hwir_name_i         <= f_board_name_conv(g_board_name);
+  sysc_regs_i.hwir_name_i         <= g_board_name;
   sysc_regs_i.hwfr_storage_sec_i  <= std_logic_vector(to_unsigned(g_flash_secsz_kb, 16));
   sysc_regs_i.hwfr_storage_type_i <= "00";  -- for now these parameters are only for Flash
   sysc_regs_i.sdbfs_baddr_i       <= std_logic_vector(to_unsigned(g_flash_sdbfs_baddr, 32));

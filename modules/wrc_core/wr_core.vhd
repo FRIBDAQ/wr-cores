@@ -369,6 +369,22 @@ architecture struct of wr_core is
     end if;
   end function;
 
+  function f_board_name_conv(name : string(1 to 4)) return std_logic_vector is
+    variable ret : std_logic_vector(31 downto 0);
+  begin
+    ret(31 downto 24) := std_logic_vector(to_unsigned(character'pos(name(1)), 8));
+    ret(23 downto 16) := std_logic_vector(to_unsigned(character'pos(name(2)), 8));
+    ret(15 downto  8) := std_logic_vector(to_unsigned(character'pos(name(3)), 8));
+    ret( 7 downto  0) := std_logic_vector(to_unsigned(character'pos(name(4)), 8));
+    return ret;
+  end f_board_name_conv;
+
+  constant c_board_name : std_logic_vector(31 downto 0) := f_board_name_conv(g_board_name);
+  constant c_memsize : std_logic_vector(3 downto 0) :=
+    std_logic_vector(to_unsigned(g_dpram_size * 4 / 2**16, 4));
+  constant c_storage_sec : std_logic_vector(15 downto 0) :=
+    std_logic_vector(to_unsigned(g_flash_secsz_kb, 16));
+
   -----------------------------------------------------------------------------
   --Local resets for peripheral
   -----------------------------------------------------------------------------
@@ -973,7 +989,7 @@ begin
   -----------------------------------------------------------------------------
   PERIPH : entity work.wrc_periph
     generic map(
-      g_board_name      => g_board_name,
+      g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,
       g_has_preinitialized_firmware => f_check_if_firmware_necessary,
@@ -1077,6 +1093,9 @@ begin
       wb_o => ext_wb_out,
       spll_i => spll_host_wb_out,
       spll_o => spll_host_wb_in,
+      syscon_hwfr_memory_i => c_memsize,
+      syscon_hwfr_STORAGE_SEC_i => c_storage_sec,
+      syscon_hwir_i => c_board_name,
       vuart_i => vuart_host_wb_out,
       vuart_o => vuart_host_wb_in,
       wdiags_i => diags_usr_wb_out,
