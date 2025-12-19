@@ -5,6 +5,40 @@ memory-map:
   x-hdl:
     busgroup: True
   children:
+  - reg:
+     name: magic
+     comment: Magic number 'WRPC'
+     address: 0x0
+     access: ro
+     width: 32
+     preset: 0x57525043
+     x-hdl:
+       type: const
+  - reg:
+     name: mapver
+     comment: Memory map version
+     address: 0x4
+     access: ro
+     width: 32
+     preset: 0x00000001
+     x-hdl:
+       type: const
+  - block:
+     name: endpoint
+     address: 0x100
+     children:
+     - reg:
+        name: mach
+        comment: MAC Address bits [47:32]
+        address: 0x24
+        access: ro
+        width: 32
+     - reg:
+        name: macl
+        comment: MAC Address bits [31:0]
+        address: 0x28
+        access: ro
+        width: 32
   - submap:
      name: spll
      address: 0x270

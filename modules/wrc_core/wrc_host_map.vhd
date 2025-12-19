@@ -14,6 +14,12 @@ entity wrc_host_map is
     wb_i                 : in    t_wishbone_slave_in;
     wb_o                 : out   t_wishbone_slave_out;
 
+    -- MAC Address bits [47:32]
+    endpoint_mach_i      : in    std_logic_vector(31 downto 0);
+
+    -- MAC Address bits [31:0]
+    endpoint_macl_i      : in    std_logic_vector(31 downto 0);
+
     -- WB bus spll
     spll_i               : in    t_wishbone_master_in;
     spll_o               : out   t_wishbone_master_out;
@@ -145,6 +151,14 @@ begin
       end if;
     end if;
   end process;
+
+  -- Register magic
+
+  -- Register mapver
+
+  -- Register endpoint_mach
+
+  -- Register endpoint_macl
 
   -- Interface spll
   spll_tr <= spll_wt or spll_rt;
@@ -301,6 +315,28 @@ begin
     wdiags_we <= '0';
     cpu_we <= '0';
     case wr_adr_d0(11 downto 8) is
+    when "0000" =>
+      case wr_adr_d0(7 downto 2) is
+      when "000000" =>
+        -- Reg magic
+        wr_ack_int <= wr_req_d0;
+      when "000001" =>
+        -- Reg mapver
+        wr_ack_int <= wr_req_d0;
+      when others =>
+        wr_ack_int <= wr_req_d0;
+      end case;
+    when "0001" =>
+      case wr_adr_d0(7 downto 2) is
+      when "001001" =>
+        -- Reg endpoint_mach
+        wr_ack_int <= wr_req_d0;
+      when "001010" =>
+        -- Reg endpoint_macl
+        wr_ack_int <= wr_req_d0;
+      when others =>
+        wr_ack_int <= wr_req_d0;
+      end case;
     when "0010" =>
       -- Submap spll
       spll_we <= wr_req_d0;
@@ -334,9 +370,10 @@ begin
   end process;
 
   -- Process for read requests.
-  process (adr_int, rd_req_int, spll_i.dat, spll_rack, syscon_hwfr_memory_i,
-           syscon_hwfr_STORAGE_SEC_i, syscon_hwir_i, vuart_i.dat, vuart_rack,
-           wdiags_i.dat, wdiags_rack, cpu_i.dat, cpu_rack) begin
+  process (adr_int, rd_req_int, endpoint_mach_i, endpoint_macl_i, spll_i.dat,
+           spll_rack, syscon_hwfr_memory_i, syscon_hwfr_STORAGE_SEC_i,
+           syscon_hwir_i, vuart_i.dat, vuart_rack, wdiags_i.dat, wdiags_rack,
+           cpu_i.dat, cpu_rack) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
     spll_re <= '0';
@@ -344,6 +381,32 @@ begin
     wdiags_re <= '0';
     cpu_re <= '0';
     case adr_int(11 downto 8) is
+    when "0000" =>
+      case adr_int(7 downto 2) is
+      when "000000" =>
+        -- Reg magic
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= "01010111010100100101000001000011";
+      when "000001" =>
+        -- Reg mapver
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= "00000000000000000000000000000001";
+      when others =>
+        rd_ack_d0 <= rd_req_int;
+      end case;
+    when "0001" =>
+      case adr_int(7 downto 2) is
+      when "001001" =>
+        -- Reg endpoint_mach
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= endpoint_mach_i;
+      when "001010" =>
+        -- Reg endpoint_macl
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= endpoint_macl_i;
+      when others =>
+        rd_ack_d0 <= rd_req_int;
+      end case;
     when "0010" =>
       -- Submap spll
       spll_re <= rd_req_int;

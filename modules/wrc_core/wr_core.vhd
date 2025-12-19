@@ -438,6 +438,7 @@ architecture struct of wr_core is
   signal ep_txtsu_ts_incorrect      : std_logic;
   signal ep_txtsu_stb, ep_txtsu_ack : std_logic;
   signal ep_led_link                : std_logic;
+  signal my_mac_addr                : std_logic_vector(47 downto 0);
 
   signal phy_rst : std_logic;
 
@@ -915,6 +916,7 @@ begin
       fc_tx_pause_req_i    => fc_tx_pause_req_i,
       fc_tx_pause_delay_i  => fc_tx_pause_delay_i,
       fc_tx_pause_ready_o  => fc_tx_pause_ready_o,
+      my_mac_addr_o        => my_mac_addr,
       led_link_o           => ep_led_link,
       led_act_o            => led_act_o);
 
@@ -1091,6 +1093,9 @@ begin
       clk_i => clk_sys_i,
       wb_i => ext_wb_in,
       wb_o => ext_wb_out,
+      endpoint_mach_i(31 downto 16) => x"0000",
+      endpoint_mach_i(15 downto 0) => my_mac_addr(47 downto 32),
+      endpoint_macl_i => my_mac_addr(31 downto 0),
       spll_i => spll_host_wb_out,
       spll_o => spll_host_wb_in,
       syscon_hwfr_memory_i => c_memsize,
