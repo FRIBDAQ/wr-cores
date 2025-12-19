@@ -146,6 +146,9 @@ entity wr_softpll_ng is
     wb_stall_o : out std_logic;
     irq_o      : out std_logic;
 
+    host_wb_i : in  t_wishbone_slave_in;
+    host_wb_o : out t_wishbone_slave_out;
+
 -- Debug FIFO readout interrupt
     dbg_fifo_irq_o : out std_logic
     );
@@ -212,6 +215,8 @@ begin  -- behavioral
       slave_o.err => wb_err,
       slave_o.rty => wb_rty,
       slave_o.stall => wb_stall_o,
+      host_wb_i   => host_wb_i,
+      host_wb_o   => host_wb_o,
       int_o           => irq_o,
       dbg_fifo_irq_o  => dbg_fifo_irq_o);
 end rtl;

@@ -130,6 +130,9 @@ entity xwr_softpll_ng is
     slave_i : in  t_wishbone_slave_in;
     slave_o : out t_wishbone_slave_out;
 
+    host_wb_i : in  t_wishbone_slave_in;
+    host_wb_o : out t_wishbone_slave_out;
+
     int_o: out std_logic;
 
     dbg_fifo_irq_o : out std_logic
@@ -144,19 +147,6 @@ architecture wrapper of xwr_softpll_ng is
   constant c_DBG_FIFO_COALESCE  : integer := 100;
 
   constant c_num_total_channels : natural := g_num_ref_inputs + g_num_outputs + g_num_exts;
-
-  function f_pick (
-    cond     : boolean;
-    if_true  : integer;
-    if_false : integer
-    ) return integer is
-  begin
-    if(cond) then
-      return if_true;
-    else
-      return if_false;
-    end if;
-  end f_pick;
 
   function resize(x : std_logic_vector; new_length : integer) return std_logic_vector is
     variable tmp : std_logic_vector(new_length-1 downto 0);
@@ -183,10 +173,6 @@ architecture wrapper of xwr_softpll_ng is
   signal regs_in  : t_SPLL_out_registers;
   signal regs_out : t_SPLL_in_registers;
 
-  -- Debug FIFO signals
-  signal dbg_fifo_almostfull   : std_logic;
-  signal dbg_seq_id            : unsigned(15 downto 0);
-  signal dbg_fifo_permit_write : std_logic;
   signal dbg_fifo_irq          : std_logic := '0';
 
   -- Temporary vectors for DDMTD clock selection (straight/reversed)
@@ -235,12 +221,10 @@ begin  -- rtl
   regs_out.f_ext_valid_i <= '0';
 
   U_WB_SLAVE : entity work.spll_wb_slave
-    generic map (
-      g_with_debug_fifo => f_pick(g_with_debug_fifo, 1, 0))
     port map (
       clk_sys_i  => clk_sys_i,
       rst_n_i    => rst_n_i,
-      wb_adr_i   => wb_in.adr(5 downto 0),
+      wb_adr_i   => wb_in.adr(4 downto 0),
       wb_dat_i   => wb_in.dat,
       wb_dat_o   => wb_out.dat,
       wb_cyc_i   => wb_in.cyc,
@@ -608,22 +592,51 @@ begin  -- rtl
   -- Debugging FIFO
   -----------------------------------------------------------------------------
 
-  gen_with_debug_fifo : if(g_with_debug_fifo = true) generate
+  gen_with_debug_fifo : if g_with_debug_fifo generate
+    signal fifo_dout : std_logic_vector(31 downto 0);
+    signal fifo_rd, fifo_wr, fifo_empty : std_logic;
+    signal fifo_count : std_logic_vector(12 downto 0);
+    signal dbg_fifo_almostfull : std_logic;
+    signal dbg_fifo_permit_write : std_logic;
+  begin
+    inst_host_map: entity work.spll_host_map
+      port map (
+        rst_n_i => rst_n_i,
+        clk_i => clk_sys_i,
+        wb_i => host_wb_i,
+        wb_o => host_wb_o,
+        dfr_host_r0_i => fifo_dout,
+        dfr_host_r0_rd_o => fifo_rd,
+        dfr_host_csr_usedw_i => fifo_count,
+        dfr_host_csr_empty_i => fifo_empty
+        );
 
-    dbg_fifo_almostfull <= '1' when unsigned(regs_in.dfr_host_wr_usedw_o) > 8180 else '0';
-
-    p_request_counter : process(clk_sys_i)
-    begin
-      if rising_edge(clk_sys_i) then
-        if rst_n_i = '0' then
-          dbg_seq_id <= (others => '0');
-        else
-          if(regs_in.dfr_spll_eos_o = '1' and regs_in.dfr_spll_eos_wr_o = '1') then
-            dbg_seq_id <= dbg_seq_id + 1;
-          end if;
-        end if;
-      end if;
-    end process;
+    inst_fifo: entity work.generic_sync_fifo
+      generic map (
+        g_data_width => 32,
+        g_size => 8192,
+        g_show_ahead => True,
+        g_show_ahead_legacy_mode => False,
+        g_with_empty => True,
+        g_with_full => False,
+        g_with_count => True
+        )
+      port map (
+        rst_n_i => rst_n_i,
+        clk_i => clk_sys_i,
+        d_i (30 downto 0) => regs_in.dfr_spll_value_o,
+        d_i (31) => regs_in.dfr_spll_eos_o,
+        we_i => fifo_wr,
+        q_o => fifo_dout,
+        rd_i => fifo_rd,
+        empty_o => fifo_empty,
+        full_o => open,
+        almost_empty_o => open,
+        almost_full_o => open,
+        count_o => fifo_count
+        );
+    dbg_fifo_almostfull <= '1' when unsigned(fifo_count) > 8180 else '0';
+    fifo_wr <= dbg_fifo_permit_write and regs_in.dfr_spll_eos_wr_o;
 
     p_fifo_permit_write : process(clk_sys_i)
     begin
@@ -646,26 +659,19 @@ begin  -- rtl
         if rst_n_i = '0' then
           dbg_fifo_irq <= '0';
         else
-          if(unsigned(regs_in.dfr_host_wr_usedw_o) = 0) then
+          if(unsigned(fifo_count) = 0) then
             dbg_fifo_irq <= '0';
-          elsif(unsigned(regs_in.dfr_host_wr_usedw_o) = c_DBG_FIFO_COALESCE) then
+          elsif(unsigned(fifo_count) = c_DBG_FIFO_COALESCE) then
             dbg_fifo_irq <= '1';
           end if;
         end if;
       end if;
     end process;
-
-    regs_out.dfr_host_wr_req_i <= regs_in.dfr_spll_value_wr_o and dbg_fifo_permit_write;
-    regs_out.dfr_host_value_i  <= regs_in.dfr_spll_eos_o & regs_in.dfr_spll_value_o;
-    regs_out.dfr_host_seq_id_i <= std_logic_vector(dbg_seq_id);
-
   end generate gen_with_debug_fifo;
 
-  gen_without_debug_fifo : if(g_with_debug_fifo = false) generate
+  gen_without_debug_fifo : if not g_with_debug_fifo generate
     dbg_fifo_irq               <= '0';
-    regs_out.dfr_host_wr_req_i <= '0';
-    regs_out.dfr_host_value_i  <= (others => '0');
-    regs_out.dfr_host_seq_id_i <= (others => '0');
+    host_wb_o <= c_dummy_wb_slave_out;
   end generate gen_without_debug_fifo;
 
   dbg_fifo_irq_o <= dbg_fifo_irq;

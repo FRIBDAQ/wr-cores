@@ -6,6 +6,10 @@ memory-map:
     busgroup: True
   children:
   - submap:
+     name: spll
+     address: 0x270
+     filename: ../wr_softpll_ng/spll_host_map.cheby
+  - submap:
      name: vuart
      address: 0x0510
      filename: ../../../general-cores/modules/wishbone/wb_vuart/vuart_host_map.cheby

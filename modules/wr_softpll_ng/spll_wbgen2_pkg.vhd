@@ -43,9 +43,6 @@ package spll_wbgen2_pkg is
     occr_out_en_i                            : std_logic_vector(7 downto 0);
     rcer_i                                   : std_logic_vector(31 downto 0);
     ocer_i                                   : std_logic_vector(7 downto 0);
-    dfr_host_wr_req_i                        : std_logic;
-    dfr_host_value_i                         : std_logic_vector(31 downto 0);
-    dfr_host_seq_id_i                        : std_logic_vector(15 downto 0);
     trr_wr_req_i                             : std_logic;
     trr_value_i                              : std_logic_vector(23 downto 0);
     trr_chan_id_i                            : std_logic_vector(6 downto 0);
@@ -71,9 +68,6 @@ package spll_wbgen2_pkg is
     occr_out_en_i => (others => '0'),
     rcer_i => (others => '0'),
     ocer_i => (others => '0'),
-    dfr_host_wr_req_i => '0',
-    dfr_host_value_i => (others => '0'),
-    dfr_host_seq_id_i => (others => '0'),
     trr_wr_req_i => '0',
     trr_value_i => (others => '0'),
     trr_chan_id_i => (others => '0'),
@@ -109,9 +103,6 @@ package spll_wbgen2_pkg is
     dfr_spll_value_wr_o                      : std_logic;
     dfr_spll_eos_o                           : std_logic;
     dfr_spll_eos_wr_o                        : std_logic;
-    dfr_host_wr_full_o                       : std_logic;
-    dfr_host_wr_empty_o                      : std_logic;
-    dfr_host_wr_usedw_o                      : std_logic_vector(12 downto 0);
     trr_wr_full_o                            : std_logic;
     trr_wr_empty_o                           : std_logic;
   end record;
@@ -143,95 +134,87 @@ package spll_wbgen2_pkg is
     dfr_spll_value_wr_o => '0',
     dfr_spll_eos_o => '0',
     dfr_spll_eos_wr_o => '0',
-    dfr_host_wr_full_o => '0',
-    dfr_host_wr_empty_o => '0',
-    dfr_host_wr_usedw_o => (others => '0'),
     trr_wr_full_o => '0',
     trr_wr_empty_o => '0'
   );
-
-function "or" (left, right: t_spll_in_registers) return t_spll_in_registers;
-function f_x_to_zero (x:std_logic) return std_logic;
-function f_x_to_zero (x:std_logic_vector) return std_logic_vector;
-
-component spll_wb_slave is
-  generic (
-        g_with_debug_fifo : integer := 1    );
-  port (
-    rst_n_i                                  : in     std_logic;
-    clk_sys_i                                : in     std_logic;
-    wb_adr_i                                 : in     std_logic_vector(5 downto 0);
-    wb_dat_i                                 : in     std_logic_vector(31 downto 0);
-    wb_dat_o                                 : out    std_logic_vector(31 downto 0);
-    wb_cyc_i                                 : in     std_logic;
-    wb_sel_i                                 : in     std_logic_vector(3 downto 0);
-    wb_stb_i                                 : in     std_logic;
-    wb_we_i                                  : in     std_logic;
-    wb_ack_o                                 : out    std_logic;
-    wb_err_o                                 : out    std_logic;
-    wb_rty_o                                 : out    std_logic;
-    wb_stall_o                               : out    std_logic;
-    wb_int_o                                 : out    std_logic;
-    irq_tag_i                                : in     std_logic;
-    regs_i                                   : in     t_spll_in_registers;
-    regs_o                                   : out    t_spll_out_registers
-  );
-end component;
-
+  
+  function "or" (left, right: t_spll_in_registers) return t_spll_in_registers;
+  function f_x_to_zero (x:std_logic) return std_logic;
+  function f_x_to_zero (x:std_logic_vector) return std_logic_vector;
+  
+  component spll_wb_slave is
+    port (
+      rst_n_i                                  : in     std_logic;
+      clk_sys_i                                : in     std_logic;
+      wb_adr_i                                 : in     std_logic_vector(4 downto 0);
+      wb_dat_i                                 : in     std_logic_vector(31 downto 0);
+      wb_dat_o                                 : out    std_logic_vector(31 downto 0);
+      wb_cyc_i                                 : in     std_logic;
+      wb_sel_i                                 : in     std_logic_vector(3 downto 0);
+      wb_stb_i                                 : in     std_logic;
+      wb_we_i                                  : in     std_logic;
+      wb_ack_o                                 : out    std_logic;
+      wb_err_o                                 : out    std_logic;
+      wb_rty_o                                 : out    std_logic;
+      wb_stall_o                               : out    std_logic;
+      wb_int_o                                 : out    std_logic;
+      irq_tag_i                                : in     std_logic;
+      regs_i                                   : in     t_spll_in_registers;
+      regs_o                                   : out    t_spll_out_registers
+    );
+  end component;
+  
 end package;
 
 package body spll_wbgen2_pkg is
-function f_x_to_zero (x:std_logic) return std_logic is
-begin
-  if x = '1' then
-    return '1';
-  else
-    return '0';
-  end if;
-end function;
-
-function f_x_to_zero (x:std_logic_vector) return std_logic_vector is
-  variable tmp: std_logic_vector(x'length-1 downto 0);
-begin
-  for i in 0 to x'length-1 loop
-    if(x(i) = 'X' or x(i) = 'U') then
-      tmp(i):= '0';
+  function f_x_to_zero (x:std_logic) return std_logic is
+  begin
+    if x = '1' then
+      return '1';
     else
-      tmp(i):=x(i);
-    end if; 
-  end loop; 
-  return tmp;
-end function;
-
-function "or" (left, right: t_spll_in_registers) return t_spll_in_registers is
-  variable tmp: t_spll_in_registers;
-begin
-  tmp.csr_n_ref_i := f_x_to_zero(left.csr_n_ref_i) or f_x_to_zero(right.csr_n_ref_i);
-  tmp.csr_n_out_i := f_x_to_zero(left.csr_n_out_i) or f_x_to_zero(right.csr_n_out_i);
-  tmp.csr_dbg_supported_i := f_x_to_zero(left.csr_dbg_supported_i) or f_x_to_zero(right.csr_dbg_supported_i);
-  tmp.eccr_ext_supported_i := f_x_to_zero(left.eccr_ext_supported_i) or f_x_to_zero(right.eccr_ext_supported_i);
-  tmp.eccr_ext_ref_locked_i := f_x_to_zero(left.eccr_ext_ref_locked_i) or f_x_to_zero(right.eccr_ext_ref_locked_i);
-  tmp.eccr_ext_ref_stopped_i := f_x_to_zero(left.eccr_ext_ref_stopped_i) or f_x_to_zero(right.eccr_ext_ref_stopped_i);
-  tmp.al_cr_valid_i := f_x_to_zero(left.al_cr_valid_i) or f_x_to_zero(right.al_cr_valid_i);
-  tmp.al_cr_required_i := f_x_to_zero(left.al_cr_required_i) or f_x_to_zero(right.al_cr_required_i);
-  tmp.al_cref_i := f_x_to_zero(left.al_cref_i) or f_x_to_zero(right.al_cref_i);
-  tmp.al_cin_i := f_x_to_zero(left.al_cin_i) or f_x_to_zero(right.al_cin_i);
-  tmp.dmtd_stat_cr_valid_i := f_x_to_zero(left.dmtd_stat_cr_valid_i) or f_x_to_zero(right.dmtd_stat_cr_valid_i);
-  tmp.dmtd_stat_val_high_i := f_x_to_zero(left.dmtd_stat_val_high_i) or f_x_to_zero(right.dmtd_stat_val_high_i);
-  tmp.dmtd_stat_val_low_i := f_x_to_zero(left.dmtd_stat_val_low_i) or f_x_to_zero(right.dmtd_stat_val_low_i);
-  tmp.f_ext_freq_i := f_x_to_zero(left.f_ext_freq_i) or f_x_to_zero(right.f_ext_freq_i);
-  tmp.f_ext_valid_i := f_x_to_zero(left.f_ext_valid_i) or f_x_to_zero(right.f_ext_valid_i);
-  tmp.occr_out_en_i := f_x_to_zero(left.occr_out_en_i) or f_x_to_zero(right.occr_out_en_i);
-  tmp.rcer_i := f_x_to_zero(left.rcer_i) or f_x_to_zero(right.rcer_i);
-  tmp.ocer_i := f_x_to_zero(left.ocer_i) or f_x_to_zero(right.ocer_i);
-  tmp.dfr_host_wr_req_i := f_x_to_zero(left.dfr_host_wr_req_i) or f_x_to_zero(right.dfr_host_wr_req_i);
-  tmp.dfr_host_value_i := f_x_to_zero(left.dfr_host_value_i) or f_x_to_zero(right.dfr_host_value_i);
-  tmp.dfr_host_seq_id_i := f_x_to_zero(left.dfr_host_seq_id_i) or f_x_to_zero(right.dfr_host_seq_id_i);
-  tmp.trr_wr_req_i := f_x_to_zero(left.trr_wr_req_i) or f_x_to_zero(right.trr_wr_req_i);
-  tmp.trr_value_i := f_x_to_zero(left.trr_value_i) or f_x_to_zero(right.trr_value_i);
-  tmp.trr_chan_id_i := f_x_to_zero(left.trr_chan_id_i) or f_x_to_zero(right.trr_chan_id_i);
-  tmp.trr_disc_i := f_x_to_zero(left.trr_disc_i) or f_x_to_zero(right.trr_disc_i);
-  return tmp;
-end function;
+      return '0';
+    end if;
+  end function;
+  
+  function f_x_to_zero (x:std_logic_vector) return std_logic_vector is
+    variable tmp: std_logic_vector(x'length-1 downto 0);
+  begin
+    for i in 0 to x'length-1 loop
+      if(x(i) = '1') then
+        tmp(i):= '1';
+      else
+        tmp(i):= '0';
+      end if; 
+    end loop; 
+    return tmp;
+  end function;
+  
+  function "or" (left, right: t_spll_in_registers) return t_spll_in_registers is
+    variable tmp: t_spll_in_registers;
+  begin
+    tmp.csr_n_ref_i := f_x_to_zero(left.csr_n_ref_i) or f_x_to_zero(right.csr_n_ref_i);
+    tmp.csr_n_out_i := f_x_to_zero(left.csr_n_out_i) or f_x_to_zero(right.csr_n_out_i);
+    tmp.csr_dbg_supported_i := f_x_to_zero(left.csr_dbg_supported_i) or f_x_to_zero(right.csr_dbg_supported_i);
+    tmp.eccr_ext_supported_i := f_x_to_zero(left.eccr_ext_supported_i) or f_x_to_zero(right.eccr_ext_supported_i);
+    tmp.eccr_ext_ref_locked_i := f_x_to_zero(left.eccr_ext_ref_locked_i) or f_x_to_zero(right.eccr_ext_ref_locked_i);
+    tmp.eccr_ext_ref_stopped_i := f_x_to_zero(left.eccr_ext_ref_stopped_i) or f_x_to_zero(right.eccr_ext_ref_stopped_i);
+    tmp.al_cr_valid_i := f_x_to_zero(left.al_cr_valid_i) or f_x_to_zero(right.al_cr_valid_i);
+    tmp.al_cr_required_i := f_x_to_zero(left.al_cr_required_i) or f_x_to_zero(right.al_cr_required_i);
+    tmp.al_cref_i := f_x_to_zero(left.al_cref_i) or f_x_to_zero(right.al_cref_i);
+    tmp.al_cin_i := f_x_to_zero(left.al_cin_i) or f_x_to_zero(right.al_cin_i);
+    tmp.dmtd_stat_cr_valid_i := f_x_to_zero(left.dmtd_stat_cr_valid_i) or f_x_to_zero(right.dmtd_stat_cr_valid_i);
+    tmp.dmtd_stat_val_high_i := f_x_to_zero(left.dmtd_stat_val_high_i) or f_x_to_zero(right.dmtd_stat_val_high_i);
+    tmp.dmtd_stat_val_low_i := f_x_to_zero(left.dmtd_stat_val_low_i) or f_x_to_zero(right.dmtd_stat_val_low_i);
+    tmp.f_ext_freq_i := f_x_to_zero(left.f_ext_freq_i) or f_x_to_zero(right.f_ext_freq_i);
+    tmp.f_ext_valid_i := f_x_to_zero(left.f_ext_valid_i) or f_x_to_zero(right.f_ext_valid_i);
+    tmp.occr_out_en_i := f_x_to_zero(left.occr_out_en_i) or f_x_to_zero(right.occr_out_en_i);
+    tmp.rcer_i := f_x_to_zero(left.rcer_i) or f_x_to_zero(right.rcer_i);
+    tmp.ocer_i := f_x_to_zero(left.ocer_i) or f_x_to_zero(right.ocer_i);
+    tmp.trr_wr_req_i := f_x_to_zero(left.trr_wr_req_i) or f_x_to_zero(right.trr_wr_req_i);
+    tmp.trr_value_i := f_x_to_zero(left.trr_value_i) or f_x_to_zero(right.trr_value_i);
+    tmp.trr_chan_id_i := f_x_to_zero(left.trr_chan_id_i) or f_x_to_zero(right.trr_chan_id_i);
+    tmp.trr_disc_i := f_x_to_zero(left.trr_disc_i) or f_x_to_zero(right.trr_disc_i);
+    return tmp;
+  end function;
 
 end package body;

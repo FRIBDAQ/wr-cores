@@ -1,0 +1,31 @@
+memory-map:
+  name: spll_host_map
+  comment: Host access to SPLL registers (debug)
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+  children:
+  - reg:
+      name: DFR_HOST_R0
+      comment: Fifo output (data)
+      address : 0x0
+      width: 32
+      access: ro
+      x-hdl:
+        read-strobe: True
+        type: wire
+  - reg:
+      name: DFR_HOST_CSR
+      comment: Fifo status
+      address: 0x08
+      width: 32
+      access: ro
+      children:
+      - field:
+          name: USEDW
+          comment: FIFO count
+          range: 12-0
+      - field:
+          name: EMPTY
+          comment: Set when FIFO is empty
+          range: 17

@@ -451,14 +451,8 @@ architecture struct of wr_core is
   signal diags_cpu_wb_in : t_wishbone_slave_in;
   signal diags_cpu_wb_out : t_wishbone_slave_out;
 
-  signal diags_usr_wb_in : t_wishbone_slave_in;
-  signal diags_usr_wb_out : t_wishbone_slave_out;
-
   signal freqmon_wb_in : t_wishbone_slave_in;
   signal freqmon_wb_out : t_wishbone_slave_out;
-
-  signal vuart_host_wb_in : t_wishbone_slave_in;
-  signal vuart_host_wb_out : t_wishbone_slave_out;
 
   signal vuart_cpu_wb_in : t_wishbone_slave_in;
   signal vuart_cpu_wb_out : t_wishbone_slave_out;
@@ -472,6 +466,15 @@ architecture struct of wr_core is
   -----------------------------------------------------------------------------
   signal ext_wb_in  : t_wishbone_slave_in;
   signal ext_wb_out : t_wishbone_slave_out;
+
+  signal vuart_host_wb_in : t_wishbone_slave_in;
+  signal vuart_host_wb_out : t_wishbone_slave_out;
+
+  signal spll_host_wb_in : t_wishbone_slave_in;
+  signal spll_host_wb_out : t_wishbone_slave_out;
+
+  signal diags_usr_wb_in : t_wishbone_slave_in;
+  signal diags_usr_wb_out : t_wishbone_slave_out;
 
   -----------------------------------------------------------------------------
   -- External Tx TSU interface
@@ -787,6 +790,9 @@ begin
 
       int_o => softpll_irq,
 
+      host_wb_i => spll_host_wb_in,
+      host_wb_o => spll_host_wb_out,
+
       dbg_fifo_irq_o => open);
 
   clk_out(0)                      <= clk_ref_i;
@@ -1069,6 +1075,8 @@ begin
       clk_i => clk_sys_i,
       wb_i => ext_wb_in,
       wb_o => ext_wb_out,
+      spll_i => spll_host_wb_out,
+      spll_o => spll_host_wb_in,
       vuart_i => vuart_host_wb_out,
       vuart_o => vuart_host_wb_in,
       wdiags_i => diags_usr_wb_out,
