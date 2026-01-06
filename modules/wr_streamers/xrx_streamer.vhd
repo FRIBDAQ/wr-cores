@@ -212,7 +212,6 @@ architecture rtl of xrx_streamer is
   signal fifo_target_ts_cycles : std_logic_vector(27 downto 0);
   signal fifo_target_ts_error  : std_logic;
   signal timestamp_pushed_to_fifo : std_logic;
-
   
 begin  -- rtl
 
@@ -402,8 +401,9 @@ begin  -- rtl
         blocks_lost            <= '0';
         pack_data              <= (others=>'0');
         is_vlan                <= '0';
-        tx_tag_present       <= '0';
-        tx_tag_valid         <= '0';
+        tx_tag_present         <= '0';
+        tx_tag_valid           <= '0';
+
       else
         case state is
           when IDLE =>
@@ -428,6 +428,7 @@ begin  -- rtl
             tx_tag_present       <= '0';
             tx_tag_valid         <= '0';
 
+
             if(fsm_in.sof = '1') then
 
               if(fifo_full = '1') then
@@ -441,7 +442,6 @@ begin  -- rtl
             if (fsm_in.eof = '1' or fsm_in.error = '1') then
               state <= IDLE;
             end if;
-
 
           when HEADER =>
             if(fsm_in.eof = '1') then
@@ -554,14 +554,12 @@ begin  -- rtl
               end if;
             end if;
 
-
-
           when PAYLOAD =>
             frames_lost <= '0';
             rx_lost_frames_cnt_o <= (others => '0');
             fifo_sync <= got_next_subframe;
 
-            if(fsm_in.eof = '1') then
+            if(fsm_in.eof = '1' or fifo_full = '1') then
               state       <= IDLE;
               fifo_drop   <= '1';
               fifo_accept <= '0';
@@ -569,8 +567,6 @@ begin  -- rtl
               
             elsif(fsm_in.dvalid = '1') then
 
-              
-              
               if(is_escape = '1') then
                 ser_count <= (others => '0');
                 fifo_last <= '1';
@@ -654,6 +650,7 @@ begin  -- rtl
                 end if;
                 
               end if;
+  
             else --of:  elsif(fsm_in.dvalid = '1') then
               fifo_dvalid <= '0';
             end if;
