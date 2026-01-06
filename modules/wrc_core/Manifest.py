@@ -4,6 +4,7 @@
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
 files = [ "xwr_core.vhd",
+          "xwr_subsystem.vhd",
           "wr_core.vhd",
           "wrcore_pkg.vhd",
           "wrc_periph.vhd",
