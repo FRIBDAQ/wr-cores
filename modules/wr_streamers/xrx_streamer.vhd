@@ -226,9 +226,6 @@ architecture rtl of xrx_streamer is
   signal fifo_target_ts_cycles : std_logic_vector(27 downto 0);
   signal fifo_target_ts_error  : std_logic;
   signal timestamp_pushed_to_fifo : std_logic;
-
-  signal fixed_latency_delay_reset_n : std_logic;
-  signal fifo_reset_n : std_logic;
   
 begin  -- rtl
 
@@ -322,8 +319,6 @@ begin  -- rtl
 
   fifo_last_int <= fifo_last or ((not pending_write) and is_escape);  -- when word is 16 bit
 
-  fixed_latency_delay_reset_n <= rst_int_n and fifo_reset_n;
-
   U_FixLatencyDelay : entity work.fixed_latency_delay
     generic map (
       g_data_width             => g_data_width,
@@ -333,7 +328,7 @@ begin  -- rtl
       g_sim_cycle_counter_range => g_sim_cycle_counter_range,
       g_simulation => g_simulation)
     port map (
-      rst_n_i          => fixed_latency_delay_reset_n,
+      rst_n_i          => rst_int_n,
       clk_sys_i        => clk_sys_i,
       clk_ref_i        => clk_ref_i,
       tm_time_valid_i  => tm_time_valid_i,
@@ -422,7 +417,6 @@ begin  -- rtl
         is_vlan                <= '0';
         tx_tag_present         <= '0';
         tx_tag_valid           <= '0';
-        fifo_reset_n           <= '1';
 
       else
         case state is
@@ -447,7 +441,6 @@ begin  -- rtl
             is_vlan              <= '0';
             tx_tag_present       <= '0';
             tx_tag_valid         <= '0';
-            fifo_reset_n         <= '1';
 
 
             if(fsm_in.sof = '1') then
@@ -460,9 +453,9 @@ begin  -- rtl
             end if;
 
           when DROP_FRAME =>
-          -- FIFO is full, flushing it and dropping the frame
-            fifo_reset_n <= '0';
-            state <= IDLE;
+            if (fsm_in.eof = '1' or fsm_in.error = '1') then
+              state <= IDLE;
+            end if;
 
           when HEADER =>
             if(fsm_in.eof = '1') then
@@ -580,11 +573,7 @@ begin  -- rtl
             rx_lost_frames_cnt_o <= (others => '0');
             fifo_sync <= got_next_subframe;
 
-            if(fifo_full = '1') then 
-              -- case where the message gets stuck and fills the FIFO
-              state       <= DROP_FRAME;
-
-            elsif(fsm_in.eof = '1') then
+            if(fsm_in.eof = '1' or fifo_full = '1') then
               state       <= IDLE;
               fifo_drop   <= '1';
               fifo_accept <= '0';
