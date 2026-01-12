@@ -70,7 +70,6 @@ entity xwr_subsystem is
     g_aux_clks                  : integer                        := 0;
     g_ep_rxbuf_size             : integer                        := 1024;
     g_tx_runt_padding           : boolean                        := true;
-    g_dpram_initialized         : boolean                        := false;
     g_dpram_size                : integer                        := 131072/4;  --in 32-bit words
     g_softpll_enable_debugger   : boolean                        := false;
     g_softpll_use_sampled_ref_clocks : boolean := false;
@@ -329,7 +328,6 @@ architecture struct of xwr_subsystem is
   -----------------------------------------------------------------------------
   --Local resets for peripheral
   -----------------------------------------------------------------------------
-  signal rst_wrc_n : std_logic;
   signal rst_net_n : std_logic;
 
   -----------------------------------------------------------------------------
@@ -869,7 +867,6 @@ begin
       g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,
-      g_has_preinitialized_firmware => g_dpram_initialized,
       g_phys_uart       => g_phys_uart,
       g_virtual_uart    => g_virtual_uart,
       g_mem_words       => g_dpram_size,
@@ -886,7 +883,6 @@ begin
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_n_i,
       rst_net_n_o => rst_net_n,
-      rst_wrc_n_o => rst_wrc_n,
 
       scl_o       => scl_o,
       scl_i       => scl_i,

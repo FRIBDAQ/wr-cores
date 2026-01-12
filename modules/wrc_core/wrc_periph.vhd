@@ -33,7 +33,6 @@ entity wrc_periph is
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr : integer := 16#600000#; -- default for SVEC (M25P128)
     g_phys_uart       : boolean := true;
-    g_has_preinitialized_firmware : boolean;
     g_with_phys_uart_fifo       : boolean                        := false;
     g_phys_uart_tx_fifo_size    : integer                        := 1024;
     g_phys_uart_rx_fifo_size    : integer                        := 1024;
@@ -52,7 +51,6 @@ entity wrc_periph is
     rst_n_i   : in std_logic;
 
     rst_net_n_o : out std_logic;
-    rst_wrc_n_o : out std_logic;
 
     scl_o       : out std_logic;
     scl_i       : in  std_logic;
@@ -130,8 +128,8 @@ architecture struct of wrc_periph is
 
   constant c_RESET_CHAIN_LENGTH : integer := 3;
   
-  signal rst_net_n, rst_wrc_n : std_logic;
-  signal rst_net_n_chain, rst_wrc_n_chain : std_logic_vector(c_RESET_CHAIN_LENGTH -1 downto 0);
+  signal rst_net_n : std_logic;
+  signal rst_net_n_chain : std_logic_vector(c_RESET_CHAIN_LENGTH -1 downto 0);
   
 begin
 
@@ -140,14 +138,11 @@ begin
   begin
     if rst_n_i = '0' then
       rst_net_n_chain <= (others => '0');
-      rst_wrc_n_chain <= (others => '0');
     elsif rising_edge(clk_sys_i) then
       rst_net_n_chain <= rst_net_n & rst_net_n_chain(c_RESET_CHAIN_LENGTH-1 downto 1);
-      rst_wrc_n_chain <= rst_wrc_n & rst_wrc_n_chain(c_RESET_CHAIN_LENGTH-1 downto 1);
     end if;
   end process;
 
-  rst_wrc_n_o <= rst_wrc_n_chain(0);
   rst_net_n_o <= rst_net_n_chain(0);
   
   process(clk_sys_i)
@@ -155,19 +150,7 @@ begin
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
         rst_net_n <= '0';
-        if g_has_preinitialized_firmware then
-          rst_wrc_n <= '1';
-        else
-          -- no firmware in DPRAM? keep in reset so that the CPU doesn't walk through the
-          -- whole address space trying to fetch instructions (and sometimes freezing the interconnect)
-          rst_wrc_n <= '0';
-        end if;
       else
-
-        if(sysc_regs_o.rstr_trig_wr_o = '1' and sysc_regs_o.rstr_trig_o = x"deadbee") then
-          rst_wrc_n <= not sysc_regs_o.rstr_rst_o;
-        end if; 
-            
         rst_net_n <= not sysc_regs_o.gpsr_net_rst_o;
       end if; 
     end if; 
