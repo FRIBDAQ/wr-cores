@@ -88,8 +88,15 @@ entity xwrc_board_gthe4_rxpi is
     sfp_scl_b : inout std_logic;
 
     --  WB bus to the WR PTP core [clk_62m5_i]
-    wb_wrpc_i: in  t_wishbone_slave_in;
-    wb_wrpc_o: out t_wishbone_slave_out;
+    wb_wrpc_host_i: in  t_wishbone_slave_in;
+    wb_wrpc_host_o: out t_wishbone_slave_out;
+
+    wb_wrpc_dev_i: in  t_wishbone_slave_in;
+    wb_wrpc_dev_o: out t_wishbone_slave_out;
+    irq_o : out std_logic;
+
+    wb_wrpc_aux_i: in  t_wishbone_slave_in;
+    wb_wrpc_aux_o: out t_wishbone_slave_out;
 
     --  Abscal signals
     abscal_txts_o       : out std_logic;
@@ -247,9 +254,6 @@ END COMPONENT;
 
   signal phy16_out : t_phy_16bits_from_wrc;
   signal phy16_in : t_phy_16bits_to_wrc;
-
-  signal wb_wraux_in: t_wishbone_master_in;
-  signal wb_wraux_out: t_wishbone_master_out;
 
   signal rx_cdr_stable_out : std_logic;
 
@@ -615,8 +619,8 @@ begin
     port map (
       clk_62m5_i => clk_62m5_i,
       rst_n_i => rst_n_i,
-      wb_aux_i => wb_wraux_out,
-      wb_aux_o => wb_wraux_in,
+      wb_aux_i => wb_wrpc_aux_i,
+      wb_aux_o => wb_wrpc_aux_o,
       tx_out_clk_i => txoutclk,
       rx_out_clk_i => rxoutclk,
       dmonitorout_i => dmonitorout,
@@ -690,11 +694,11 @@ begin
   eeprom_scl_b <= '0' when eeprom_scl_out = '0' else 'Z';
   eeprom_sda_b <= '0' when eeprom_sda_out = '0' else 'Z';
 
-  inst_wrcore : entity work.xwr_core
+  inst_wr_subsystem : entity work.xwr_subsystem
     generic map (
       g_board_name => g_board_name, --"KR26",
       --         g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
-      g_dpram_initf => g_dpram_initf,
+--      g_dpram_initf => g_dpram_initf,
       g_dpram_size => g_dpram_size,
       g_pcs_16bit => true,
       g_records_for_phy => true,
@@ -767,10 +771,15 @@ begin
       owr_i => open,
       uart_rxd_i => uart_rxd_i,
       uart_txd_o => uart_txd_o,
-      slave_i => wb_wrpc_i,
-      slave_o => wb_wrpc_o,
-      aux_master_i => wb_wraux_in,
-      aux_master_o => wb_wraux_out,
+      wb_host_i => wb_wrpc_host_i,
+      wb_host_o => wb_wrpc_host_o,
+      wb_cpu_i => wb_wrpc_dev_i,
+      wb_cpu_o => wb_wrpc_dev_o,
+      wb_aux_master_i => open,
+      wb_aux_master_o => open,
+      wb_cpu_csr_i => cc_dummy_master_in,
+      wb_cpu_csr_o => open,
+      softpll_irq_o => irq_o,
       wrf_src_o => wrf_src_o,
       wrf_src_i => wrf_src_i,
       wrf_snk_o => wrf_snk_o,
@@ -898,7 +907,7 @@ begin
     gtrxreset <= not powergood_dly or not qpll0_lock or pd_dly or gth_tx_rst;
   end block;
 
-  gen_ila: if true generate
+  gen_ila: if false generate
     component ila_0
       port (
         clk    : in STD_LOGIC;

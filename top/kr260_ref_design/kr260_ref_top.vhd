@@ -82,31 +82,32 @@ end;
 architecture top of kr260_ref_top is
   --  In sources, select the mpsoc.bd file and right-click to view instantiation template
   component mpsoc is
-    port (
-      M_AXI_araddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
-      M_AXI_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-      M_AXI_arready : in STD_LOGIC;
-      M_AXI_arvalid : out STD_LOGIC;
-      M_AXI_awaddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
-      M_AXI_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-      M_AXI_awready : in STD_LOGIC;
-      M_AXI_awvalid : out STD_LOGIC;
-      M_AXI_bready : out STD_LOGIC;
-      M_AXI_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-      M_AXI_bvalid : in STD_LOGIC;
-      M_AXI_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
-      M_AXI_rready : out STD_LOGIC;
-      M_AXI_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-      M_AXI_rvalid : in STD_LOGIC;
-      M_AXI_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
-      M_AXI_wready : in STD_LOGIC;
-      M_AXI_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
-      M_AXI_wvalid : out STD_LOGIC;
-      UART_0_0_rxd : in STD_LOGIC;
-      UART_0_0_txd : out STD_LOGIC;
-      clk_axi : in STD_LOGIC;
-      rst_axi_n : in STD_LOGIC
-    );
+  port (
+    M_AXI_awaddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
+    M_AXI_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_awvalid : out STD_LOGIC;
+    M_AXI_awready : in STD_LOGIC;
+    M_AXI_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    M_AXI_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_wvalid : out STD_LOGIC;
+    M_AXI_wready : in STD_LOGIC;
+    M_AXI_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_bvalid : in STD_LOGIC;
+    M_AXI_bready : out STD_LOGIC;
+    M_AXI_araddr : out STD_LOGIC_VECTOR ( 39 downto 0 );
+    M_AXI_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_arvalid : out STD_LOGIC;
+    M_AXI_arready : in STD_LOGIC;
+    M_AXI_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
+    M_AXI_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_rvalid : in STD_LOGIC;
+    M_AXI_rready : out STD_LOGIC;
+    UART_0_0_txd : out STD_LOGIC;
+    UART_0_0_rxd : in STD_LOGIC;
+    rst_axi_n : in STD_LOGIC;
+    clk_axi : in STD_LOGIC;
+    irq : in STD_LOGIC_VECTOR ( 0 to 0 )
+  );
   end component mpsoc;
 
   signal rst_n, rst : std_logic := '0';
@@ -125,8 +126,9 @@ architecture top of kr260_ref_top is
 
   signal uart_rx, uart_tx : std_logic;
 
-  signal wb_wrpc_in: t_wishbone_master_in;
-  signal wb_wrpc_out: t_wishbone_master_out;
+  signal wb_wrpc_host_in,  wb_wrpc_dev_in,  wb_wrpc_aux_in: t_wishbone_master_in;
+  signal wb_wrpc_host_out, wb_wrpc_dev_out, wb_wrpc_aux_out: t_wishbone_master_out;
+  signal irq : std_logic;
 
   signal abscal_tx, abscal_rx : std_logic;
 
@@ -162,8 +164,13 @@ begin
       sfp_scl_b => sfp_scl_b,
       dac_dpll_data_o => open,
       dac_dpll_load_p1_o => open,
-      wb_wrpc_i => wb_wrpc_out,
-      wb_wrpc_o => wb_wrpc_in,
+      wb_wrpc_host_i => wb_wrpc_host_out,
+      wb_wrpc_host_o => wb_wrpc_host_in,
+      wb_wrpc_dev_i => wb_wrpc_dev_out,
+      wb_wrpc_dev_o => wb_wrpc_dev_in,
+      wb_wrpc_aux_i => wb_wrpc_aux_out,
+      wb_wrpc_aux_o => wb_wrpc_aux_in,
+      irq_o => irq,
       wrf_snk_i => open,
       wrf_snk_o => open,
       wrf_src_i => open,
@@ -329,6 +336,7 @@ begin
       UART_0_0_rxd => uart_rx,
       UART_0_0_txd => uart_tx,
       rst_axi_n => rst_n,
+      irq(0) => irq,
       clk_axi => clk_62m5
     );
 
@@ -336,7 +344,7 @@ begin
   port map (
     aclk => clk_62m5,
     areset_n => rst_n,
-    awaddr => m_axi4_out.awaddr(12 downto 2),
+    awaddr => m_axi4_out.awaddr(14 downto 2),
     awvalid => m_axi4_out.awvalid,
     awready => m_axi4_in.awready,
     awprot => "000",
@@ -347,7 +355,7 @@ begin
     bvalid => m_axi4_in.bvalid,
     bready => m_axi4_out.bready,
     bresp => m_axi4_in.bresp,
-    araddr => m_axi4_out.araddr(12 downto 2),
+    araddr => m_axi4_out.araddr(14 downto 2),
     arvalid => m_axi4_out.arvalid,
     arready => m_axi4_in.arready,
     arprot => "000",
@@ -356,8 +364,8 @@ begin
     rdata => m_axi4_in.rdata,
     rresp => m_axi4_in.rresp,
 
-    wrpc_i => wb_wrpc_in,
-    wrpc_o => wb_wrpc_out,
+    wrpc_host_i => wb_wrpc_host_in,
+    wrpc_host_o => wb_wrpc_host_out,
 
     ctrl_led1_o => open,
     ctrl_led2_o => open,
@@ -387,7 +395,12 @@ begin
     bitslide_value_o => open,
 
     nbr_comma_det_i => (others => '0'),
-    nbr_byte_align_i => (others => '0')
+    nbr_byte_align_i => (others => '0'),
+
+    wrpc_device_i => wb_wrpc_dev_in,
+    wrpc_device_o => wb_wrpc_dev_out,
+    wrpc_aux_i => wb_wrpc_aux_in,
+    wrpc_aux_o => wb_wrpc_aux_out
   );
  
   inst_flash: entity work.wr_mac_flash

@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0xD196FF533C7C925C",
+      "boundary_crc": "0x8AE78C57CD2EFBB4",
       "device": "xck26-sfvc784-2LV-c",
       "name": "mpsoc",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
@@ -294,6 +294,21 @@
           },
           "PHASE": {
             "value": "0.0",
+            "value_src": "default"
+          }
+        }
+      },
+      "irq": {
+        "type": "intr",
+        "direction": "I",
+        "left": "0",
+        "right": "0",
+        "parameters": {
+          "PortWidth": {
+            "value": "1"
+          },
+          "SENSITIVITY": {
+            "value": "LEVEL_HIGH",
             "value_src": "default"
           }
         }
@@ -1701,6 +1716,12 @@
           "axi_protocol_convert_0/aclk",
           "zynq_ultra_ps_e_0/maxihpm0_lpd_aclk",
           "axi_dwidth_converter_0/s_axi_aclk"
+        ]
+      },
+      "pl_ps_irq0_0_1": {
+        "ports": [
+          "irq",
+          "zynq_ultra_ps_e_0/pl_ps_irq0"
         ]
       },
       "rst_axi_n_1": {

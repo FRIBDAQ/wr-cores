@@ -4,7 +4,7 @@ memory-map:
   description: Memmap from mpsoc
   children:
   - submap:
-     name: wrpc
+     name: wrpc_host
      interface: wb-32-be
      size: 4k
      address: 0x0000
@@ -112,3 +112,17 @@ memory-map:
      name: nbr_byte_align
      width: 32
      access: ro
+  - submap:
+     name: wrpc_device
+     interface: wb-32-be
+     size: 4k
+     address: 0x3000
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: wrpc_aux
+     interface: wb-32-be
+     size: 4k
+     address: 0x4000
+     x-hdl:
+       busgroup: True
