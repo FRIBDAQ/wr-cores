@@ -1,9 +1,13 @@
+//////////////////////////////////////////////////////////////////////////////
+// SPDX-FileCopyrightText: 2016 GSI / Wesley W. Terpstra <w.terpstra@gsi.de>
+// 
+// SPDX-License-Identifier:   LGPL-2.1-or-later
+//////////////////////////////////////////////////////////////////////////////
 /** @file        eca_regs.h
   * DesignUnit   eca
   * @author      Wesley W. Terpstra <w.terpstra@gsi.de>
   * @date        08/04/2016
   * @version     2.0
-  * @copyright   2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
   *
   * @brief       Register map for Wishbone interface of VHDL entity <eca_auto>
   */

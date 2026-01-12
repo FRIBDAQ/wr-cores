@@ -1,4 +1,9 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2013 GSI / Wesley W. Terpstra
+-- SPDX-FileCopyrightText: 2016 CERN (home.cern)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : Deterministic Altera PHY wrapper - Arria 5
 -- Project    : WR PTP Core
 -- URL        : https://gitlab.com/ohwr/project/wr-cores/-/wikis/wrpc-core
@@ -13,29 +18,6 @@
 -------------------------------------------------------------------------------
 -- Description: Single channel wrapper for deterministic PHY
 -------------------------------------------------------------------------------
---
--- Copyright (c) 2013 GSI / Wesley W. Terpstra
--- Copyright (c) 2016-2017 CERN
---
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
---
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
---
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
--- from http://www.gnu.org/licenses/lgpl-2.1.html
--- 
---
--------------------------------------------------------------------------------
-
 
 library ieee;
 use ieee.std_logic_1164.all;
