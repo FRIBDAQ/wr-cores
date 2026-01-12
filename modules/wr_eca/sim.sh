@@ -1,4 +1,9 @@
 #! /bin/sh
+##-----------------------------------------------------------------------------
+## SPDX-FileCopyrightText: 2016 GSI / Wesley W. Terpstra <w.terpstra@gsi.de>
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+##-----------------------------------------------------------------------------
 
 set -e
 

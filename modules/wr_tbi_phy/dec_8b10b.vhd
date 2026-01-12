@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2009 GSI / Vladimir Cherkashyn <v.cherkashyn@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 --! @file dec_8b10b.vhd
 
 --! Standard library

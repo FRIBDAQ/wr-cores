@@ -1,4 +1,9 @@
--- 8b10b disparity generator, based on 8b10b encoder core (c) Mathias Kreider
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2009 GSI / Mathias Kreider <m.kreider@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
+-- 8b10b disparity generator, based on 8b10b encoder core
 
 library ieee;
 use ieee.std_logic_1164.all;
