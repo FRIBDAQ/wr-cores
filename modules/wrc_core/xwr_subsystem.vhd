@@ -831,7 +831,7 @@ begin
   -----------------------------------------------------------------------------
   -- Mini-NIC
   -----------------------------------------------------------------------------
-  MINI_NIC : xwr_mini_nic
+  MINI_NIC : entity work.xwr_mini_nic
     generic map (
       g_interface_mode       => PIPELINED,
       g_address_granularity  => BYTE,
@@ -993,7 +993,7 @@ begin
   -----------------------------------------------------------------------------
   -- WBP MUX
   -----------------------------------------------------------------------------
-  U_WBP_Mux : xwrf_mux
+  U_WBP_Mux : entity work.xwrf_mux
     generic map(
       g_muxed_ports => 2)
     port map (

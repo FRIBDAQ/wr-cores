@@ -478,7 +478,7 @@ begin
       host_slave_o => cpu_csr_wb_out
       );
 
-  U_Adapter : wb_slave_adapter
+  U_Adapter : entity work.wb_slave_adapter
     generic map(
       g_master_use_struct  => true,
       g_master_mode        => PIPELINED,
