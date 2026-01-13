@@ -29,7 +29,7 @@ use work.sysc_wbgen2_pkg.all;
 
 entity wrc_periph is
   generic(
-    g_board_name      : string  := "NA  ";
+    g_board_name      : std_logic_vector(31 downto 0);
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr : integer := 16#600000#; -- default for SVEC (M25P128)
     g_phys_uart       : boolean := true;
@@ -71,8 +71,26 @@ entity wrc_periph is
     spi_mosi_o  : out std_logic;
     spi_miso_i  : in  std_logic;
 
-    slave_i : in  t_wishbone_slave_in_array(0 to 4);
-    slave_o : out t_wishbone_slave_out_array(0 to 4);
+    syscon_wb_i : in  t_wishbone_slave_in;
+    syscon_wb_o : out t_wishbone_slave_out;
+
+    uart_wb_i : in  t_wishbone_slave_in;
+    uart_wb_o : out t_wishbone_slave_out;
+
+    vuart_cpu_wb_i : in  t_wishbone_slave_in;
+    vuart_cpu_wb_o : out t_wishbone_slave_out;
+
+    vuart_host_wb_i : in  t_wishbone_slave_in;
+    vuart_host_wb_o : out t_wishbone_slave_out;
+
+    onewire_wb_i : in  t_wishbone_slave_in;
+    onewire_wb_o : out t_wishbone_slave_out;
+
+    diags_cpu_wb_i : in  t_wishbone_slave_in;
+    diags_cpu_wb_o : out t_wishbone_slave_out;
+
+    diags_usr_wb_i : in  t_wishbone_slave_in;
+    diags_usr_wb_o : out t_wishbone_slave_out;
 
     uart_rxd_i : in  std_logic;
     uart_txd_o : out std_logic;
@@ -97,18 +115,6 @@ architecture struct of wrc_periph is
     -- /1024  - to get size in kB
     -- /16 -1 - to get size in format of MEMSIZE@sysc_hwfr register
   end f_cnt_memsize;
-
-  function f_board_name_conv(name : string) return std_logic_vector is
-    variable ret : std_logic_vector(31 downto 0);
-  begin
-    assert (name'length= 4)
-    report "Board name has to be exactly 4 letters string" severity failure;
-    ret(31 downto 24) := std_logic_vector(to_unsigned(character'pos(name(1)), 8));
-    ret(23 downto 16) := std_logic_vector(to_unsigned(character'pos(name(2)), 8));
-    ret(15 downto  8) := std_logic_vector(to_unsigned(character'pos(name(3)), 8));
-    ret( 7 downto  0) := std_logic_vector(to_unsigned(character'pos(name(4)), 8));
-    return ret;
-  end f_board_name_conv;
 
   signal sysc_regs_i : t_sysc_in_registers;
   signal sysc_regs_o : t_sysc_out_registers;
@@ -181,7 +187,7 @@ begin
   -------------------------------------
   -- BOARD NAME and Flash info
   -------------------------------------
-  sysc_regs_i.hwir_name_i         <= f_board_name_conv(g_board_name);
+  sysc_regs_i.hwir_name_i         <= g_board_name;
   sysc_regs_i.hwfr_storage_sec_i  <= std_logic_vector(to_unsigned(g_flash_secsz_kb, 16));
   sysc_regs_i.hwfr_storage_type_i <= "00";  -- for now these parameters are only for Flash
   sysc_regs_i.sdbfs_baddr_i       <= std_logic_vector(to_unsigned(g_flash_sdbfs_baddr, 32));
@@ -389,20 +395,19 @@ begin
     port map (
       rst_n_i    => rst_n_i,
       clk_sys_i  => clk_sys_i,
-      wb_adr_i   => slave_i(0).adr(5 downto 2), -- shift address for word addressing
-      wb_dat_i   => slave_i(0).dat,
-      wb_dat_o   => slave_o(0).dat,
-      wb_cyc_i   => slave_i(0).cyc,
-      wb_sel_i   => slave_i(0).sel,
-      wb_stb_i   => slave_i(0).stb,
-      wb_we_i    => slave_i(0).we,
-      wb_ack_o   => slave_o(0).ack,
-      wb_stall_o => slave_o(0).stall,
+      wb_adr_i   => syscon_wb_i.adr(5 downto 2), -- shift address for word addressing
+      wb_dat_i   => syscon_wb_i.dat,
+      wb_dat_o   => syscon_wb_o.dat,
+      wb_cyc_i   => syscon_wb_i.cyc,
+      wb_sel_i   => syscon_wb_i.sel,
+      wb_stb_i   => syscon_wb_i.stb,
+      wb_we_i    => syscon_wb_i.we,
+      wb_ack_o   => syscon_wb_o.ack,
+      wb_err_o   => syscon_wb_o.err,
+      wb_rty_o   => syscon_wb_o.rty,
+      wb_stall_o => syscon_wb_o.stall,
       regs_i     => sysc_regs_i,
       regs_o     => sysc_regs_o);
-
-  slave_o(0).err <= '0';
-  slave_o(0).rty <= '0';
 
   --------------------------------------
   -- UART
@@ -423,8 +428,8 @@ begin
       rst_n_i   => rst_n_i,
 
       -- Wishbone
-      slave_i => slave_i(1),
-      slave_o => slave_o(1),
+      slave_i => uart_wb_i,
+      slave_o => uart_wb_o,
       desc_o  => open,
       int_o   => open,
 
@@ -432,6 +437,18 @@ begin
       uart_txd_o => uart_txd_o
       );
 
+  inst_vuart: entity work.xwb_vuart
+    generic map (
+      g_fifo_size => g_vuart_fifo_size
+    )
+    port map (
+      clk_sys_i => clk_sys_i,
+      rst_n_i => rst_n_i,
+      host_i => vuart_host_wb_i,
+      host_o => vuart_host_wb_o,
+      board_i => vuart_cpu_wb_i,
+      board_o => vuart_cpu_wb_o
+    );
   --------------------------------------
   -- 1-WIRE
   --------------------------------------
@@ -448,8 +465,8 @@ begin
       rst_n_i   => rst_n_i,
 
       -- Wishbone
-      slave_i => slave_i(2),
-      slave_o => slave_o(2),
+      slave_i => onewire_wb_i,
+      slave_o => onewire_wb_o,
       desc_o  => open,
       int_o   => open,
 
@@ -471,11 +488,11 @@ begin
       rst_n_i   => rst_n_i,
       clk_sys_i => clk_sys_i,
 
-      slave_user_i   => slave_i(3),
-      slave_user_o   => slave_o(3),
+      slave_user_i   => diags_usr_wb_i,
+      slave_user_o   => diags_usr_wb_o,
 
-      slave_wrc_i    => SLAVE_I(4),
-      slave_wrc_o    => SLAVE_O(4)
+      slave_wrc_i    => diags_cpu_wb_i,
+      slave_wrc_o    => diags_cpu_wb_o
     );
 
 end struct;

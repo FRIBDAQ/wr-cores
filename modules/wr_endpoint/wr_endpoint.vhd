@@ -279,6 +279,9 @@ entity wr_endpoint is
 
     stop_traffic_i : in std_logic := '0';
 
+    --  Set by sw.
+    my_mac_addr_o             : out std_logic_vector(47 downto 0);
+
     dbg_tx_pcs_wr_count_o     : out std_logic_vector(5+4 downto 0);
     dbg_tx_pcs_rd_count_o     : out std_logic_vector(5+4 downto 0);
     nice_dbg_o                : out t_dbg_ep
@@ -742,6 +745,7 @@ begin
 
   regs_towb <= regs_towb_ep or regs_towb_tsu or regs_towb_rpath or regs_towb_tpath;
 
+  my_mac_addr_o <= regs_fromwb.mach_o & regs_fromwb.macl_o;
 
   p_link_activity : process(clk_sys_i)
   begin

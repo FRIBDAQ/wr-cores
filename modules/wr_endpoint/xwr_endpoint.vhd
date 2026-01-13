@@ -240,6 +240,10 @@ entity xwr_endpoint is
     link_kill_i : in  std_logic := '0';
     link_up_o   : out std_logic;
     stop_traffic_i : in std_logic := '0';
+
+    --  Set by sw.
+    my_mac_addr_o             : out std_logic_vector(47 downto 0);
+
     dbg_tx_pcs_wr_count_o     : out std_logic_vector(5+4 downto 0);
     dbg_tx_pcs_rd_count_o     : out std_logic_vector(5+4 downto 0);
     nice_dbg_o  : out t_dbg_ep);
@@ -399,6 +403,7 @@ begin
       inject_packet_sel_i  => inject_packet_sel_i,
       inject_ready_o       => inject_ready_o,
       stop_traffic_i       => stop_traffic_i,
+      my_mac_addr_o        => my_mac_addr_o,
       dbg_tx_pcs_wr_count_o=>dbg_tx_pcs_wr_count_o,
       dbg_tx_pcs_rd_count_o=>dbg_tx_pcs_rd_count_o,
       nice_dbg_o           => nice_dbg_o);

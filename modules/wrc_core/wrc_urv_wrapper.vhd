@@ -21,7 +21,7 @@ use ieee.numeric_std.all;
 
 use work.genram_pkg.all;
 use work.wishbone_pkg.all;
-use work.wrc_cpu_csr_wbgen2_pkg.all;
+use work.wrc_cpu_csr_pkg.all;
 use work.urv_pkg.all;
 
 entity wrc_urv_wrapper is
@@ -103,19 +103,19 @@ architecture arch of wrc_urv_wrapper is
 
   signal dwb_out         : t_wishbone_master_out;
 
-  signal regs_in : t_wrc_cpu_csr_out_registers;
-  signal regs_out : t_wrc_cpu_csr_in_registers;
+  signal regs_in : t_wrc_cpu_csr_regs_master_out;
+  signal regs_out : t_wrc_cpu_csr_regs_master_in;
 
 begin
 
-  wrc_cpu_csr_wb_slave_1: entity work.wrc_cpu_csr_wb_slave
+  wrc_cpu_csr_wb_slave_1: entity work.wrc_cpu_csr
     port map (
-      rst_n_i   => rst_n_i,
-      clk_sys_i => clk_sys_i,
-      slave_i   => host_slave_i,
-      slave_o   => host_slave_o,
-      regs_i    => regs_out,
-      regs_o    => regs_in);
+      rst_n_i  => rst_n_i,
+      clk_i    => clk_sys_i,
+      wb_i     => host_slave_i,
+      wb_o     => host_slave_o,
+      wrc_cpu_csr_regs_i => regs_out,
+      wrc_cpu_csr_regs_o => regs_in);
 
   dwb_o <= dwb_out;
 
@@ -133,6 +133,7 @@ begin
       im_addr_o        => im_addr,
       im_data_i        => im_data,
       im_valid_i       => im_valid,
+      im_rd_o          => open,
       dm_addr_o        => dm_addr,
       dm_data_s_o      => dm_data_s,
       dm_data_l_i      => dm_data_l,
@@ -141,14 +142,15 @@ begin
       dm_load_o        => dm_load,
       dm_load_done_i   => dm_load_done,
       dm_store_done_i  => dm_store_done,
-      dbg_force_i      => regs_in.dbg_force_o(0),
-      dbg_enabled_o    => regs_out.dbg_status_i(0),
+      fault_o          => open,
+      dbg_force_i      => regs_in.dbg_force(0),
+      dbg_enabled_o    => regs_out.dbg_status(0),
       dbg_insn_i       => dbg_insn,
-      dbg_insn_set_i   => regs_in.dbg_core0_insn_wr_o,
-      dbg_insn_ready_o => regs_out.dbg_insn_ready_i(0),
-      dbg_mbx_data_i   => regs_in.dbg_core0_mbx_o,
-      dbg_mbx_write_i  => regs_in.dbg_core0_mbx_load_o,
-      dbg_mbx_data_o   => regs_out.dbg_core0_mbx_i);
+      dbg_insn_set_i   => regs_in.dbg_core0_insn_wr,
+      dbg_insn_ready_o => regs_out.dbg_insn_ready(0),
+      dbg_mbx_data_i   => regs_in.dbg_core0_mbx,
+      dbg_mbx_write_i  => regs_in.dbg_core0_mbx_wr,
+      dbg_mbx_data_o   => regs_out.dbg_core0_mbx);
 
   -- 1st MByte of the mem is the IRAM
   dm_is_wishbone <= '1' when dm_addr(31 downto 20) /= x"000" else '0';
@@ -184,16 +186,16 @@ begin
       if rst_n_i = '0' then
         ha_im_write <= '0';
       else
-        if regs_in.udata_load_o = '1' then
-          ha_im_wdata <= f_swap_endian_32(regs_in.udata_o);
+        if regs_in.udata_wr = '1' then
+          ha_im_wdata <= f_swap_endian_32(regs_in.udata);
           ha_im_write <= '1';
         else
           ha_im_write <= '0';
         end if;
 
-        ha_im_addr(21 downto 0)  <= regs_in.uaddr_addr_o & "00";
+        ha_im_addr(21 downto 0)  <= regs_in.uaddr(19 downto 0) & "00";
         ha_im_addr(31 downto 22) <= (others => '0');
-        regs_out.udata_i        <= f_swap_endian_32(im_data);
+        regs_out.udata           <= f_swap_endian_32(im_data);
       end if;
     end if;
   end process p_iram_host_access;
@@ -279,8 +281,8 @@ begin
       if rst_n_i = '0' then
         dbg_insn <= c_INSN_NOP;
       else
-        if regs_in.dbg_core0_insn_wr_o = '1' then
-          dbg_insn <= regs_in.dbg_core0_insn_o;
+        if regs_in.dbg_core0_insn_wr = '1' then
+          dbg_insn <= regs_in.dbg_core0_insn;
         else
           dbg_insn <= c_INSN_NOP;
         end if;
@@ -301,6 +303,6 @@ begin
     end if;
   end process p_im_valid;
 
-  cpu_rst        <= not rst_n_i or regs_in.reset_o(0);
+  cpu_rst        <= not rst_n_i or regs_in.reset(0);
 
 end architecture arch;

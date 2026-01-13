@@ -1,0 +1,84 @@
+memory-map:
+  name: wrc_host_map
+  comment: Memory map for host
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+  children:
+  - reg:
+     name: magic
+     comment: Magic number 'WRPC'
+     address: 0x0
+     access: ro
+     width: 32
+     preset: 0x57525043
+     x-hdl:
+       type: const
+  - reg:
+     name: mapver
+     comment: Memory map version
+     address: 0x4
+     access: ro
+     width: 32
+     preset: 0x00000001
+     x-hdl:
+       type: const
+  - block:
+     name: endpoint
+     address: 0x100
+     children:
+     - reg:
+        name: mach
+        comment: MAC Address bits [47:32]
+        address: 0x24
+        access: ro
+        width: 32
+     - reg:
+        name: macl
+        comment: MAC Address bits [31:0]
+        address: 0x28
+        access: ro
+        width: 32
+  - submap:
+     name: spll
+     address: 0x270
+     filename: ../wr_softpll_ng/spll_host_map.cheby
+  - block:
+     name: syscon
+     address: 0x400
+     children:
+     - reg:
+        name: hwfr
+        comment: HW feature register
+        address: 0x0c
+        access: ro
+        width: 32
+        children:
+        - field:
+           name: memory
+           comment: Memory size (in 64KB units)
+           range: 3-0
+        - field:
+           name: STORAGE_SEC
+           range: 31-16
+     - reg:
+        name: hwir
+        comment: HW identification (name of the board)
+        address: 0x10
+        access: ro
+        width: 32
+  - submap:
+     name: vuart
+     address: 0x0510
+     filename: ../../../general-cores/modules/wishbone/wb_vuart/vuart_host_map.cheby
+  - submap:
+     name: wdiags
+     address: 0x0900
+     size: 0x100
+     interface: wb-32-be
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: cpu
+     address: 0x0b00
+     filename: wrc_cpu_csr.cheby
