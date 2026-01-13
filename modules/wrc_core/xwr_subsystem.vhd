@@ -53,12 +53,7 @@ entity xwr_subsystem is
     --if set to 1, then blocks in PCS use smaller calibration counter to speed 
     --up simulation
     g_simulation                : integer                        := 0;
-    -- set to false to reduce the number of information printed during simulation
-    g_verbose                   : boolean                        := true;
     g_with_external_clock_input : boolean                        := true;
-    g_ram_address_space_size_kb : integer                        := 128;
-
-    --
     g_board_name                : string                         := "NA  ";
     g_flash_secsz_kb            : integer                        := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr         : integer                        := 16#600000#; -- default for SVEC (M25P128)
@@ -456,28 +451,6 @@ architecture struct of xwr_subsystem is
 
   signal clk_out    : std_logic_vector(g_aux_clks downto 0);
   signal out_enable : std_logic_vector(g_aux_clks downto 0);
-
-  function f_count_freqmon_clocks return integer is
-    variable cnt : integer;
-  begin
-
-    -- SYS + DMTD + REF + PHY RX Clock;
-    cnt := 1 + 1 + 1 + 1;
-
-    -- All Aux Clocks
-    cnt := cnt + g_aux_clks;
-
-    -- Ext clock input, if need be.
-    if( g_with_external_clock_input ) then
-      cnt := cnt + 1;
-    end if;
-
-    return cnt;
-  end f_count_freqmon_clocks;
-
-  constant c_NUM_FREQMON_CLOCKS: integer := f_count_freqmon_clocks;
-
-  signal freqmon_in : std_logic_vector(c_NUM_FREQMON_CLOCKS - 1 downto 0);
 begin
 
   -----------------------------------------------------------------------------
@@ -602,7 +575,7 @@ begin
     signal aux_timing_out : t_aux_timing_out;
   begin
 
-    TIMECODE_GEN: wr_timecodes
+    TIMECODE_GEN: entity work.wr_timecodes
       generic map (
         g_interface_mode        => PIPELINED,
         g_address_granularity   => BYTE,
@@ -1037,7 +1010,27 @@ begin
   ep_txtsu_ack <= timestamps_ack_i or mnic_txtsu_ack;
 
   gen_with_clock_monitor : if g_with_clock_freq_monitor generate
+    function f_count_freqmon_clocks return integer is
+      variable cnt : integer;
+    begin
+      -- SYS + DMTD + REF + PHY RX Clock;
+      cnt := 1 + 1 + 1 + 1;
 
+      -- All Aux Clocks
+      cnt := cnt + g_aux_clks;
+
+      -- Ext clock input, if need be.
+      if( g_with_external_clock_input ) then
+        cnt := cnt + 1;
+      end if;
+
+      return cnt;
+    end f_count_freqmon_clocks;
+
+    constant c_NUM_FREQMON_CLOCKS: integer := f_count_freqmon_clocks;
+
+    signal freqmon_in : std_logic_vector(c_NUM_FREQMON_CLOCKS - 1 downto 0);
+  begin
     inst_clock_monitor: entity work.xwb_clock_monitor
       generic map (
         g_NUM_CLOCKS             => c_NUM_FREQMON_CLOCKS,
