@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2009 GSI / Mathias Kreider <m.kreider@gsi.de> / Vladimir Cherkashyn <v.cherkashyn@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 --! @file enc_8b10b.vhd
 
 --! Standard library

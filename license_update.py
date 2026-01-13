@@ -313,6 +313,9 @@ if (__name__ == "__main__"):
     cp_other_cnt = 0
     no_cp_cnt = 0
     cp_spdx_cnt = 0
+    cp_other_spdx_cnt = 0 # files with Other SPDX (non-CERN)
+    cp_total_spdx_cnt = 0 # total files with any SPDX
+    cp_xilinx_cnt = 0       # files with Xilinx copyright
     for f in files:
         for t in types:
             if get_extension(f) == t:
@@ -323,6 +326,8 @@ if (__name__ == "__main__"):
                 force = is_in_force_list(f, force_update)
                 cp_spdx = False
                 cp_added = False
+
+                # CERN copyright / SPDX
                 if cp_cern or force:
                     cp_cern_cnt += 1
                     cp_spdx = is_copyright_spdx(cp_line)
@@ -332,12 +337,24 @@ if (__name__ == "__main__"):
                         cp_added = True
                     else:
                         cp_spdx_cnt += 1
+                        cp_total_spdx_cnt += 1
+
+                # Other copyright / SPDX
                 elif cp_cern == False and len(cp_line) > 0:
                     cp_other_cnt += 1
+                    if "SPDX-FileCopyrightText" in cp_line:
+                        cp_other_spdx_cnt += 1
+                        cp_total_spdx_cnt += 1
+                    if "Xilinx" in cp_line:
+                        cp_xilinx_cnt += 1
+
+                # Force no copyright
                 elif force_no_cp == True:
                     update_licence(fd, content)
                     cp_added_cnt += 1
                     cp_added = True
+
+                # No copyright
                 else:
                     no_cp_cnt += 1
 
@@ -355,6 +372,9 @@ if (__name__ == "__main__"):
     fd_lic.write("Number of files with other copyright;{}\n".format(cp_other_cnt))
     fd_lic.write("Number of files without copyright;{}\n".format(no_cp_cnt))
     fd_lic.write("Number of files with CERN SPDX copyright already present;{}\n".format(cp_spdx_cnt))
+    fd_lic.write("Number of files with OTHER SPDX copyright already present;{}\n".format(cp_other_spdx_cnt))
+    fd_lic.write("Total number of files with any SPDX copyright;{}\n".format(cp_total_spdx_cnt))
+    fd_lic.write("Number of files with Xilinx copyright;{}\n".format(cp_xilinx_cnt))
     fd_lic.write("Number of files updated (SPDX copyright added);{}\n".format(cp_added_cnt))
     fd_lic.write("Number of files NOT updated;{}\n".format(total - cp_added_cnt))
     
@@ -365,6 +385,9 @@ if (__name__ == "__main__"):
     print("  - with other copyright.........: {}".format(cp_other_cnt))
     print("  - with CERN copyright..........: {}".format(cp_cern_cnt))
     print("  - with CERN SPDX copyright.....: {}".format(cp_spdx_cnt))
+    print("  - with OTHER SPDX copyright.......: {}".format(cp_other_spdx_cnt))
+    print("  - total files with SPDX copyright.: {}".format(cp_total_spdx_cnt))
+    print("  - with Xilinx copyright............: {}".format(cp_xilinx_cnt))
     print("  - updated with SPDX copyright..: {}".format(cp_added_cnt))
     print("  - NOT updated..................: {}".format(total - cp_added_cnt))
 

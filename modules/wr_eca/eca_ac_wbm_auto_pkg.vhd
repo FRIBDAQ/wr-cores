@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2015 GSI / Mathias Kreider <m.kreider@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- File Name         : /home/mkreider/hdlprojects/bel_projects/ip_cores/wr-cores/modules/wr_eca/eca_ac_wbm_auto_pkg.vhd
 -- Design Unit Name  : eca_ac_wbm_auto
 -- Revision          : 0.0.1

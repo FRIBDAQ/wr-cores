@@ -1,27 +1,17 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2016 GSI / Wesley W. Terpstra <w.terpstra@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 --! @file eca_scan.vhd
 --! @brief Scanner, looking for actions to put into calendar
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
---!
---! Copyright (C) 2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 --!
 --! This entity receives deadlines as input and outputs them later. 
 --! Assuming time_i increases 2**multiplier ticks/cycle, it outputs stored
 --! items one cycle before time_i is in (deadline-period, deadline].  If
 --! time_i jumps, eca_scan outputs items exactly once within one second.
 --!
---------------------------------------------------------------------------------
---! This library is free software; you can redistribute it and/or
---! modify it under the terms of the GNU Lesser General Public
---! License as published by the Free Software Foundation; either
---! version 3 of the License, or (at your option) any later version.
---!
---! This library is distributed in the hope that it will be useful,
---! but WITHOUT ANY WARRANTY; without even the implied warranty of
---! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
---! Lesser General Public License for more details.
---!  
---! You should have received a copy of the GNU Lesser General Public
---! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
 
 library ieee;

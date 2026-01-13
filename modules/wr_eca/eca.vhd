@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2013 GSI / Wesley W. Terpstra <w.terpstra@gsi.de>
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
