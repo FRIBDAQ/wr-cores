@@ -32,19 +32,12 @@ entity wrc_periph is
     g_board_name      : std_logic_vector(31 downto 0);
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr : integer := 16#600000#; -- default for SVEC (M25P128)
-    g_phys_uart       : boolean := true;
-    g_with_phys_uart_fifo       : boolean                        := false;
-    g_phys_uart_tx_fifo_size    : integer                        := 1024;
-    g_phys_uart_rx_fifo_size    : integer                        := 1024;
-    g_virtual_uart    : boolean := false;
     g_cntr_period     : integer := 62500;
     g_mem_words       : integer := 16384;   --in 32-bit words
-    g_vuart_fifo_size : integer := 1024;
     g_diag_id         : integer := 0;
     g_diag_ver        : integer := 0;
     g_diag_ro_size    : integer := 0;
     g_diag_rw_size    : integer := 0;
-    g_wdiags_num_words : integer := 64;
     g_hwbld_date      : std_logic_vector(31 downto 0));
   port(
     clk_sys_i : in std_logic;
@@ -71,32 +64,6 @@ entity wrc_periph is
 
     syscon_wb_i : in  t_wishbone_slave_in;
     syscon_wb_o : out t_wishbone_slave_out;
-
-    uart_wb_i : in  t_wishbone_slave_in;
-    uart_wb_o : out t_wishbone_slave_out;
-
-    vuart_cpu_wb_i : in  t_wishbone_slave_in;
-    vuart_cpu_wb_o : out t_wishbone_slave_out;
-
-    vuart_host_wb_i : in  t_wishbone_slave_in;
-    vuart_host_wb_o : out t_wishbone_slave_out;
-
-    onewire_wb_i : in  t_wishbone_slave_in;
-    onewire_wb_o : out t_wishbone_slave_out;
-
-    diags_cpu_wb_i : in  t_wishbone_slave_in;
-    diags_cpu_wb_o : out t_wishbone_slave_out;
-
-    diags_usr_wb_i : in  t_wishbone_slave_in;
-    diags_usr_wb_o : out t_wishbone_slave_out;
-
-    uart_rxd_i : in  std_logic;
-    uart_txd_o : out std_logic;
-
-    -- 1-Wire
-    owr_pwren_o: out std_logic_vector(1 downto 0);
-    owr_en_o : out std_logic_vector(1 downto 0);
-    owr_i    : in  std_logic_vector(1 downto 0);
 
     -- optional diagnostics from external HDL modules
     diag_array_in  : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others=>(others=>'0'));
@@ -391,91 +358,5 @@ begin
       wb_stall_o => syscon_wb_o.stall,
       regs_i     => sysc_regs_i,
       regs_o     => sysc_regs_o);
-
-  --------------------------------------
-  -- UART
-  --------------------------------------
-  UART : xwb_simple_uart
-    generic map(
-      g_with_virtual_uart   => g_virtual_uart,
-      g_with_physical_uart  => g_phys_uart,
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
-      g_vuart_fifo_size     => g_vuart_fifo_size,
-      g_WITH_PHYSICAL_UART_FIFO => g_with_phys_uart_fifo,
-      g_TX_FIFO_SIZE => g_phys_uart_tx_fifo_size,
-      g_RX_FIFO_SIZE => g_phys_uart_rx_fifo_size
-      )
-    port map(
-      clk_sys_i => clk_sys_i,
-      rst_n_i   => rst_n_i,
-
-      -- Wishbone
-      slave_i => uart_wb_i,
-      slave_o => uart_wb_o,
-      desc_o  => open,
-      int_o   => open,
-
-      uart_rxd_i => uart_rxd_i,
-      uart_txd_o => uart_txd_o
-      );
-
-  inst_vuart: entity work.xwb_vuart
-    generic map (
-      g_fifo_size => g_vuart_fifo_size
-    )
-    port map (
-      clk_sys_i => clk_sys_i,
-      rst_n_i => rst_n_i,
-      host_i => vuart_host_wb_i,
-      host_o => vuart_host_wb_o,
-      board_i => vuart_cpu_wb_i,
-      board_o => vuart_cpu_wb_o
-    );
-  --------------------------------------
-  -- 1-WIRE
-  --------------------------------------
-  ONEWIRE : xwb_onewire_master
-    generic map(
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
-      g_num_ports           => 2,
-      g_ow_btp_normal       => "5.0",
-      g_ow_btp_overdrive    => "1.0"
-      )
-    port map(
-      clk_sys_i => clk_sys_i,
-      rst_n_i   => rst_n_i,
-
-      -- Wishbone
-      slave_i => onewire_wb_i,
-      slave_o => onewire_wb_o,
-      desc_o  => open,
-      int_o   => open,
-
-      owr_pwren_o => owr_pwren_o,
-      owr_en_o => owr_en_o,
-      owr_i    => owr_i
-      );
-
-  --------------------------------------
-  -- WRPC Diags
-  --------------------------------------
-
-  -- access through WB (PCI/VME/application) to diagnostics of WRPC
-  DIAGS: entity work.wrc_diags_dpram
-    generic map(
-      g_size => g_wdiags_num_words
-    )
-    port map(
-      rst_n_i   => rst_n_i,
-      clk_sys_i => clk_sys_i,
-
-      slave_user_i   => diags_usr_wb_i,
-      slave_user_o   => diags_usr_wb_o,
-
-      slave_wrc_i    => diags_cpu_wb_i,
-      slave_wrc_o    => diags_cpu_wb_o
-    );
 
 end struct;

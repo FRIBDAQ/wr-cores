@@ -76,6 +76,7 @@ entity xwr_subsystem is
     g_diag_ver                  : integer                        := 0;
     g_diag_ro_size              : integer                        := 0;
     g_diag_rw_size              : integer                        := 0;
+    g_wdiags_num_words          : integer := 64;
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
@@ -405,6 +406,12 @@ architecture struct of xwr_subsystem is
   signal vuart_cpu_wb_in : t_wishbone_slave_in;
   signal vuart_cpu_wb_out : t_wishbone_slave_out;
 
+  signal ep_wb_in  : t_wishbone_slave_in;
+  signal ep_wb_out : t_wishbone_slave_out;
+
+  signal minic_wb_in  : t_wishbone_slave_in;
+  signal minic_wb_out : t_wishbone_slave_out;
+
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
   --attribute mark_debug of secbar_master_i : signal is "true";
@@ -425,23 +432,10 @@ architecture struct of xwr_subsystem is
   -- External Tx TSU interface
   -----------------------------------------------------------------------------
 
-  signal ep_wb_in  : t_wishbone_slave_in;
-  signal ep_wb_out : t_wishbone_slave_out;
-
-  signal minic_wb_in  : t_wishbone_slave_in;
-  signal minic_wb_out : t_wishbone_slave_out;
-
-  signal ep_src_out : t_wrf_source_out;
-  signal ep_src_in  : t_wrf_source_in;
-  signal ep_snk_out : t_wrf_sink_out;
-  signal ep_snk_in  : t_wrf_sink_in;
-
-
-  signal mux_src_out : t_wrf_source_out_array(1 downto 0);
-  signal mux_src_in  : t_wrf_source_in_array(1 downto 0);
-  signal mux_snk_out : t_wrf_sink_out_array(1 downto 0);
-  signal mux_snk_in  : t_wrf_sink_in_array(1 downto 0);
-  signal mux_class   : t_wrf_mux_class(1 downto 0);
+  signal ep_src_out, nic_src_out : t_wrf_source_out;
+  signal ep_src_in,  nic_src_in  : t_wrf_source_in;
+  signal ep_snk_out, nic_snk_out : t_wrf_sink_out;
+  signal ep_snk_in,  nic_snk_in  : t_wrf_sink_in;
 
   signal spll_out_locked : std_logic_vector(g_aux_clks downto 0);
 
@@ -815,10 +809,10 @@ begin
       clk_sys_i => clk_sys_i,
       rst_n_i   => rst_net_n,
 
-      src_o => mux_snk_in(0),
-      src_i => mux_snk_out(0),
-      snk_o => mux_src_in(0),
-      snk_i => mux_src_out(0),
+      src_o => nic_snk_in,
+      src_i => nic_snk_out,
+      snk_o => nic_src_in,
+      snk_i => nic_src_out,
 
       txtsu_port_id_i     => ep_txtsu_port_id,
       txtsu_frame_id_i    => ep_txtsu_frame_id,
@@ -840,13 +834,7 @@ begin
       g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,
-      g_phys_uart       => g_phys_uart,
-      g_virtual_uart    => g_virtual_uart,
       g_mem_words       => g_dpram_size,
-      g_vuart_fifo_size => g_vuart_fifo_size,
-      g_with_phys_uart_fifo   => g_with_phys_uart_fifo,
-      g_phys_uart_tx_fifo_size => g_phys_uart_tx_fifo_size,
-      g_phys_uart_rx_fifo_size => g_phys_uart_rx_fifo_size,
       g_diag_id         => g_diag_id,
       g_diag_ver        => g_diag_ver,
       g_diag_ro_size    => g_diag_ro_size,
@@ -877,34 +865,96 @@ begin
       syscon_wb_i => syscon_wb_in,
       syscon_wb_o => syscon_wb_out,
 
-      uart_wb_i => uart_wb_in,
-      uart_wb_o => uart_wb_out,
-
-      vuart_cpu_wb_i => vuart_cpu_wb_in,
-      vuart_cpu_wb_o => vuart_cpu_wb_out,
-
-      vuart_host_wb_i => vuart_host_wb_in,
-      vuart_host_wb_o => vuart_host_wb_out,
-
-      onewire_wb_i => onewire_wb_in,
-      onewire_wb_o => onewire_wb_out,
-
-      diags_usr_wb_i => diags_usr_wb_in,
-      diags_usr_wb_o => diags_usr_wb_out,
-
-      diags_cpu_wb_i => diags_cpu_wb_in,
-      diags_cpu_wb_o => diags_cpu_wb_out,
-
-      uart_rxd_i => uart_rxd_i,
-      uart_txd_o => uart_txd_o,
-
-      owr_pwren_o => owr_pwren_o,
-      owr_en_o    => owr_en_o,
-      owr_i       => owr_i,
-
       diag_array_in  => aux_diag_i,
       diag_array_out => aux_diag_o
       );
+
+
+  --------------------------------------
+  -- UART
+  --------------------------------------
+  UART : xwb_simple_uart
+    generic map(
+      g_with_virtual_uart   => g_virtual_uart,
+      g_with_physical_uart  => g_phys_uart,
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_vuart_fifo_size     => g_vuart_fifo_size,
+      g_WITH_PHYSICAL_UART_FIFO => g_with_phys_uart_fifo,
+      g_TX_FIFO_SIZE => g_phys_uart_tx_fifo_size,
+      g_RX_FIFO_SIZE => g_phys_uart_rx_fifo_size
+      )
+    port map(
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_n_i,
+
+      -- Wishbone
+      slave_i => uart_wb_in,
+      slave_o => uart_wb_out,
+      desc_o  => open,
+      int_o   => open,
+
+      uart_rxd_i => uart_rxd_i,
+      uart_txd_o => uart_txd_o
+      );
+
+  inst_vuart: entity work.xwb_vuart
+    generic map (
+      g_fifo_size => g_vuart_fifo_size
+    )
+    port map (
+      clk_sys_i => clk_sys_i,
+      rst_n_i => rst_n_i,
+      host_i => vuart_host_wb_in,
+      host_o => vuart_host_wb_out,
+      board_i => vuart_cpu_wb_in,
+      board_o => vuart_cpu_wb_out
+    );
+  --------------------------------------
+  -- 1-WIRE
+  --------------------------------------
+  ONEWIRE : xwb_onewire_master
+    generic map(
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_num_ports           => 2,
+      g_ow_btp_normal       => "5.0",
+      g_ow_btp_overdrive    => "1.0"
+      )
+    port map(
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_n_i,
+
+      -- Wishbone
+      slave_i => onewire_wb_in,
+      slave_o => onewire_wb_out,
+      desc_o  => open,
+      int_o   => open,
+
+      owr_pwren_o => owr_pwren_o,
+      owr_en_o => owr_en_o,
+      owr_i    => owr_i
+      );
+
+  --------------------------------------
+  -- WRPC Diags
+  --------------------------------------
+
+  -- access through WB (PCI/VME/application) to diagnostics of WRPC
+  DIAGS: entity work.wrc_diags_dpram
+    generic map(
+      g_size => g_wdiags_num_words
+    )
+    port map(
+      rst_n_i   => rst_n_i,
+      clk_sys_i => clk_sys_i,
+
+      slave_user_i   => diags_usr_wb_in,
+      slave_user_o   => diags_usr_wb_out,
+
+      slave_wrc_i    => diags_cpu_wb_in,
+      slave_wrc_o    => diags_cpu_wb_out
+    );
 
   inst_host_map: entity work.wrc_host_map
     port map (
@@ -976,20 +1026,16 @@ begin
       ep_src_i    => ep_snk_out,
       ep_snk_o    => ep_src_in,
       ep_snk_i    => ep_src_out,
-      mux_src_o   => mux_src_out,
-      mux_src_i   => mux_src_in,
-      mux_snk_o   => mux_snk_out,
-      mux_snk_i   => mux_snk_in,
-      mux_class_i => mux_class);
-
-  mux_class(0)  <= x"0f";
-  mux_class(1)  <= x"f0";
-
-  wrf_src_o <= mux_src_out(1);
-  mux_src_in(1) <= wrf_src_i;
-
-  mux_snk_in(1) <= wrf_snk_i;
-  wrf_snk_o <= mux_snk_out(1);
+      mux_src_o(0) => nic_src_out,
+      mux_src_o(1) => wrf_src_o,
+      mux_src_i(0) => nic_src_in,
+      mux_src_i(1) => wrf_src_i,
+      mux_snk_o(0) => nic_snk_out,
+      mux_snk_o(1) => wrf_snk_o,
+      mux_snk_i(0) => nic_snk_in,
+      mux_snk_i(1) => wrf_snk_i,
+      mux_class_i(0) => x"0f",
+      mux_class_i(1) => x"f0");
 
   -----------------------------------------------------------------------------
   -- External Tx Timestamping I/F
