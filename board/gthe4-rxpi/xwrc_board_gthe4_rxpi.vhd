@@ -697,8 +697,6 @@ begin
   inst_wr_subsystem : entity work.xwr_subsystem
     generic map (
       g_board_name => g_board_name, --"KR26",
-      --         g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
---      g_dpram_initf => g_dpram_initf,
       g_dpram_size => g_dpram_size,
       g_pcs_16bit => true,
       g_records_for_phy => true,
