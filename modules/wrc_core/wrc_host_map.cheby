@@ -56,7 +56,7 @@ memory-map:
         children:
         - field:
            name: memory
-           comment: Memory size (in 64KB units)
+           comment: Memory size (in 16KB units + 1)
            range: 3-0
         - field:
            name: STORAGE_SEC
