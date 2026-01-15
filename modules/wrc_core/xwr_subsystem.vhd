@@ -829,7 +829,7 @@ begin
   -----------------------------------------------------------------------------
   -- WB Peripherials
   -----------------------------------------------------------------------------
-  PERIPH : entity work.wrc_periph
+  inst_syscon : entity work.wrc_syscon
     generic map(
       g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,

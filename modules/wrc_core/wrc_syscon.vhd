@@ -6,16 +6,12 @@
 -- Title      : WhiteRabbit PTP Core peripherials
 -- Project    : WhiteRabbit
 -------------------------------------------------------------------------------
--- File       : wrc_periph.vhd
+-- File       : wrc_syscon.vhd
 -- Author     : Grzegorz Daniluk <grzegorz.daniluk@cern.ch>
 -- Company    : CERN (BE-CO-HT)
 -- Created    : 2011-04-04
 -- Platform   : FPGA-generics
 -- Standard   : VHDL
--------------------------------------------------------------------------------
--- Description:
--- WRC_PERIPH integrates WRC_SYSCON, UART/VUART, 1-Wire Master, WRPC_DIAGS
--- 
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -27,7 +23,7 @@ use work.wrcore_pkg.all;
 use work.wishbone_pkg.all;
 use work.sysc_wbgen2_pkg.all;
 
-entity wrc_periph is
+entity wrc_syscon is
   generic(
     g_board_name      : std_logic_vector(31 downto 0);
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
@@ -69,10 +65,9 @@ entity wrc_periph is
     diag_array_in  : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others=>(others=>'0'));
     diag_array_out : out t_generic_word_array(g_diag_rw_size-1 downto 0)
     );
-end wrc_periph;
+end wrc_syscon;
 
-architecture struct of wrc_periph is
-
+architecture struct of wrc_syscon is
   function f_cnt_memsize(words : integer) return std_logic_vector is
   begin
     return std_logic_vector(to_unsigned(words * 4 / 1024 / 16 - 1, 4));
