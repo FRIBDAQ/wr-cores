@@ -43,7 +43,6 @@ use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
 use work.wr_timecode_pkg.all;
 use work.gencores_pkg.all;
@@ -316,8 +315,13 @@ architecture struct of xwr_subsystem is
   end f_board_name_conv;
 
   constant c_board_name : std_logic_vector(31 downto 0) := f_board_name_conv(g_board_name);
+
   constant c_memsize : std_logic_vector(3 downto 0) :=
-    std_logic_vector(to_unsigned(g_dpram_size * 4 / 2**14 - 1, 4));
+    std_logic_vector(to_unsigned(g_dpram_size * 4 / 1014 / 16 - 1, 4));
+  -- *4     - to get size in bytes
+  -- /1024  - to get size in kB
+  -- /16 -1 - to get size in format of MEMSIZE@sysc_hwfr register
+
   constant c_storage_sec : std_logic_vector(15 downto 0) :=
     std_logic_vector(to_unsigned(g_flash_secsz_kb, 16));
 
@@ -834,7 +838,7 @@ begin
       g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,
-      g_mem_words       => g_dpram_size,
+      g_memsize         => c_memsize,
       g_diag_id         => g_diag_id,
       g_diag_ver        => g_diag_ver,
       g_diag_ro_size    => g_diag_ro_size,
@@ -843,6 +847,10 @@ begin
     port map(
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_n_i,
+
+      syscon_wb_i => syscon_wb_in,
+      syscon_wb_o => syscon_wb_out,
+
       rst_net_n_o => rst_net_n,
 
       scl_o       => scl_o,
@@ -854,16 +862,12 @@ begin
       sfp_sda_o   => sfp_sda_o,
       sfp_sda_i   => sfp_sda_i,
       sfp_det_i   => sfp_det_i,
-      memsize_i   => "0000",
       btn1_i      => btn1_i,
       btn2_i      => btn2_i,
       spi_sclk_o  => spi_sclk_o,
       spi_ncs_o   => spi_ncs_o,
       spi_mosi_o  => spi_mosi_o,
       spi_miso_i  => spi_miso_i,
-
-      syscon_wb_i => syscon_wb_in,
-      syscon_wb_o => syscon_wb_out,
 
       diag_array_in  => aux_diag_i,
       diag_array_out => aux_diag_o
@@ -941,7 +945,7 @@ begin
   --------------------------------------
 
   -- access through WB (PCI/VME/application) to diagnostics of WRPC
-  DIAGS: entity work.wrc_diags_dpram
+  inst_diags_dpram: entity work.wrc_diags_dpram
     generic map(
       g_size => g_wdiags_num_words
     )

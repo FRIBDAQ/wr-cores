@@ -25,22 +25,26 @@ use work.sysc_wbgen2_pkg.all;
 
 entity wrc_syscon is
   generic(
-    g_board_name      : std_logic_vector(31 downto 0);
+    g_board_name        : std_logic_vector(31 downto 0);
     g_flash_secsz_kb    : integer := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr : integer := 16#600000#; -- default for SVEC (M25P128)
-    g_cntr_period     : integer := 62500;
-    g_mem_words       : integer := 16384;   --in 32-bit words
-    g_diag_id         : integer := 0;
-    g_diag_ver        : integer := 0;
-    g_diag_ro_size    : integer := 0;
-    g_diag_rw_size    : integer := 0;
-    g_hwbld_date      : std_logic_vector(31 downto 0));
+    g_cntr_period       : integer := 62500;
+    g_memsize           : std_logic_vector(3 downto 0);
+    g_diag_id           : integer := 0;
+    g_diag_ver          : integer := 0;
+    g_diag_ro_size      : integer := 0;
+    g_diag_rw_size      : integer := 0;
+    g_hwbld_date        : std_logic_vector(31 downto 0));
   port(
     clk_sys_i : in std_logic;
     rst_n_i   : in std_logic;
 
+    syscon_wb_i : in  t_wishbone_slave_in;
+    syscon_wb_o : out t_wishbone_slave_out;
+
     rst_net_n_o : out std_logic;
 
+    --  GPIOs
     scl_o       : out std_logic;
     scl_i       : in  std_logic;
     sda_o       : out std_logic;
@@ -50,16 +54,12 @@ entity wrc_syscon is
     sfp_sda_o   : out std_logic;
     sfp_sda_i   : in  std_logic;
     sfp_det_i   : in  std_logic;
-    memsize_i   : in  std_logic_vector(3 downto 0);
     btn1_i      : in  std_logic;
     btn2_i      : in  std_logic;
     spi_sclk_o  : out std_logic;
     spi_ncs_o   : out std_logic;
     spi_mosi_o  : out std_logic;
     spi_miso_i  : in  std_logic;
-
-    syscon_wb_i : in  t_wishbone_slave_in;
-    syscon_wb_o : out t_wishbone_slave_out;
 
     -- optional diagnostics from external HDL modules
     diag_array_in  : in  t_generic_word_array(g_diag_ro_size-1 downto 0) := (others=>(others=>'0'));
@@ -68,14 +68,6 @@ entity wrc_syscon is
 end wrc_syscon;
 
 architecture struct of wrc_syscon is
-  function f_cnt_memsize(words : integer) return std_logic_vector is
-  begin
-    return std_logic_vector(to_unsigned(words * 4 / 1024 / 16 - 1, 4));
-    -- *4     - to get size in bytes
-    -- /1024  - to get size in kB
-    -- /16 -1 - to get size in format of MEMSIZE@sysc_hwfr register
-  end f_cnt_memsize;
-
   signal sysc_regs_i : t_sysc_in_registers;
   signal sysc_regs_o : t_sysc_out_registers;
 
@@ -127,7 +119,7 @@ begin
   -------------------------------------
   -- MEMSIZE
   -------------------------------------
-  sysc_regs_i.hwfr_memsize_i(3 downto 0) <= f_cnt_memsize(g_mem_words);
+  sysc_regs_i.hwfr_memsize_i(3 downto 0) <= g_memsize;
 
   -------------------------------------
   -- BOARD NAME and Flash info
