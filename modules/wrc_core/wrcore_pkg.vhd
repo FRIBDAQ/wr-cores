@@ -20,7 +20,6 @@ use ieee.std_logic_1164.all;
 library work;
 use work.genram_pkg.all;
 use work.wishbone_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
 use work.softpll_pkg.all;
@@ -304,58 +303,6 @@ package wrcore_pkg is
         version   => x"00000001",
         date      => x"20230426",
         name      => "WR-Periph-CLOCK-MON")));
-
-  component wrc_periph is
-    generic(
-      g_board_name      : string  := "NA  ";
-      g_flash_secsz_kb    : integer := 64;
-      g_flash_sdbfs_baddr : integer := 16#2e0000#;
-      g_has_preinitialized_firmware : boolean;
-      g_phys_uart       : boolean := true;
-      g_virtual_uart    : boolean := false;
-      g_cntr_period     : integer := 62500;
-      g_mem_words       : integer := 16384;
-      g_vuart_fifo_size : integer := 1024;
-      g_diag_id         : integer := 0;
-      g_diag_ver        : integer := 0;
-      g_diag_ro_size    : integer := 0;
-      g_diag_rw_size    : integer := 0;
-      g_with_phys_uart_fifo       : boolean                        := false;
-      g_phys_uart_tx_fifo_size    : integer                        := 1024;
-      g_phys_uart_rx_fifo_size    : integer                        := 1024
-      );
-    port(
-      clk_sys_i   : in  std_logic;
-      rst_n_i     : in  std_logic;
-      rst_net_n_o : out std_logic;
-      rst_wrc_n_o : out std_logic;
-      scl_o       : out std_logic;
-      scl_i       : in  std_logic;
-      sda_o       : out std_logic;
-      sda_i       : in  std_logic;
-      sfp_scl_o   : out std_logic;
-      sfp_scl_i   : in  std_logic;
-      sfp_sda_o   : out std_logic;
-      sfp_sda_i   : in  std_logic;
-      sfp_det_i   : in  std_logic;
-      memsize_i   : in  std_logic_vector(3 downto 0);
-      btn1_i      : in  std_logic;
-      btn2_i      : in  std_logic;
-      spi_sclk_o  : out std_logic;
-      spi_ncs_o   : out std_logic;
-      spi_mosi_o  : out std_logic;
-      spi_miso_i  : in  std_logic;
-      slave_i     : in  t_wishbone_slave_in_array(0 to 4);
-      slave_o     : out t_wishbone_slave_out_array(0 to 4);
-      uart_rxd_i  : in  std_logic;
-      uart_txd_o  : out std_logic;
-      owr_pwren_o : out std_logic_vector(1 downto 0);
-      owr_en_o    : out std_logic_vector(1 downto 0);
-      owr_i       : in  std_logic_vector(1 downto 0);
-      diag_array_in  : in  t_generic_word_array(g_diag_ro_size-1 downto 0);
-      diag_array_out : out t_generic_word_array(g_diag_rw_size-1 downto 0)
-      );
-  end component;
 
   -----------------------------------------------------------------------------
   -- Soft-PLL

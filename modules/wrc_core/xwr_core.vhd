@@ -45,18 +45,13 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
-library work;
 use work.wrcore_pkg.all;
-use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
 use work.wr_timecode_pkg.all;
-use work.gencores_pkg.all;
 
 entity xwr_core is
   generic(
@@ -66,7 +61,7 @@ entity xwr_core is
     -- set to false to reduce the number of information printed during simulation
     g_verbose                   : boolean                        := true;
     g_with_external_clock_input : boolean                        := true;
-    g_ram_address_space_size_kb : integer                        := 128;
+    g_ram_address_space_size_kb : integer                        := 128;        --  UNUSED
     g_board_name                : string                         := "NA  ";
     g_flash_secsz_kb            : integer                        := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr         : integer                        := 16#600000#; -- default for SVEC (M25P128)
@@ -323,9 +318,7 @@ begin
   inst_uncore: entity work.xwr_subsystem
     generic map (
       g_simulation => g_simulation,
-      g_verbose => g_verbose,
       g_with_external_clock_input => g_with_external_clock_input,
-      g_ram_address_space_size_kb => g_ram_address_space_size_kb,
       g_board_name => g_board_name,
       g_flash_secsz_kb => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,

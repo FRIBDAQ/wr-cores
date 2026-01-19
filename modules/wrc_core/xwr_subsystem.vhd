@@ -43,7 +43,6 @@ use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
 use work.wr_timecode_pkg.all;
 use work.gencores_pkg.all;
@@ -53,12 +52,7 @@ entity xwr_subsystem is
     --if set to 1, then blocks in PCS use smaller calibration counter to speed 
     --up simulation
     g_simulation                : integer                        := 0;
-    -- set to false to reduce the number of information printed during simulation
-    g_verbose                   : boolean                        := true;
     g_with_external_clock_input : boolean                        := true;
-    g_ram_address_space_size_kb : integer                        := 128;
-
-    --
     g_board_name                : string                         := "NA  ";
     g_flash_secsz_kb            : integer                        := 256;        -- default for SVEC (M25P128)
     g_flash_sdbfs_baddr         : integer                        := 16#600000#; -- default for SVEC (M25P128)
@@ -81,6 +75,7 @@ entity xwr_subsystem is
     g_diag_ver                  : integer                        := 0;
     g_diag_ro_size              : integer                        := 0;
     g_diag_rw_size              : integer                        := 0;
+    g_wdiags_num_words          : integer := 64;
     g_dac_bits                  : integer                        := 16;
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
@@ -320,8 +315,13 @@ architecture struct of xwr_subsystem is
   end f_board_name_conv;
 
   constant c_board_name : std_logic_vector(31 downto 0) := f_board_name_conv(g_board_name);
+
   constant c_memsize : std_logic_vector(3 downto 0) :=
-    std_logic_vector(to_unsigned(g_dpram_size * 4 / 2**14 - 1, 4));
+    std_logic_vector(to_unsigned(g_dpram_size * 4 / 1014 / 16 - 1, 4));
+  -- *4     - to get size in bytes
+  -- /1024  - to get size in kB
+  -- /16 -1 - to get size in format of MEMSIZE@sysc_hwfr register
+
   constant c_storage_sec : std_logic_vector(15 downto 0) :=
     std_logic_vector(to_unsigned(g_flash_secsz_kb, 16));
 
@@ -410,6 +410,12 @@ architecture struct of xwr_subsystem is
   signal vuart_cpu_wb_in : t_wishbone_slave_in;
   signal vuart_cpu_wb_out : t_wishbone_slave_out;
 
+  signal ep_wb_in  : t_wishbone_slave_in;
+  signal ep_wb_out : t_wishbone_slave_out;
+
+  signal minic_wb_in  : t_wishbone_slave_in;
+  signal minic_wb_out : t_wishbone_slave_out;
+
   --attribute mark_debug : string;
   --attribute mark_debug of secbar_master_o : signal is "true";
   --attribute mark_debug of secbar_master_i : signal is "true";
@@ -430,23 +436,10 @@ architecture struct of xwr_subsystem is
   -- External Tx TSU interface
   -----------------------------------------------------------------------------
 
-  signal ep_wb_in  : t_wishbone_slave_in;
-  signal ep_wb_out : t_wishbone_slave_out;
-
-  signal minic_wb_in  : t_wishbone_slave_in;
-  signal minic_wb_out : t_wishbone_slave_out;
-
-  signal ep_src_out : t_wrf_source_out;
-  signal ep_src_in  : t_wrf_source_in;
-  signal ep_snk_out : t_wrf_sink_out;
-  signal ep_snk_in  : t_wrf_sink_in;
-
-
-  signal mux_src_out : t_wrf_source_out_array(1 downto 0);
-  signal mux_src_in  : t_wrf_source_in_array(1 downto 0);
-  signal mux_snk_out : t_wrf_sink_out_array(1 downto 0);
-  signal mux_snk_in  : t_wrf_sink_in_array(1 downto 0);
-  signal mux_class   : t_wrf_mux_class(1 downto 0);
+  signal ep_src_out, nic_src_out : t_wrf_source_out;
+  signal ep_src_in,  nic_src_in  : t_wrf_source_in;
+  signal ep_snk_out, nic_snk_out : t_wrf_sink_out;
+  signal ep_snk_in,  nic_snk_in  : t_wrf_sink_in;
 
   signal spll_out_locked : std_logic_vector(g_aux_clks downto 0);
 
@@ -456,28 +449,6 @@ architecture struct of xwr_subsystem is
 
   signal clk_out    : std_logic_vector(g_aux_clks downto 0);
   signal out_enable : std_logic_vector(g_aux_clks downto 0);
-
-  function f_count_freqmon_clocks return integer is
-    variable cnt : integer;
-  begin
-
-    -- SYS + DMTD + REF + PHY RX Clock;
-    cnt := 1 + 1 + 1 + 1;
-
-    -- All Aux Clocks
-    cnt := cnt + g_aux_clks;
-
-    -- Ext clock input, if need be.
-    if( g_with_external_clock_input ) then
-      cnt := cnt + 1;
-    end if;
-
-    return cnt;
-  end f_count_freqmon_clocks;
-
-  constant c_NUM_FREQMON_CLOCKS: integer := f_count_freqmon_clocks;
-
-  signal freqmon_in : std_logic_vector(c_NUM_FREQMON_CLOCKS - 1 downto 0);
 begin
 
   -----------------------------------------------------------------------------
@@ -602,7 +573,7 @@ begin
     signal aux_timing_out : t_aux_timing_out;
   begin
 
-    TIMECODE_GEN: wr_timecodes
+    TIMECODE_GEN: entity work.wr_timecodes
       generic map (
         g_interface_mode        => PIPELINED,
         g_address_granularity   => BYTE,
@@ -842,10 +813,10 @@ begin
       clk_sys_i => clk_sys_i,
       rst_n_i   => rst_net_n,
 
-      src_o => mux_snk_in(0),
-      src_i => mux_snk_out(0),
-      snk_o => mux_src_in(0),
-      snk_i => mux_src_out(0),
+      src_o => nic_snk_in,
+      src_i => nic_snk_out,
+      snk_o => nic_src_in,
+      snk_i => nic_src_out,
 
       txtsu_port_id_i     => ep_txtsu_port_id,
       txtsu_frame_id_i    => ep_txtsu_frame_id,
@@ -862,18 +833,12 @@ begin
   -----------------------------------------------------------------------------
   -- WB Peripherials
   -----------------------------------------------------------------------------
-  PERIPH : entity work.wrc_periph
+  inst_syscon : entity work.wrc_syscon
     generic map(
       g_board_name      => c_board_name,
       g_flash_secsz_kb  => g_flash_secsz_kb,
       g_flash_sdbfs_baddr => g_flash_sdbfs_baddr,
-      g_phys_uart       => g_phys_uart,
-      g_virtual_uart    => g_virtual_uart,
-      g_mem_words       => g_dpram_size,
-      g_vuart_fifo_size => g_vuart_fifo_size,
-      g_with_phys_uart_fifo   => g_with_phys_uart_fifo,
-      g_phys_uart_tx_fifo_size => g_phys_uart_tx_fifo_size,
-      g_phys_uart_rx_fifo_size => g_phys_uart_rx_fifo_size,
+      g_memsize         => c_memsize,
       g_diag_id         => g_diag_id,
       g_diag_ver        => g_diag_ver,
       g_diag_ro_size    => g_diag_ro_size,
@@ -882,6 +847,10 @@ begin
     port map(
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_n_i,
+
+      syscon_wb_i => syscon_wb_in,
+      syscon_wb_o => syscon_wb_out,
+
       rst_net_n_o => rst_net_n,
 
       scl_o       => scl_o,
@@ -893,7 +862,6 @@ begin
       sfp_sda_o   => sfp_sda_o,
       sfp_sda_i   => sfp_sda_i,
       sfp_det_i   => sfp_det_i,
-      memsize_i   => "0000",
       btn1_i      => btn1_i,
       btn2_i      => btn2_i,
       spi_sclk_o  => spi_sclk_o,
@@ -901,37 +869,96 @@ begin
       spi_mosi_o  => spi_mosi_o,
       spi_miso_i  => spi_miso_i,
 
-      syscon_wb_i => syscon_wb_in,
-      syscon_wb_o => syscon_wb_out,
-
-      uart_wb_i => uart_wb_in,
-      uart_wb_o => uart_wb_out,
-
-      vuart_cpu_wb_i => vuart_cpu_wb_in,
-      vuart_cpu_wb_o => vuart_cpu_wb_out,
-
-      vuart_host_wb_i => vuart_host_wb_in,
-      vuart_host_wb_o => vuart_host_wb_out,
-
-      onewire_wb_i => onewire_wb_in,
-      onewire_wb_o => onewire_wb_out,
-
-      diags_usr_wb_i => diags_usr_wb_in,
-      diags_usr_wb_o => diags_usr_wb_out,
-
-      diags_cpu_wb_i => diags_cpu_wb_in,
-      diags_cpu_wb_o => diags_cpu_wb_out,
-
-      uart_rxd_i => uart_rxd_i,
-      uart_txd_o => uart_txd_o,
-
-      owr_pwren_o => owr_pwren_o,
-      owr_en_o    => owr_en_o,
-      owr_i       => owr_i,
-
       diag_array_in  => aux_diag_i,
       diag_array_out => aux_diag_o
       );
+
+
+  --------------------------------------
+  -- UART
+  --------------------------------------
+  UART : xwb_simple_uart
+    generic map(
+      g_with_virtual_uart   => g_virtual_uart,
+      g_with_physical_uart  => g_phys_uart,
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_vuart_fifo_size     => g_vuart_fifo_size,
+      g_WITH_PHYSICAL_UART_FIFO => g_with_phys_uart_fifo,
+      g_TX_FIFO_SIZE => g_phys_uart_tx_fifo_size,
+      g_RX_FIFO_SIZE => g_phys_uart_rx_fifo_size
+      )
+    port map(
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_n_i,
+
+      -- Wishbone
+      slave_i => uart_wb_in,
+      slave_o => uart_wb_out,
+      desc_o  => open,
+      int_o   => open,
+
+      uart_rxd_i => uart_rxd_i,
+      uart_txd_o => uart_txd_o
+      );
+
+  inst_vuart: entity work.xwb_vuart
+    generic map (
+      g_fifo_size => g_vuart_fifo_size
+    )
+    port map (
+      clk_sys_i => clk_sys_i,
+      rst_n_i => rst_n_i,
+      host_i => vuart_host_wb_in,
+      host_o => vuart_host_wb_out,
+      board_i => vuart_cpu_wb_in,
+      board_o => vuart_cpu_wb_out
+    );
+  --------------------------------------
+  -- 1-WIRE
+  --------------------------------------
+  ONEWIRE : xwb_onewire_master
+    generic map(
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_num_ports           => 2,
+      g_ow_btp_normal       => "5.0",
+      g_ow_btp_overdrive    => "1.0"
+      )
+    port map(
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_n_i,
+
+      -- Wishbone
+      slave_i => onewire_wb_in,
+      slave_o => onewire_wb_out,
+      desc_o  => open,
+      int_o   => open,
+
+      owr_pwren_o => owr_pwren_o,
+      owr_en_o => owr_en_o,
+      owr_i    => owr_i
+      );
+
+  --------------------------------------
+  -- WRPC Diags
+  --------------------------------------
+
+  -- access through WB (PCI/VME/application) to diagnostics of WRPC
+  inst_diags_dpram: entity work.wrc_diags_dpram
+    generic map(
+      g_size => g_wdiags_num_words
+    )
+    port map(
+      rst_n_i   => rst_n_i,
+      clk_sys_i => clk_sys_i,
+
+      slave_user_i   => diags_usr_wb_in,
+      slave_user_o   => diags_usr_wb_out,
+
+      slave_wrc_i    => diags_cpu_wb_in,
+      slave_wrc_o    => diags_cpu_wb_out
+    );
 
   inst_host_map: entity work.wrc_host_map
     port map (
@@ -1003,20 +1030,16 @@ begin
       ep_src_i    => ep_snk_out,
       ep_snk_o    => ep_src_in,
       ep_snk_i    => ep_src_out,
-      mux_src_o   => mux_src_out,
-      mux_src_i   => mux_src_in,
-      mux_snk_o   => mux_snk_out,
-      mux_snk_i   => mux_snk_in,
-      mux_class_i => mux_class);
-
-  mux_class(0)  <= x"0f";
-  mux_class(1)  <= x"f0";
-
-  wrf_src_o <= mux_src_out(1);
-  mux_src_in(1) <= wrf_src_i;
-
-  mux_snk_in(1) <= wrf_snk_i;
-  wrf_snk_o <= mux_snk_out(1);
+      mux_src_o(0) => nic_src_out,
+      mux_src_o(1) => wrf_src_o,
+      mux_src_i(0) => nic_src_in,
+      mux_src_i(1) => wrf_src_i,
+      mux_snk_o(0) => nic_snk_out,
+      mux_snk_o(1) => wrf_snk_o,
+      mux_snk_i(0) => nic_snk_in,
+      mux_snk_i(1) => wrf_snk_i,
+      mux_class_i(0) => x"0f",
+      mux_class_i(1) => x"f0");
 
   -----------------------------------------------------------------------------
   -- External Tx Timestamping I/F
@@ -1037,7 +1060,27 @@ begin
   ep_txtsu_ack <= timestamps_ack_i or mnic_txtsu_ack;
 
   gen_with_clock_monitor : if g_with_clock_freq_monitor generate
+    function f_count_freqmon_clocks return integer is
+      variable cnt : integer;
+    begin
+      -- SYS + DMTD + REF + PHY RX Clock;
+      cnt := 1 + 1 + 1 + 1;
 
+      -- All Aux Clocks
+      cnt := cnt + g_aux_clks;
+
+      -- Ext clock input, if need be.
+      if( g_with_external_clock_input ) then
+        cnt := cnt + 1;
+      end if;
+
+      return cnt;
+    end f_count_freqmon_clocks;
+
+    constant c_NUM_FREQMON_CLOCKS: integer := f_count_freqmon_clocks;
+
+    signal freqmon_in : std_logic_vector(c_NUM_FREQMON_CLOCKS - 1 downto 0);
+  begin
     inst_clock_monitor: entity work.xwb_clock_monitor
       generic map (
         g_NUM_CLOCKS             => c_NUM_FREQMON_CLOCKS,
