@@ -804,8 +804,6 @@ begin
   -----------------------------------------------------------------------------
   MINI_NIC : entity work.xwr_mini_nic
     generic map (
-      g_interface_mode       => PIPELINED,
-      g_address_granularity  => BYTE,
       g_tx_fifo_size         => 1024,
       g_rx_fifo_size         => 2048,
       g_buffer_little_endian => false)
