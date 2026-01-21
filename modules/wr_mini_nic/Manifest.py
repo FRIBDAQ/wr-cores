@@ -3,7 +3,6 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-files = [ "minic_packet_buffer.vhd",
-          "wr_mini_nic_map.vhd",
+files = [ "wr_mini_nic_map.vhd",
           "wr_mini_nic.vhd",
           "xwr_mini_nic.vhd" ];
