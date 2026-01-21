@@ -31,15 +31,14 @@ entity xwr_mini_nic is
     clk_sys_i : in std_logic;
     rst_n_i   : in std_logic;
 
--------------------------------------------------------------------------------
--- Pipelined Wishbone interface
--------------------------------------------------------------------------------
+    --  Wishbone slave interface
+    wb_i : in  t_wishbone_slave_in;
+    wb_o : out t_wishbone_slave_out;
 
-    -- WBP Master (TX)
+    -- WR fabric
     src_o : out t_wrf_source_out;
     src_i : in  t_wrf_source_in;
 
-    -- WBP Slave (RX)
     snk_o : out t_wrf_sink_out;
     snk_i : in  t_wrf_sink_in;
 
@@ -52,21 +51,8 @@ entity xwr_mini_nic is
     txtsu_tsval_i       : in  std_logic_vector(28 + 4 - 1 downto 0);
     txtsu_tsincorrect_i : in  std_logic;
     txtsu_stb_i         : in  std_logic;
-    txtsu_ack_o         : out std_logic;
-
--------------------------------------------------------------------------------
--- Wishbone slave
--------------------------------------------------------------------------------
-
-  wb_i : in  t_wishbone_slave_in;
-  wb_o : out t_wishbone_slave_out;
-
--------------------------------------------------------------------------------
--- Interrupt output
--------------------------------------------------------------------------------
-
-  int_o : out std_logic
-    );
+    txtsu_ack_o         : out std_logic
+  );
 end xwr_mini_nic;
 
 architecture wrapper of xwr_mini_nic is

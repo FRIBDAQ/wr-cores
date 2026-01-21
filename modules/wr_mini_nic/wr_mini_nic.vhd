@@ -97,14 +97,8 @@ entity wr_mini_nic is
     wb_dat_i   : in  std_logic_vector(c_wishbone_data_width-1 downto 0);
     wb_dat_o   : out std_logic_vector(c_wishbone_data_width-1 downto 0);
     wb_ack_o   : out std_logic;
-    wb_stall_o : out std_logic;
-
--------------------------------------------------------------------------------
--- Interrupt output
--------------------------------------------------------------------------------
-
-    int_o   : out std_logic
-    );
+    wb_stall_o : out std_logic
+  );
 end wr_mini_nic;
 
 architecture behavioral of wr_mini_nic is
@@ -171,6 +165,5 @@ begin  -- wrapper
       txtsu_stb_i         => txtsu_stb_i,
       txtsu_ack_o         => txtsu_ack_o,
       wb_i                => wb_out,
-      wb_o                => wb_in,
-      int_o               => int_o);
+      wb_o                => wb_in);
 end behavioral;
