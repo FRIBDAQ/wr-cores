@@ -20,7 +20,7 @@ use ieee.numeric_std.all;
 
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
-use work.minic_wbgen2_pkg.all;
+use work.wr_mini_nic_map_pkg.all;
 
 entity xwr_mini_nic is
   generic (
@@ -56,7 +56,7 @@ entity xwr_mini_nic is
 
 -------------------------------------------------------------------------------
 -- Wishbone slave
--------------------------------------------------------------------------------    
+-------------------------------------------------------------------------------
 
   wb_i : in  t_wishbone_slave_in;
   wb_o : out t_wishbone_slave_out;
@@ -89,8 +89,6 @@ architecture wrapper of xwr_mini_nic is
   signal src_cyc_int   : std_logic;
   signal src_stb_int   : std_logic;
   signal snk_stall_int : std_logic;
-
-  signal wb_out  : t_wishbone_slave_out;
 
 -----------------------------------------------------------------------------
 -- FIFO interface signals
@@ -133,7 +131,7 @@ architecture wrapper of xwr_mini_nic is
 
 -------------------------------------------------------------------------------
 -- RX FSM stuff
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 
   signal snk_cyc_d0 : std_logic;
   signal nrx_sof : std_logic;
@@ -146,31 +144,21 @@ architecture wrapper of xwr_mini_nic is
 
 -------------------------------------------------------------------------------
 -- Classic Wishbone slave signals
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 
-  signal regs_in  : t_minic_in_registers;
-  signal regs_out : t_minic_out_registers;
+  signal regs_in  : t_mini_nic_regs_master_in;
+  signal regs_out : t_mini_nic_regs_master_out;
 
-  signal irq_tx     : std_logic;
-  signal irq_rx_ack : std_logic;
-  signal irq_rx     : std_logic;
-
-  signal nrx_newpacket, nrx_newpacket_d0 : std_logic;
-  signal ntx_newpacket, ntx_newpacket_d0 : std_logic;
-
-  signal irq_tx_ack  : std_logic;
-  signal irq_tx_mask : std_logic;
-begin  -- behavioral
-  regs_in.mcr_ver_i         <= x"1";
-  regs_in.dbgr_irq_cnt_i    <= (others => '0');
-  regs_in.dbgr_wb_irq_val_i <= '0';
+  signal mcr_rx_en : std_logic;
+begin
+  regs_in.mcr_ver         <= x"1";
 
 -------------------------------------------------------------------------------
 -- Tx / Rx FIFO
 -----------------------------------------------------------------------------
   TX_FIFO: entity work.generic_sync_fifo
     generic map(
-      g_data_width => 18, 
+      g_data_width => 18,
       g_size       => g_tx_fifo_size,
       g_with_almost_empty => false,
       g_with_almost_full  => false,
@@ -191,7 +179,7 @@ begin  -- behavioral
 
   RX_FIFO: entity work.generic_sync_fifo
     generic map(
-      g_data_width => 18, 
+      g_data_width => 18,
       g_size       => g_rx_fifo_size,
       g_with_almost_empty => false,
       g_with_almost_full  => true,
@@ -211,26 +199,22 @@ begin  -- behavioral
       almost_full_o => rx_fifo_afull,
       almost_empty_o => open);
 
-  tx_fifo_d  <= regs_out.tx_fifo_type_o & regs_out.tx_fifo_dat_o;
-  tx_fifo_we <= regs_out.tx_fifo_dat_wr_o and regs_out.tx_fifo_type_wr_o;
-  regs_in.mcr_tx_empty_i <= tx_fifo_empty;
-  regs_in.mcr_tx_full_i  <= tx_fifo_full;
+  tx_fifo_d  <= regs_out.tx_fifo_type & regs_out.tx_fifo_dat;
+  tx_fifo_we <= regs_out.tx_fifo_wr;
+  regs_in.mcr_tx_empty <= tx_fifo_empty;
+  regs_in.mcr_tx_full  <= tx_fifo_full;
 
-  regs_in.mcr_rx_empty_i  <= rx_fifo_empty;
-  regs_in.rx_fifo_empty_i <= rx_fifo_empty;
-  regs_in.mcr_rx_full_i   <= rx_fifo_full;
-  regs_in.rx_fifo_full_i  <= rx_fifo_full;
-  regs_in.rx_fifo_type_i  <= rx_fifo_q(17 downto 16);
-  regs_in.rx_fifo_dat_i   <= rx_fifo_q(15 downto 0);
-
-  -- sniff wb access to generate rx_fifo_rd every time the RX_FIFO register is
-  -- read
-  rx_fifo_rd <= '1' when(wb_i.cyc='1' and wb_i.stb='1' and wb_i.adr(6 downto 2)=b"0_0010" and wb_out.ack='1') else
-                '0';
+  regs_in.mcr_rx_empty  <= rx_fifo_empty;
+  regs_in.rx_fifo_empty <= rx_fifo_empty;
+  regs_in.mcr_rx_full   <= rx_fifo_full;
+  regs_in.rx_fifo_full  <= rx_fifo_full;
+  regs_in.rx_fifo_type  <= rx_fifo_q(17 downto 16);
+  regs_in.rx_fifo_dat   <= rx_fifo_q(15 downto 0);
+  rx_fifo_rd <= regs_out.rx_fifo_rd;
 
 -------------------------------------------------------------------------------
 -- TX Path  (Host -> Fabric)
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 
 -- helper signals to avoid big IF conditions in the FSM
   ntx_timeout_is_zero <= '1' when (ntx_timeout = to_unsigned(0, ntx_timeout'length)) else '0';
@@ -258,6 +242,19 @@ begin  -- behavioral
   txf_fnew   <= '1' when (tx_fifo_empty = '0' and txf_type = c_WRF_STATUS and tx_status_word.error = '0') else
                 '0';
 
+  process (clk_sys_i)
+  begin
+    if rising_edge(clk_sys_i) then
+      if rst_n_i = '0' then
+        mcr_rx_en <= '0';
+      elsif regs_out.mcr_wr = '1' then
+        mcr_rx_en <= regs_out.mcr_rx_en;
+      end if;
+    end if;
+  end process;
+
+  regs_in.mcr_rx_en <= mcr_rx_en;
+
   p_tx_fsm: process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
@@ -272,42 +269,42 @@ begin  -- behavioral
         ntx_stored_dat <= (others=>'0');
         ntx_stored_type <= (others=>'0');
         ntx_flush_last <= '0';
-        ntx_newpacket  <= '0';
       else
         case ntx_state is
           when TX_IDLE =>
-            regs_in.mcr_tx_error_i <= '0';
+            regs_in.mcr_tx_error <= '0';
             src_cyc_int <= '0';
             src_stb_int <= '0';
             src_o.sel   <= "11";
             src_o.adr   <= txf_type;
             ntx_timeout <= to_unsigned(c_NTX_TIMEOUT, ntx_timeout'length);
             ntx_flush_last <= '0';
-            ntx_newpacket  <= '0';
             if (tx_fifo_empty = '0' and txf_fnew = '0') then
               -- if there is something in the fifo but it's not a status word,
               -- we read until we find a valid status. In this case we indicate
               -- that Minic is busy by driving wbreg bit tx_idle to 0.
               tx_fifo_rd <= '1';
               ntx_rst_ts_ready <= '0';
-              regs_in.mcr_tx_idle_i  <= '0';
-            elsif (tx_fifo_empty = '0' and txf_fnew = '1' and regs_out.mcr_tx_start_o = '1') then
+              regs_in.mcr_tx_idle  <= '0';
+            elsif (tx_fifo_empty = '0' and txf_fnew = '1'
+                   and regs_out.mcr_wr = '1' and regs_out.mcr_tx_start = '1')
+            then
               -- we have a new frame to be sent, proceed..
               src_cyc_int <= '1';
               tx_fifo_rd <= '1';
               ntx_rst_ts_ready <= '1';
-              regs_in.mcr_tx_idle_i  <= '0';
+              regs_in.mcr_tx_idle  <= '0';
               ntx_state  <= TX_STATUS;
             else
               -- wait quietly for something to be written to FIFO
               tx_fifo_rd <= '0';
               ntx_rst_ts_ready <= '0';
-              regs_in.mcr_tx_idle_i  <= '1';
+              regs_in.mcr_tx_idle  <= '1';
             end if;
 
           when TX_STATUS =>
             -- read first word of the frame from fifo and start transmission
-            regs_in.mcr_tx_idle_i <= '0';
+            regs_in.mcr_tx_idle <= '0';
             ntx_rst_ts_ready      <= '0';
             src_cyc_int <= '1';
             src_stb_int <= '1';
@@ -316,14 +313,12 @@ begin  -- behavioral
             src_o.dat   <= f_swap_endian_16(txf_data);
             tx_fifo_rd <= '1';
             ntx_flush_last <= '0';
-            ntx_newpacket  <= '0';
             ntx_state <= TX_PACKET;
 
           when TX_PACKET =>
-            regs_in.mcr_tx_idle_i <= '0';
+            regs_in.mcr_tx_idle <= '0';
             ntx_rst_ts_ready      <= '0';
             src_cyc_int <= '1';
-            ntx_newpacket  <= '0';
             if (tx_fifo_empty = '0' and src_i.stall = '0' and txf_ferror = '0' and txf_type = c_WRF_DATA) then
               -- normal situation, we send the payload of a frame
               src_o.adr   <= c_WRF_DATA;
@@ -372,10 +367,9 @@ begin  -- behavioral
             end if;
 
           when TX_FLUSH =>
-            regs_in.mcr_tx_idle_i <= '0';
+            regs_in.mcr_tx_idle <= '0';
             ntx_rst_ts_ready      <= '0';
             src_cyc_int <= '1';
-            ntx_newpacket  <= '0';
             if (src_i.stall = '0' and (ntx_stored_type = c_WRF_DATA or ntx_stored_type = c_WRF_OOB)) then
               src_o.adr   <= ntx_stored_type;
               src_o.dat   <= f_swap_endian_16(ntx_stored_dat);
@@ -404,17 +398,16 @@ begin  -- behavioral
             end if;
 
           when TX_END_PACKET =>
-            regs_in.mcr_tx_idle_i <= '0';
+            regs_in.mcr_tx_idle <= '0';
             ntx_rst_ts_ready      <= '0';
             src_stb_int <= '0';
             -- timeout counter in case we never get all ACKs.
             ntx_timeout <= ntx_timeout - 1;
             if (ntx_ack_count = 0 or ntx_timeout_is_zero = '1') then
-              regs_in.mcr_tx_error_i <= ntx_timeout_is_zero;
+              regs_in.mcr_tx_error <= ntx_timeout_is_zero;
               src_cyc_int <= '0';
               src_o.sel   <= "11";
               tx_fifo_rd  <= '0';
-              ntx_newpacket <= '1';
               ntx_state   <= TX_IDLE;
             end if;
         end case;
@@ -429,7 +422,7 @@ begin  -- behavioral
 
 -------------------------------------------------------------------------------
 -- RX Path (Fabric ->  Host)
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
 
   p_rx_gen_ack : process(clk_sys_i)
   begin
@@ -461,8 +454,7 @@ begin  -- behavioral
         rxf_type   <= (others=>'0');
         rxf_data   <= (others=>'0');
         snk_stall_int <= '0';
-        regs_in.mcr_rx_ready_i <= '0';
-        nrx_newpacket <= '0';
+        regs_in.mcr_rx_ready <= '0';
         nrx_state  <= RX_WAIT_FRAME;
 
       else
@@ -473,9 +465,8 @@ begin  -- behavioral
             rx_fifo_we <= '0';
             rxf_type   <= (others=>'0');
             rxf_data   <= (others=>'0');
-            regs_in.mcr_rx_error_i  <= '0';
-            nrx_newpacket <= '0';
-            if (regs_out.mcr_rx_en_o = '1') then
+            regs_in.mcr_rx_error  <= '0';
+            if (mcr_rx_en = '1') then
               --  Stall at start of frame, will accept in RX_FRAME state.
               snk_stall_int <= not nrx_sof;
             else
@@ -484,7 +475,7 @@ begin  -- behavioral
             end if;
 
             -- wait for software to enable RX path and a start of new frame
-            if (regs_out.mcr_rx_en_o = '1' and nrx_sof = '1' and rx_fifo_full = '0') then
+            if (mcr_rx_en = '1' and nrx_sof = '1' and rx_fifo_full = '0') then
               nrx_state <= RX_FRAME;
             end if;
 
@@ -505,33 +496,29 @@ begin  -- behavioral
               rx_fifo_we <= '0';
             end if;
 
-            if ((regs_out.mcr_rx_en_o = '0' or nrx_eof = '1') and rx_fifo_full = '0') then
+            if ((mcr_rx_en = '0' or nrx_eof = '1') and rx_fifo_full = '0') then
               -- stop writing FIFO if sw disables RX path
               -- or if we're done with current frame
-              regs_in.mcr_rx_ready_i <= '1';
-              regs_in.mcr_rx_error_i  <= '0';
-              nrx_newpacket <= '1';
+              regs_in.mcr_rx_ready <= '1';
+              regs_in.mcr_rx_error  <= '0';
               nrx_state              <= RX_WAIT_FRAME;
-            elsif ((regs_out.mcr_rx_en_o = '0' or nrx_eof = '1') and rx_fifo_full = '1') then
+            elsif ((mcr_rx_en = '0' or nrx_eof = '1') and rx_fifo_full = '1') then
               -- the difference with the previous condition is that if the fifo
               -- is full on the last word, we don't set rx_error, because the
               -- frame was not cut (it fits in the FIFO). Besides that, we have
               -- to go to RX_FULL state to wait for the FIFO to be half-empty
               -- and receive more frames.
-              regs_in.mcr_rx_ready_i <= '1';
-              regs_in.mcr_rx_error_i  <= '0';
-              nrx_newpacket <= '1';
+              regs_in.mcr_rx_ready <= '1';
+              regs_in.mcr_rx_error  <= '0';
               nrx_state              <= RX_FULL;
             elsif (rx_fifo_full = '1') then
               -- error if fifo gets full needs to be recovered
-              regs_in.mcr_rx_ready_i <= '1';
-              regs_in.mcr_rx_error_i  <= '1';
-              nrx_newpacket <= '1';
+              regs_in.mcr_rx_ready <= '1';
+              regs_in.mcr_rx_error  <= '1';
               nrx_state <= RX_FULL;
             else
-              regs_in.mcr_rx_ready_i <= '0';
-              regs_in.mcr_rx_error_i  <= '0';
-              nrx_newpacket <= '0';
+              regs_in.mcr_rx_ready <= '0';
+              regs_in.mcr_rx_error  <= '0';
 
             end if;
 
@@ -540,11 +527,10 @@ begin  -- behavioral
             rx_fifo_we <= '0';
             rxf_type   <= (others=>'0');
             rxf_data   <= (others=>'0');
-            nrx_newpacket <= '0';
 
             -- recovering means disabling RX path and reading everything from
             -- the FIFO
-            --if (regs_out.mcr_rx_en_o = '0' and rx_fifo_empty = '1') then
+            --if (mcr_rx_en = '0' and rx_fifo_empty = '1') then
             --  nrx_state <= RX_WAIT_FRAME;
             --end if;
             if (snk_i.cyc = '0' and rx_fifo_afull = '0') then
@@ -561,29 +547,29 @@ begin  -- behavioral
 
 -------------------------------------------------------------------------------
 -- TX Timestamping unit
--------------------------------------------------------------------------------  
+-------------------------------------------------------------------------------
   tsu_fsm : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
-        regs_in.mcr_tx_ts_ready_i <= '0';
-        regs_in.tsr0_valid_i <= '0';
-        regs_in.tsr0_pid_i   <= (others => '0');
-        regs_in.tsr0_fid_i   <= (others => '0');
-        regs_in.tsr1_tsval_i <= (others => '0');
+        regs_in.mcr_tx_ts_ready <= '0';
+        regs_in.tsr0_valid <= '0';
+        regs_in.tsr0_pid   <= (others => '0');
+        regs_in.tsr0_fid   <= (others => '0');
+        regs_in.tsr1_tsval <= (others => '0');
         txtsu_ack_o          <= '0';
       else
         -- Make sure the timestamp is written to the FIFO only once.
 
         if(ntx_rst_ts_ready = '1') then
-          regs_in.mcr_tx_ts_ready_i <= '0';
+          regs_in.mcr_tx_ts_ready <= '0';
         elsif(txtsu_stb_i = '1') then
-          regs_in.mcr_tx_ts_ready_i <= '1';
-          regs_in.tsr0_valid_i <= not txtsu_tsincorrect_i;
-          regs_in.tsr0_fid_i   <= txtsu_frame_id_i;
-          regs_in.tsr0_pid_i   <= txtsu_port_id_i;
-          regs_in.tsr1_tsval_i <= txtsu_tsval_i;
-          txtsu_ack_o          <= '1';
+          regs_in.mcr_tx_ts_ready <= '1';
+          regs_in.tsr0_valid <= not txtsu_tsincorrect_i;
+          regs_in.tsr0_fid   <= txtsu_frame_id_i;
+          regs_in.tsr0_pid   <= txtsu_port_id_i;
+          regs_in.tsr1_tsval <= txtsu_tsval_i;
+          txtsu_ack_o        <= '1';
         else
           txtsu_ack_o <= '0';
         end if;
@@ -591,58 +577,12 @@ begin  -- behavioral
     end if;
   end process;
 
-  handle_irqs: process(clk_sys_i)
-  begin
-    if rising_edge(clk_sys_i) then
-      if rst_n_i = '0' then
-        irq_tx           <= '0';
-        irq_rx           <= '0';
-        ntx_newpacket_d0 <= '0';
-        nrx_newpacket_d0 <= '0';
-      else
-        ntx_newpacket_d0 <= ntx_newpacket;
-        nrx_newpacket_d0 <= nrx_newpacket;
-
-        if (ntx_newpacket_d0 = '0' and ntx_newpacket = '1' and irq_tx_mask = '1') then
-          irq_tx <= '1';
-        elsif (irq_tx_mask = '0' or irq_tx_ack = '1') then
-          irq_tx <= '0';
-        end if;
-
-        if (nrx_newpacket_d0 = '0' and nrx_newpacket = '1') then
-          irq_rx <= '1';
-        elsif (irq_rx_ack = '1') then
-          irq_rx <= '0';
-        end if;
-      end if;
-    end if;
-  end process;
-
-  U_WB_Slave : entity work.minic_wb_slave
+  inst_wr_minic_map: entity work.wr_mini_nic_map
     port map (
       rst_n_i          => rst_n_i,
-      clk_sys_i        => clk_sys_i,
-      wb_adr_i         => wb_i.adr(6 downto 2),
-      wb_dat_i         => wb_i.dat,
-      wb_dat_o         => wb_out.dat,
-      wb_cyc_i         => wb_i.cyc,
-      wb_sel_i         => wb_i.sel,
-      wb_stb_i         => wb_i.stb,
-      wb_we_i          => wb_i.we,
-      wb_ack_o         => wb_out.ack,
-      wb_stall_o       => wb_out.stall,
-      wb_err_o         => wb_out.err,
-      wb_rty_o         => wb_out.rty,
-      wb_int_o         => int_o,
-      regs_i           => regs_in,
-      regs_o           => regs_out,
-      tx_ts_read_ack_o => open,
-      irq_tx_i         => irq_tx,
-      irq_tx_ack_o     => irq_tx_ack,
-      irq_tx_mask_o    => irq_tx_mask,
-      irq_rx_i         => irq_rx,
-      irq_rx_ack_o     => irq_rx_ack,
-      irq_txts_i       => '0');
-
-  wb_o <= wb_out;
+      clk_i            => clk_sys_i,
+      wb_i             => wb_i,
+      wb_o             => wb_o,
+      mini_nic_regs_i  => regs_in,
+      mini_nic_regs_o  => regs_out);
 end wrapper;
