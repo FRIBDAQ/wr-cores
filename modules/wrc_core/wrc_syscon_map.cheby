@@ -1,0 +1,316 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later, CERN-OHL-W-2.0+
+###############################################################################
+memory-map:
+  name: wrc_syscon_map
+  comment: WR Core System Controller
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+    iogroup: sysc_regs
+  children:
+  - reg:
+      name: RSTR
+      comment: Syscon reset register
+      width: 32
+      access: rw
+      address: 0x0
+      x-hdl:
+        write-strobe: True
+      children:
+      - field:
+          name: TRIG
+          comment: Reset trigger
+          description: Write 0xdeadbee latch the state of RSTR.RST to the reset line of the LM32 CPU.
+          range: 27-0
+          x-hdl:
+            type: wire
+      - field:
+          name: RST
+          comment: Reset line state value
+          range: 28
+  - reg:
+      name: GPSR
+      comment: GPIO Set/Readback Register
+      width: 32
+      access: rw
+      address: 0x4
+      x-hdl:
+        write-strobe: True
+        type: wire
+      children:
+      - field:
+          name: fmc_scl
+          comment: FMC I2C bitbanged SCL
+          description: |
+            write 1: Set FMC SCL line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 2
+      - field:
+          name: fmc_sda
+          comment: FMC I2C bitbanged SDA
+          description: |
+            write 1: Set FMC SDA line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 3
+      - field:
+          name: Net_RST
+          comment: Network AP reset
+          description: 'write 1: resets the networking subsystem'
+          range: 4
+      - field:
+          name: Btn1
+          comment: SPEC Pushbutton 1 state
+          range: 5
+      - field:
+          name: Btn2
+          comment: SPEC Pushbutton 2 state
+          range: 6
+      - field:
+          name: sfp1_det
+          comment: SFP1 detect (MOD_DEF0 signal)
+          range: 7
+      - field:
+          name: sfp1_scl
+          comment: SFP1 I2C bitbanged SCL
+          description: |
+            write 1: Set SFP1 SCL line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 8
+      - field:
+          name: sfp1_sda
+          comment: SFP1 I2C bitbanged SDA
+          description: |
+            write 1: Set SFP1 SDA line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 9
+      - field:
+          name: spi_sclk
+          comment: SPI bitbanged SCLK
+          description: |
+            write 1: drive SPI CLK to 1
+            read: always 0
+          range: 10
+      - field:
+          name: spi_ncs
+          comment: SPI bitbanged NCS
+          description: |
+            write 1: drive SPI NCS to 1
+            read: always 0
+          range: 11
+      - field:
+          name: spi_mosi
+          comment: SPI bitbanged MOSI
+          description: |
+            write 1: drive SPI MOSI line to 1
+            read: always 0
+          range: 12
+      - field:
+          name: spi_miso
+          comment: SPI bitbanged MISO
+          range: 13
+      - field:
+          name: sfp2_det
+          comment: SFP2 detect
+          description: 'read : returns the state of the SFP2''s MOD_DEF0 line'
+          range: 16
+      - field:
+          name: sfp2_scl
+          comment: SFP2 I2C bitbanged SCL
+          description: |
+            write 1: Set SFP2 SCL line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 17
+      - field:
+          name: sfp2_sda
+          comment: SFP2 I2C bitbanged SDA
+          description: |
+            write 1: Set SFP2 SDA line to 1 (pullup)
+            read : returns the current status of the SCL line.
+          range: 18
+  - reg:
+      name: GPCR
+      comment: GPIO Clear Register
+      width: 32
+      access: wo
+      address: 0x8
+      x-hdl:
+        write-strobe: True
+        type: wire
+      children:
+      - field:
+          name: fmc_scl
+          comment: FMC I2C bitbanged SCL
+          description: 'write 1: Set FMC SCL line to 0.'
+          range: 2
+      - field:
+          name: fmc_sda
+          comment: FMC I2C bitbanged SDA
+          description: 'write 1: Set FMC SDA line to 0.'
+          range: 3
+      - field:
+          name: sfp1_scl
+          comment: SFP I2C bitbanged SCL
+          description: 'write 1: Set SFP SCL line to 0.'
+          range: 8
+      - field:
+          name: sfp1_sda
+          comment: SFP I2C bitbanged SDA
+          description: 'write 1: Set SFP SDA line to 0.'
+          range: 9
+      - field:
+          name: spi_sclk
+          comment: SPI bitbanged SCLK
+          description: 'write 1: Set SPI CLK line to 0.'
+          range: 10
+      - field:
+          name: spi_cs
+          comment: SPI bitbanged CS
+          description: 'write 1: Set SPI CS line to 0'
+          range: 11
+      - field:
+          name: spi_mosi
+          comment: SPI bitbanged MOSI
+          description: 'write 1: Set SPI MOSI line to 0.'
+          range: 12
+      - field:
+          name: sfp2_scl
+          comment: SFP2 I2C bitbanged SCL
+          description: 'write 1: Set SFP2 SCL line to 0.'
+          range: 17
+      - field:
+          name: sfp2_sda
+          comment: SFP2 I2C bitbanged SDA
+          description: 'write 1: Set SFP2 SDA line to 0.'
+          range: 18
+  - reg:
+      name: HWFR
+      comment: Hardware Feature Register
+      width: 32
+      access: ro
+      address: 0xc
+      children:
+      - field:
+          name: MEMSIZE
+          comment: Memory size
+          description: 'Size of installed memory: 0 = 64 kB ... 0xf = 1024 kB'
+          range: 3-0
+      - field:
+          name: STORAGE_TYPE
+          comment: Storage type
+          description: Storage memory type (0 - Flash, 1 - I2C EEPROM, 2 - 1-Wire EEPROM)
+          range: 9-8
+      - field:
+          name: mapver
+          comment: Memory map version
+          range: 15-12
+#          preset: 0x1
+      - field:
+          name: STORAGE_SEC
+          comment: Storage sector size in KB
+          range: 31-16
+  - reg:
+      name: HWIR
+      comment: Hardware Info Register
+      width: 32
+      access: ro
+      address: 0x10
+      children:
+      - field:
+          name: NAME
+          comment: Board name (4 letters)
+          range: 31-0
+  - reg:
+      name: SDBFS
+      comment: Storage SDBFS info
+      width: 32
+      access: ro
+      address: 0x14
+      children:
+      - field:
+          name: BADDR
+          comment: Base address
+          description: Default base address in storage, where WRPC should write SDBFS image
+          range: 31-0
+  - reg:
+      name: TCR
+      comment: Timer Control Register
+      width: 32
+      access: rw
+      address: 0x18
+      children:
+      - field:
+          name: ENABLE
+          comment: Timer Enable
+          description: '1: enable timer, 0: disable timer'
+          range: 31
+  - reg:
+      name: TVR
+      comment: Timer Counter Value Register
+      width: 32
+      access: ro
+      address: 0x1c
+  - reg:
+      name: DIAG_INFO
+      comment: 'User Diag: version register'
+      width: 32
+      access: ro
+      address: 0x20
+      children:
+      - field:
+          name: VER
+          comment: Ver
+          range: 15-0
+      - field:
+          name: ID
+          comment: Id
+          range: 31-16
+  - reg:
+      name: DIAG_NW
+      comment: 'User Diag: number of words'
+      width: 32
+      access: ro
+      address: 0x24
+      children:
+      - field:
+          name: RW
+          comment: Read/write words
+          range: 15-0
+      - field:
+          name: RO
+          comment: Read-only words
+          range: 31-16
+  - reg:
+      name: DIAG_CR
+      comment: 'User Diag: Control Register'
+      width: 32
+      access: wo
+      address: 0x28
+      x-hdl:
+        write-strobe: True
+      children:
+      - field:
+          name: ADR
+          comment: Address
+          range: 15-0
+      - field:
+          name: RW
+          comment: R/W
+          range: 31
+  - reg:
+      name: DIAG_DAT
+      comment: 'User Diag: data to read/write'
+      width: 32
+      access: rw
+      address: 0x2c
+      x-hdl:
+        write-strobe: True
+        type: wire
+  - reg:
+      name: HWBLD
+      comment: HW Build date
+      width: 32
+      access: ro
+      address: 0x30
