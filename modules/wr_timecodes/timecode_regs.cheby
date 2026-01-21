@@ -23,6 +23,7 @@ memory-map:
   x-hdl:
     iogroup: timecode_regs
     name-suffix: _regs
+    busgroup: True
   schema-version:
     core: 2.0.0
     x-conversions: 1.0.0

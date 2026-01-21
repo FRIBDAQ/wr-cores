@@ -93,8 +93,6 @@ architecture rtl of wr_irig_master is
   signal frame_m : std_logic_vector(c_FRAME_LEN-1 downto 0);    --markers
 
 begin
-
-
   u_edge_detect: gc_edge_detect
   port map
   (
