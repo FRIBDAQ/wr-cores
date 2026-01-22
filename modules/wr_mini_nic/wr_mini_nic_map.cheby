@@ -1,0 +1,156 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2025 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
+memory-map:
+  name: wr_mini_nic_map
+  comment: Mini NIC for WhiteRabbit
+  description: Simple, embedded WhiteRabbit-compiliant Network Interface Controller (NIC) for use in WhiteRabbit embedded receivers
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+    iogroup: mini_nic_regs
+  children:
+  - reg:
+      name: mcr
+      comment: miNIC Control Register
+      width: 32
+      access: rw
+      address: 0x0
+      x-hdl:
+        type: wire
+        write-strobe: True
+      children:
+      - field:
+          name: tx_start
+          comment: Start TX
+          description: 'write 1: starts transmission, write 0: no effect'
+          range: 0
+      - field:
+          name: tx_idle
+          comment: TX idle
+          description: '1: TX is idle.\n0: TX is busy, don''t touch the buffer'
+          range: 1
+      - field:
+          name: tx_error
+          comment: TX error
+          description: '1: an error occured during the TX transfer'
+          range: 2
+      - field:
+          name: tx_empty
+          comment: TX_FIFO_EMPTY
+          range: 3
+      - field:
+          name: tx_full
+          comment: TX_FIFO_FULL
+          range: 4
+      - field:
+          name: rx_ready
+          comment: RX ready
+          description: '1: RX buffer contains at least one packet'
+          range: 8
+      - field:
+          name: rx_error
+          comment: RX error
+          description: '1: RX error, FIFO overflow'
+          range: 9
+      - field:
+          name: rx_en
+          comment: RX enable
+          description: '1: RX buffer is allocated and initialized by the host, the miNIC can receive packets\n0: RX buffer not ready, reception is disabled'
+          range: 10
+      - field:
+          name: tx_ts_ready
+          comment: TX TS ready
+          description: '1: the TX transfer is complete and a timestamp is available'
+          range: 11
+      - field:
+          name: rx_empty
+          comment: RX_FIFO_EMPTY
+          range: 12
+      - field:
+          name: rx_full
+          comment: RX_FIFO_FULL
+          range: 13
+      - field:
+          name: VER
+          comment: Regs map version
+          range: 27-24
+  - reg:
+      name: tx_fifo
+      comment: TX FIFO Register
+      width: 32
+      access: wo
+      address: 0x4
+      x-hdl:
+        write-strobe: True
+        type: wire
+      children:
+      - field:
+          name: dat
+          comment: Data to send
+          range: 15-0
+      - field:
+          name: type
+          comment: Data type
+          description: '00: normal data\n        01: OOB data\n        10: First word of a new frame'
+          range: 17-16
+  - reg:
+      name: rx_fifo
+      comment: RX FIFO Register
+      width: 32
+      access: ro
+      address: 0x8
+      x-hdl:
+        read-strobe: True
+      children:
+      - field:
+          name: dat
+          comment: Data to send
+          range: 15-0
+      - field:
+          name: type
+          comment: Data type
+          description: '00: normal data\n        01: OOB data\n        10: First word of a new frame'
+          range: 17-16
+      - field:
+          name: empty
+          comment: RX_FIFO_EMPTY
+          range: 30
+      - field:
+          name: full
+          comment: RX_FIFO_FULL
+          range: 31
+  - reg:
+      name: tsr0
+      comment: TX timestamp register 0
+      width: 32
+      access: ro
+      address: 0x14
+      children:
+      - field:
+          name: valid
+          comment: Timestamp valid
+          range: 0
+      - field:
+          name: pid
+          comment: Port ID
+          range: 5-1
+      - field:
+          name: fid
+          comment: Frame ID
+          range: 21-6
+  - reg:
+      name: tsr1
+      comment: TX timestamp register 1
+      width: 32
+      access: ro
+      address: 0x18
+      x-hdl:
+        read-strobe: True
+      children:
+      - field:
+          name: tsval
+          comment: Timestamp value
+          range: 31-0

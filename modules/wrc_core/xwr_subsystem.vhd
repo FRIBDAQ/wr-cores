@@ -811,6 +811,9 @@ begin
       clk_sys_i => clk_sys_i,
       rst_n_i   => rst_net_n,
 
+      wb_i => minic_wb_in,
+      wb_o => minic_wb_out,
+
       src_o => nic_snk_in,
       src_i => nic_snk_out,
       snk_o => nic_src_in,
@@ -821,12 +824,8 @@ begin
       txtsu_tsval_i       => ep_txtsu_ts_value,
       txtsu_tsincorrect_i => ep_txtsu_ts_incorrect,
       txtsu_stb_i         => mnic_txtsu_stb,
-      txtsu_ack_o         => mnic_txtsu_ack,
-
-      wb_i => minic_wb_in,
-      wb_o => minic_wb_out,
-      int_o => open
-      );
+      txtsu_ack_o         => mnic_txtsu_ack
+    );
 
   -----------------------------------------------------------------------------
   -- WB Peripherials

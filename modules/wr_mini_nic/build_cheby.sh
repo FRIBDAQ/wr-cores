@@ -5,5 +5,4 @@
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ##-----------------------------------------------------------------------------
 
-mkdir -p doc
-wbgen2 -D ./doc/minic.html -C minic_regs.h -V minic_wb_slave.vhd -p minic_wbgen2_pkg.vhd --cstyle defines --lang vhdl  -H record -K ../../sim/minic_regs.vh mini_nic.wb
+cheby -i wr_mini_nic_map.cheby --header=commit --gen-hdl > wr_mini_nic_map.vhd
