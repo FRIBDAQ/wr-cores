@@ -36,7 +36,6 @@ entity xwr_endpoint is
     g_tx_force_gap_length   : integer                        := 0;
     g_tx_runt_padding       : boolean                        := false;
     g_pcs_16bit             : boolean                        := false;
-    g_records_for_phy       : boolean                        := false;
     g_rx_buffer_size        : integer                        := 1024;
     g_with_rx_buffer        : boolean                        := true;
     g_with_flow_control     : boolean                        := true;
@@ -106,12 +105,6 @@ entity xwr_endpoint is
     phy_mdio_master_o : out t_wishbone_master_out;
     phy_mdio_master_i : in t_wishbone_master_in := cc_dummy_slave_out; 
     
-    -- 2nd option is to use record-based I/Os
-    phy8_o            : out t_phy_8bits_from_wrc;
-    phy8_i            : in  t_phy_8bits_to_wrc  := c_dummy_phy8_to_wrc;
-    phy16_o           : out t_phy_16bits_from_wrc;
-    phy16_i           : in  t_phy_16bits_to_wrc := c_dummy_phy16_to_wrc;
-
     ---------------------------------------------------------------------------
     -- Wishbone I/O
     ---------------------------------------------------------------------------
@@ -251,29 +244,7 @@ entity xwr_endpoint is
 end xwr_endpoint;
 
 architecture syn of xwr_endpoint is
-
-  signal phy_rst          : std_logic;
-  signal phy_loopen       : std_logic;
-  signal phy_loopen_vec   : std_logic_vector(2 downto 0);
-  signal phy_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
-  signal phy_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
-  signal phy_tx_prbs_sel  : std_logic_vector(2 downto 0);
-  signal sfp_tx_disable   : std_logic;
-  signal phy_tx_clk       : std_logic;
-
-  signal phy_tx_disparity : std_logic;
-  signal phy_tx_enc_err   : std_logic;
-  signal phy_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rx_clk       : std_logic;
-  signal phy_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rx_enc_err   : std_logic;
-  signal phy_rx_bts       : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rdy          : std_logic;
-  signal sfp_tx_fault     : std_logic;
-  signal sfp_los          : std_logic;
-
 begin
-
   U_Wrapped_Endpoint : entity work.wr_endpoint
     generic map (
       g_interface_mode      => g_interface_mode,
@@ -306,11 +277,11 @@ begin
       pps_csync_p1_i       => pps_csync_p1_i,
       pps_valid_i          => pps_valid_i,
 
-      phy_rst_o            => phy_rst,
-      phy_loopen_o         => phy_loopen,
-      phy_loopen_vec_o     => phy_loopen_vec,
-      phy_tx_prbs_sel_o    => phy_tx_prbs_sel,
-      phy_rdy_i            => phy_rdy,
+      phy_rst_o            => phy_rst_o,
+      phy_loopen_o         => phy_loopen_o,
+      phy_loopen_vec_o     => phy_loopen_vec_o,
+      phy_tx_prbs_sel_o    => phy_tx_prbs_sel_o,
+      phy_rdy_i            => phy_rdy_i,
 
       phy_mdio_master_cyc_o     => phy_mdio_master_o.cyc,
       phy_mdio_master_stb_o     => phy_mdio_master_o.stb,
@@ -322,20 +293,20 @@ begin
       phy_mdio_master_stall_i   => phy_mdio_master_i.stall,
       phy_mdio_master_ack_i     => phy_mdio_master_i.ack,
 
-      phy_sfp_tx_fault_i   => sfp_tx_fault,
-      phy_sfp_los_i        => sfp_los,
-      phy_sfp_tx_disable_o => sfp_tx_disable,
+      phy_sfp_tx_fault_i   => phy_sfp_tx_fault_i,
+      phy_sfp_los_i        => phy_sfp_los_i,
+      phy_sfp_tx_disable_o => phy_sfp_tx_disable_o,
 
-      phy_ref_clk_i        => phy_tx_clk,
-      phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
-      phy_tx_disparity_i   => phy_tx_disparity,
-      phy_tx_enc_err_i     => phy_tx_enc_err,
-      phy_rx_data_i        => phy_rx_data,
-      phy_rx_clk_i         => phy_rx_clk,
-      phy_rx_k_i           => phy_rx_k,
-      phy_rx_enc_err_i     => phy_rx_enc_err,
-      phy_rx_bitslide_i    => phy_rx_bts,
+      phy_ref_clk_i        => phy_ref_clk_i,
+      phy_tx_data_o        => phy_tx_data_o,
+      phy_tx_k_o           => phy_tx_k_o,
+      phy_tx_disparity_i   => phy_tx_disparity_i,
+      phy_tx_enc_err_i     => phy_tx_enc_err_i,
+      phy_rx_data_i        => phy_rx_data_i,
+      phy_rx_clk_i         => phy_rx_clk_i,
+      phy_rx_k_i           => phy_rx_k_i,
+      phy_rx_enc_err_i     => phy_rx_enc_err_i,
+      phy_rx_bitslide_i    => phy_rx_bitslide_i,
 
       src_dat_o            => src_o.dat,
       src_adr_o            => src_o.adr,
@@ -410,100 +381,6 @@ begin
 
   wb_o.err <= '0';
   wb_o.rty <= '0';
-
-
-  -- Record-based PHY connections, depending on 8/16-bit PCS
-  GEN_16BIT_IF: if g_pcs_16bit and g_records_for_phy generate
-    phy16_o.rst            <= phy_rst;
-    phy16_o.loopen         <= phy_loopen;
-    phy16_o.loopen_vec     <= phy_loopen_vec;
-    phy16_o.tx_data        <= phy_tx_data;
-    phy16_o.tx_k           <= phy_tx_k;
-    phy16_o.tx_prbs_sel    <= phy_tx_prbs_sel;
-    phy16_o.sfp_tx_disable <= sfp_tx_disable;
-
-    phy_tx_clk       <= phy16_i.ref_clk;
-    phy_tx_disparity <= phy16_i.tx_disparity;
-    phy_tx_enc_err   <= phy16_i.tx_enc_err;
-    phy_rx_data      <= phy16_i.rx_data;
-    phy_rx_clk       <= phy16_i.rx_clk;
-    phy_rx_k         <= phy16_i.rx_k;
-    phy_rx_enc_err   <= phy16_i.rx_enc_err;
-    phy_rx_bts       <= phy16_i.rx_bitslide;
-    phy_rdy          <= phy16_i.rdy;
-    sfp_tx_fault     <= phy16_i.sfp_tx_fault;
-    sfp_los          <= phy16_i.sfp_los;
-
-    -- drive unused ports with dummy values
-    phy8_o               <= c_dummy_phy8_from_wrc;
-    phy_rst_o            <= '0';
-    phy_loopen_o         <= '0';
-    phy_tx_data_o        <= (others => '0');
-    phy_tx_k_o           <= (others => '0');
-    phy_loopen_vec_o     <= (others => '0');
-    phy_tx_prbs_sel_o    <= (others => '0');
-    phy_sfp_tx_disable_o <= '0';
-  end generate;
-
-  GEN_8BIT_IF: if not g_pcs_16bit and g_records_for_phy generate
-    phy8_o.rst            <= phy_rst;
-    phy8_o.loopen         <= phy_loopen;
-    phy8_o.loopen_vec     <= phy_loopen_vec;
-    phy8_o.tx_data        <= phy_tx_data;
-    phy8_o.tx_k           <= phy_tx_k;
-    phy8_o.tx_prbs_sel    <= phy_tx_prbs_sel;
-    phy8_o.sfp_tx_disable <= sfp_tx_disable;
-
-    phy_tx_clk       <= phy8_i.ref_clk;
-    phy_tx_disparity <= phy8_i.tx_disparity;
-    phy_tx_enc_err   <= phy8_i.tx_enc_err;
-    phy_rx_data      <= phy8_i.rx_data;
-    phy_rx_clk       <= phy8_i.rx_clk;
-    phy_rx_k         <= phy8_i.rx_k;
-    phy_rx_enc_err   <= phy8_i.rx_enc_err;
-    phy_rx_bts       <= phy8_i.rx_bitslide;
-    phy_rdy          <= phy8_i.rdy;
-    sfp_tx_fault     <= phy8_i.sfp_tx_fault;
-    sfp_los          <= phy8_i.sfp_los;
-
-    -- drive unused ports with dummy values
-    phy16_o              <= c_dummy_phy16_from_wrc;
-    phy_rst_o            <= '0';
-    phy_loopen_o         <= '0';
-    phy_tx_data_o        <= (others => '0');
-    phy_tx_k_o           <= (others => '0');
-    phy_loopen_vec_o     <= (others => '0');
-    phy_tx_prbs_sel_o    <= (others => '0');
-    phy_sfp_tx_disable_o <= '0';
-  end generate;
-
-  -- backwards compatibility
-  GEN_STD_IF: if not g_records_for_phy generate
-    phy_rst_o            <= phy_rst;
-    phy_loopen_o         <= phy_loopen;
-    phy_loopen_vec_o     <= phy_loopen_vec;
-    phy_tx_data_o        <= phy_tx_data;
-    phy_tx_k_o           <= phy_tx_k;
-    phy_tx_prbs_sel_o    <= phy_tx_prbs_sel;
-    phy_sfp_tx_disable_o <= sfp_tx_disable;
-
-    phy_tx_clk       <= phy_ref_clk_i;
-    phy_tx_disparity <= phy_tx_disparity_i;
-    phy_tx_enc_err   <= phy_tx_enc_err_i;
-    phy_rx_data      <= phy_rx_data_i;
-    phy_rx_clk       <= phy_rx_clk_i;
-    phy_rx_k         <= phy_rx_k_i;
-    phy_rx_enc_err   <= phy_rx_enc_err_i;
-    phy_rx_bts       <= phy_rx_bitslide_i;
-    phy_rdy          <= phy_rdy_i;
-    sfp_tx_fault     <= phy_sfp_tx_fault_i;
-    sfp_los          <= phy_sfp_los_i;
-
-    -- drive unused ports with dummy values
-    phy8_o  <= c_dummy_phy8_from_wrc;
-    phy16_o <= c_dummy_phy16_from_wrc;
-  end generate;
-  
 end syn;
 
 
