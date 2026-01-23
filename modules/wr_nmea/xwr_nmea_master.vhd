@@ -27,10 +27,7 @@ use work.gencores_pkg.all;
 use work.nmea_master_regs_pkg.all;
 
 entity xwr_nmea_master is
-  generic
-  (
-    g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
-    g_address_granularity : t_wishbone_address_granularity := BYTE;
+  generic (
     g_ref_clock_rate      : integer := 62500000
   );
   port
@@ -59,65 +56,23 @@ entity xwr_nmea_master is
 end entity xwr_nmea_master;
 
 architecture wrapper of xwr_nmea_master is
-
-  signal wb_in : t_wishbone_slave_in;
-  signal wb_out : t_wishbone_slave_out;
-
   signal nmea_regs_in  : t_nmea_regs_master_in;
   signal nmea_regs_out : t_nmea_regs_master_out;
-
-  signal sec_sys   : std_logic_vector(7 downto 0);
-  signal min_sys   : std_logic_vector(7 downto 0);
-  signal hour_sys  : std_logic_vector(7 downto 0);
-  signal day_sys   : std_logic_vector(7 downto 0);
-  signal month_sys : std_logic_vector(7 downto 0);
-  signal year_sys  : std_logic_vector(15 downto 0);
 
   signal baud_div : std_logic_vector(16 downto 0);
   signal busy_out : std_logic;
   signal nmea_out : std_logic;
 
 begin
-
-  U_Adapter : wb_slave_adapter
-  generic map
-  (
-    g_master_use_struct  => true,
-    g_master_mode        => CLASSIC,
-    g_master_granularity => WORD,
-    g_slave_use_struct   => true,
-    g_slave_mode         => g_interface_mode,
-    g_slave_granularity  => g_address_granularity
-  )
-  port map
-  (
-    clk_sys_i => clk_sys_i,
-    rst_n_i   => rst_sys_n_i,
-    slave_i   => wb_i,
-    slave_o   => wb_o,
-    master_i  => wb_out,
-    master_o  => wb_in
-  );
-
   U_nmea_master_regs: entity work.nmea_master_regs
-  port map
-  (
-    rst_n_i     => rst_sys_n_i,
-    clk_i       => clk_sys_i,
-    wb_cyc_i    => wb_in.cyc,
-    wb_stb_i    => wb_in.stb,
-    wb_adr_i    => wb_in.adr(1 downto 0),
-    wb_sel_i    => wb_in.sel,
-    wb_we_i     => wb_in.we,
-    wb_dat_i    => wb_in.dat,
-    wb_ack_o    => wb_out.ack,
-    wb_err_o    => wb_out.err,
-    wb_rty_o    => wb_out.rty,
-    wb_stall_o  => wb_out.stall,
-    wb_dat_o    => wb_out.dat,
-    nmea_regs_i => nmea_regs_in,
-    nmea_regs_o => nmea_regs_out
-  );
+    port map (
+      rst_n_i     => rst_sys_n_i,
+      clk_i       => clk_sys_i,
+      wb_i        => wb_i,
+      wb_o        => wb_o,
+      nmea_regs_i => nmea_regs_in,
+      nmea_regs_o => nmea_regs_out
+      );
 
   U_sync_baud_div: gc_sync_register
     generic map (
@@ -131,22 +86,21 @@ begin
     );
 
   U_nmea: entity work.wr_nmea_master
-  port map
-  (
-    clk_i      => clk_ref_i,
-    rst_n_i    => rst_ref_n_i,
-    sec_i      => sec_i,
-    min_i      => min_i,
-    hour_i     => hour_i,
-    day_i      => day_i,
-    month_i    => month_i,
-    year_i     => year_i,
-    valid_i    => valid_i,
-    tx_en_i    => tx_en_i,
-    uart_bcr_i => baud_div,
-    busy_o     => busy_out,
-    nmea_o     => nmea_out
-  );
+    port map (
+      clk_i      => clk_ref_i,
+      rst_n_i    => rst_ref_n_i,
+      sec_i      => sec_i,
+      min_i      => min_i,
+      hour_i     => hour_i,
+      day_i      => day_i,
+      month_i    => month_i,
+      year_i     => year_i,
+      valid_i    => valid_i,
+      tx_en_i    => tx_en_i,
+      uart_bcr_i => baud_div,
+      busy_o     => busy_out,
+      nmea_o     => nmea_out
+      );
 
   nmea_o <= nmea_out when nmea_regs_out.CR_invert = '0' else not nmea_out;
 

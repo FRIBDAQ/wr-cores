@@ -21,6 +21,7 @@ memory-map:
   bus: wb-32-be
   x-hdl:
     iogroup: auxclk_regs
+    busgroup: True
     name-suffix: _regs
   schema-version:
     core: 2.0.0

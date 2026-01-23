@@ -575,8 +575,6 @@ begin
 
     TIMECODE_GEN: entity work.wr_timecodes
       generic map (
-        g_interface_mode        => PIPELINED,
-        g_address_granularity   => BYTE,
         g_ref_clock_rate        => f_refclk_rate(g_pcs_16bit),
         g_serdes_data_width     => f_pcs_data_width(g_pcs_16bit)/2,
         g_timecode_config       => g_aux_timing_config

@@ -33,8 +33,6 @@ use work.gencores_pkg.all;
 
 entity xwr_auxclk_gen is
   generic (
-    g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
-    g_address_granularity : t_wishbone_address_granularity := WORD;
     g_data_width          : natural := 8
   );
   port (
@@ -60,9 +58,6 @@ architecture behav of xwr_auxclk_gen is
 
   signal sd_data : std_logic_vector(g_data_width-1 downto 0);
 
-  signal wb_in  : t_wishbone_slave_in;
-  signal wb_out : t_wishbone_slave_out;
-
   signal aux_half_high: std_logic_vector(15 downto 0);
   signal aux_half_low : std_logic_vector(15 downto 0);
   signal pps_valid_d  : std_logic;
@@ -76,42 +71,16 @@ architecture behav of xwr_auxclk_gen is
   signal pr_wr   : std_logic;
 
 begin
-
-  U_Adapter : wb_slave_adapter
-    generic map (
-      g_master_use_struct  => true,
-      g_master_mode        => CLASSIC,
-      g_master_granularity => WORD,
-      g_slave_use_struct   => true,
-      g_slave_mode         => g_interface_mode,
-      g_slave_granularity  => g_address_granularity)
-    port map (
-      clk_sys_i => clk_sys_i,
-      rst_n_i   => rst_sys_n_i,
-      slave_i   => slave_i,
-      slave_o   => slave_o,
-      master_i  => wb_out,
-      master_o  => wb_in);
-
   U_WB_IF: entity work.auxclk_gen_regs
-  port map (
-    rst_n_i => rst_sys_n_i,
-    clk_i   => clk_sys_i,
-    wb_cyc_i  => wb_in.cyc,
-    wb_stb_i  => wb_in.stb,
-    wb_adr_i  => wb_in.adr(0 downto 0),
-    wb_sel_i  => wb_in.sel,
-    wb_we_i   => wb_in.we,
-    wb_dat_i  => wb_in.dat,
-    wb_ack_o  => wb_out.ack,
-    wb_err_o  => wb_out.err,
-    wb_rty_o  => wb_out.rty,
-    wb_stall_o   => wb_out.stall,
-    wb_dat_o     => wb_out.dat,
+    port map (
+      rst_n_i => rst_sys_n_i,
+      clk_i   => clk_sys_i,
+      wb_i  => slave_i,
+      wb_o  => slave_o,
       -- Wires and registers
-    auxclk_regs_i => auxclk_regs_in,
-    auxclk_regs_o => auxclk_regs_out
-  );
+      auxclk_regs_i => auxclk_regs_in,
+      auxclk_regs_o => auxclk_regs_out
+      );
 
   p_read_regs: process(clk_sys_i) is
   begin

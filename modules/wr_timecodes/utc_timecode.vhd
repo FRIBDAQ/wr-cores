@@ -118,17 +118,6 @@ architecture rtl of utc_timecode is
   signal ls_val_ref   : std_logic_vector(7 downto 0);
   signal ls_flag_ref  : std_logic_vector(1 downto 0);
   signal ls_valid_ref : std_logic;
-
-  signal utc_bcd_valid : std_logic;
-  signal utc_bcd_year  : std_logic_vector(15 downto 0);
-  signal utc_bcd_diy   : std_logic_vector(11 downto 0);
-  signal utc_bcd_month : std_logic_vector(7 downto 0);
-  signal utc_bcd_day   : std_logic_vector(7 downto 0);
-  signal utc_bcd_hour  : std_logic_vector(7 downto 0);
-  signal utc_bcd_min   : std_logic_vector(7 downto 0);
-  signal utc_bcd_sec   : std_logic_vector(7 downto 0);
-
-
 begin
 
   utc_valid_sys <= pps_valid_sys and utc_valid_sys_i;
