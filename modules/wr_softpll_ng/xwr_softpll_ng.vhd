@@ -71,11 +71,8 @@ entity xwr_softpll_ng is
 
     g_direct_tag             : boolean := false;
 
-    g_aux_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
-
-    g_interface_mode      : t_wishbone_interface_mode      := PIPELINED;
-    g_address_granularity : t_wishbone_address_granularity := BYTE
-    );
+    g_aux_config : t_softpll_channels_config_array := c_softpll_default_channels_config
+  );
 
   port(
     clk_sys_i    : in std_logic;
@@ -168,8 +165,6 @@ architecture wrapper of xwr_softpll_ng is
   signal rcer_int : std_logic_vector(g_num_ref_inputs-1 downto 0);
   signal ocer_int : std_logic_vector(g_num_outputs-1 downto 0);
 
-  signal wb_out   : t_wishbone_slave_out;
-  signal wb_in    : t_wishbone_slave_in;
   signal regs_in  : t_SPLL_out_registers;
   signal regs_out : t_SPLL_in_registers;
 
@@ -202,40 +197,24 @@ architecture wrapper of xwr_softpll_ng is
 
 begin  -- rtl
 
-  U_Adapter : wb_slave_adapter
-    generic map(
-      g_master_use_struct  => true,
-      g_master_mode        => CLASSIC,
-      g_master_granularity => WORD,
-      g_slave_use_struct   => true,
-      g_slave_mode         => g_interface_mode,
-      g_slave_granularity  => g_address_granularity)
-    port map (
-      clk_sys_i  => clk_sys_i,
-      rst_n_i    => rst_n_i,
-      master_i   => wb_out,
-      master_o   => wb_in,
-      slave_i    => slave_i,
-      slave_o    => slave_o);
-
   regs_out.f_ext_valid_i <= '0';
 
   U_WB_SLAVE : entity work.spll_wb_slave
     port map (
       clk_sys_i  => clk_sys_i,
       rst_n_i    => rst_n_i,
-      wb_adr_i   => wb_in.adr(4 downto 0),
-      wb_dat_i   => wb_in.dat,
-      wb_dat_o   => wb_out.dat,
-      wb_cyc_i   => wb_in.cyc,
-      wb_sel_i   => wb_in.sel,
-      wb_stb_i   => wb_in.stb,
-      wb_we_i    => wb_in.we,
-      wb_ack_o   => wb_out.ack,
-      wb_err_o   => wb_out.err,
-      wb_rty_o   => wb_out.rty,
+      wb_adr_i   => slave_i.adr(6 downto 2),
+      wb_dat_i   => slave_i.dat,
+      wb_dat_o   => slave_o.dat,
+      wb_cyc_i   => slave_i.cyc,
+      wb_sel_i   => slave_i.sel,
+      wb_stb_i   => slave_i.stb,
+      wb_we_i    => slave_i.we,
+      wb_ack_o   => slave_o.ack,
+      wb_err_o   => slave_o.err,
+      wb_rty_o   => slave_o.rty,
+      wb_stall_o => slave_o.stall,
       wb_int_o   => int_o,
-      wb_stall_o => wb_out.stall,
 
       regs_o => regs_in,
       regs_i => regs_out,

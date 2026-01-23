@@ -715,8 +715,6 @@ begin
       g_with_debug_fifo      => g_softpll_enable_debugger,
       g_tag_bits             => 22,
       g_dac_bits             => g_dac_bits,
-      g_interface_mode       => PIPELINED,
-      g_address_granularity  => BYTE,
       g_num_ref_inputs       => 1,
       g_num_outputs          => 1 + g_aux_clks,
       g_num_exts             => f_num_ext_clks,

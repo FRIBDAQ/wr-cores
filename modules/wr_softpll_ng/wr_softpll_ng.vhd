@@ -155,9 +155,36 @@ entity wr_softpll_ng is
 end wr_softpll_ng;
 
 architecture rtl of wr_softpll_ng is
+  signal wb_out   : t_wishbone_slave_out;
+  signal wb_in    : t_wishbone_slave_in;
 
   signal wb_err, wb_rty : std_logic;
 begin  -- behavioral
+
+  U_Adapter : wb_slave_adapter
+    generic map(
+      g_master_use_struct  => true,
+      g_master_mode        => CLASSIC,
+      g_master_granularity => BYTE,
+      g_slave_use_struct   => true,
+      g_slave_mode         => g_interface_mode,
+      g_slave_granularity  => g_address_granularity)
+    port map (
+      clk_sys_i  => clk_sys_i,
+      rst_n_i    => rst_sys_n_i,
+      slave_i.adr => wb_adr_i,
+      slave_i.dat => wb_dat_i,
+      slave_i.cyc => wb_cyc_i,
+      slave_i.sel => wb_sel_i,
+      slave_i.stb => wb_stb_i,
+      slave_i.we => wb_we_i,
+      slave_o.dat => wb_dat_o,
+      slave_o.ack => wb_ack_o,
+      slave_o.err => wb_err,
+      slave_o.rty => wb_rty,
+      slave_o.stall => wb_stall_o,
+      master_i   => wb_out,
+      master_o   => wb_in);
 
   U_Wrapped_Softpll : entity work.xwr_softpll_ng
     generic map (
@@ -204,17 +231,8 @@ begin  -- behavioral
       dac_out_load_o  => dac_out_load_o,
       out_enable_i    => out_enable_i,
       out_locked_o    => out_locked_o,
-      slave_i.adr => wb_adr_i,
-      slave_i.dat => wb_dat_i,
-      slave_i.cyc => wb_cyc_i,
-      slave_i.sel => wb_sel_i,
-      slave_i.stb => wb_stb_i,
-      slave_i.we => wb_we_i,
-      slave_o.dat => wb_dat_o,
-      slave_o.ack => wb_ack_o,
-      slave_o.err => wb_err,
-      slave_o.rty => wb_rty,
-      slave_o.stall => wb_stall_o,
+      slave_i         => wb_in,
+      slave_o         => wb_out,
       host_wb_i   => host_wb_i,
       host_wb_o   => host_wb_o,
       int_o           => irq_o,
