@@ -504,7 +504,7 @@ begin
   end generate;
 
   GEN_8BIT_PHY_IF: if not g_pcs_16bit and g_records_for_phy generate
-      phy8_o.rst            <= phy_rst;
+    phy8_o.rst            <= phy_rst;
     phy8_o.loopen         <= phy_loopen;
     phy8_o.loopen_vec     <= phy_loopen_vec;
     phy8_o.tx_data        <= phy_tx_data;
@@ -876,8 +876,6 @@ begin
   link_ok_o    <= ep_led_link;
 
   tm_link_up_o <= ep_led_link;
-
-  phy_rst_o <= phy_rst;
 
   -----------------------------------------------------------------------------
   -- Mini-NIC
