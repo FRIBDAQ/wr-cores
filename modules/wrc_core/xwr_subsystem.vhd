@@ -529,8 +529,6 @@ begin
   -----------------------------------------------------------------------------
   PPS_GEN : entity work.xwr_pps_gen
     generic map(
-      g_interface_mode       => PIPELINED,
-      g_address_granularity  => BYTE,
       g_ref_clock_rate       => f_refclk_rate(g_pcs_16bit),
       g_ext_clock_rate       => 10000000,
       g_with_ext_clock_input => g_with_external_clock_input)
