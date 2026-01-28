@@ -24,11 +24,13 @@ use ieee.numeric_std.all;
 library work;
 
 use work.endpoint_pkg.all;
+use work.endpoint_private_pkg.all;
+use work.ep_wbgen2_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
+use work.gencores_pkg.all;
 
 entity xwr_endpoint is
-  
   generic (
     g_interface_mode        : t_wishbone_interface_mode      := CLASSIC;
     g_address_granularity   : t_wishbone_address_granularity := WORD;
@@ -36,7 +38,6 @@ entity xwr_endpoint is
     g_tx_force_gap_length   : integer                        := 0;
     g_tx_runt_padding       : boolean                        := false;
     g_pcs_16bit             : boolean                        := false;
-    g_records_for_phy       : boolean                        := false;
     g_rx_buffer_size        : integer                        := 1024;
     g_with_rx_buffer        : boolean                        := true;
     g_with_flow_control     : boolean                        := true;
@@ -106,12 +107,6 @@ entity xwr_endpoint is
     phy_mdio_master_o : out t_wishbone_master_out;
     phy_mdio_master_i : in t_wishbone_master_in := cc_dummy_slave_out; 
     
-    -- 2nd option is to use record-based I/Os
-    phy8_o            : out t_phy_8bits_from_wrc;
-    phy8_i            : in  t_phy_8bits_to_wrc  := c_dummy_phy8_to_wrc;
-    phy16_o           : out t_phy_16bits_from_wrc;
-    phy16_i           : in  t_phy_16bits_to_wrc := c_dummy_phy16_to_wrc;
-
     ---------------------------------------------------------------------------
     -- Wishbone I/O
     ---------------------------------------------------------------------------
@@ -252,258 +247,515 @@ end xwr_endpoint;
 
 architecture syn of xwr_endpoint is
 
-  signal phy_rst          : std_logic;
-  signal phy_loopen       : std_logic;
-  signal phy_loopen_vec   : std_logic_vector(2 downto 0);
-  signal phy_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
-  signal phy_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
-  signal phy_tx_prbs_sel  : std_logic_vector(2 downto 0);
-  signal sfp_tx_disable   : std_logic;
-  signal phy_tx_clk       : std_logic;
+-------------------------------------------------------------------------------
+-- TX FRAMER -> TX PCS signals
+-------------------------------------------------------------------------------
 
-  signal phy_tx_disparity : std_logic;
-  signal phy_tx_enc_err   : std_logic;
-  signal phy_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rx_clk       : std_logic;
-  signal phy_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rx_enc_err   : std_logic;
-  signal phy_rx_bts       : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
-  signal phy_rdy          : std_logic;
-  signal sfp_tx_fault     : std_logic;
-  signal sfp_los          : std_logic;
+  signal txpcs_fab   : t_ep_internal_fabric;
+  signal txpcs_dreq  : std_logic;
+  signal txpcs_error : std_logic;
+  signal txpcs_busy  : std_logic;
 
+-------------------------------------------------------------------------------
+-- Timestamping/OOB signals
+-------------------------------------------------------------------------------
+
+  signal txpcs_timestamp_trigger_p_a : std_logic;
+
+  signal txts_timestamp_valid : std_logic;
+  signal txts_timestamp_value : std_logic_vector(31 downto 0);
+
+
+  signal rxpcs_timestamp_stb         : std_logic;
+  signal rxpcs_timestamp_trigger_p_a : std_logic;
+  signal rxpcs_timestamp_valid       : std_logic;
+  signal rxpcs_timestamp_value       : std_logic_vector(31 downto 0);
+
+
+-------------------------------------------------------------------------------
+-- RX PCS -> RX DEFRAMER signals
+-------------------------------------------------------------------------------
+
+  signal rxpcs_fab             : t_ep_internal_fabric;
+  signal rxpath_fab            : t_ep_internal_fabric;
+  signal rxpcs_busy            : std_logic;
+  signal rxpcs_fifo_almostfull : std_logic;
+
+-------------------------------------------------------------------------------
+-- WB slave signals
+-------------------------------------------------------------------------------
+
+  signal regs_fromwb     : t_ep_out_registers;
+  signal regs_towb       : t_ep_in_registers;
+  signal regs_towb_ep    : t_ep_in_registers;
+  signal regs_towb_tsu   : t_ep_in_registers;
+  signal regs_towb_rpath : t_ep_in_registers;
+  signal regs_towb_tpath : t_ep_in_registers;
+
+-------------------------------------------------------------------------------
+-- flow control signals
+-------------------------------------------------------------------------------
+
+  signal txfra_flow_enable : std_logic;
+
+  signal txfra_pause_req   : std_logic;
+  signal txfra_pause_ready : std_logic;
+  signal txfra_pause_delay : std_logic_vector(15 downto 0);
+
+  signal link_ok, rx_synced : std_logic;
+
+  signal mdio_addr    : std_logic_vector(15 downto 0);
+
+  signal src_out : t_wrf_source_out;
+
+  signal rst_n_rx : std_logic;
+
+  signal rtu_rq               : t_ep_internal_rtu_request;
+  signal dvalid_tx, dvalid_rx : std_logic;
+
+-------------------------------------------------------------------------------
+-- TRU stuff
+-------------------------------------------------------------------------------
+  signal ep_ctrl        : std_logic;
+  signal pfilter_pclass : std_logic_vector(7 downto 0);
+  signal pfilter_drop   : std_logic;
+  signal pfilter_done   : std_logic;
+
+-------------------------------------------------------------------------------
+-- RMON signals
+-------------------------------------------------------------------------------
+  signal pcs_rmon     : t_rmon_triggers;
+  signal rx_path_rmon : t_rmon_triggers;
+  signal rmon         : t_rmon_triggers;
+
+-------------------------------------------------------------------------------
+-- Synchronisation for RX path
+-------------------------------------------------------------------------------
+  signal phy_rdy_resync_sys  : std_logic;
+  signal rst_n_rx_resync_sys : std_logic;
+
+  attribute mark_debug : string;
+--  attribute mark_debug of rmon_events_o : signal is "true";
 begin
 
-  U_Wrapped_Endpoint : entity work.wr_endpoint
+  U_Sync_phy_rdy_sysclk : gc_sync
     generic map (
-      g_interface_mode      => g_interface_mode,
-      g_address_granularity => g_address_granularity,
-      g_tx_force_gap_length => g_tx_force_gap_length,
-      g_tx_runt_padding     => g_tx_runt_padding,
-      g_simulation            => g_simulation,
-      g_pcs_16bit             => g_pcs_16bit,
-      g_rx_buffer_size        => g_rx_buffer_size,
-      g_with_rx_buffer        => g_with_rx_buffer,
-      g_with_flow_control     => g_with_flow_control,
-      g_with_timestamper      => g_with_timestamper,
-      g_with_dpi_classifier   => g_with_dpi_classifier,
-      g_with_vlans            => g_with_vlans,
-      g_with_rtu              => g_with_rtu,
-      g_with_leds             => g_with_leds,
-      g_with_packet_injection => g_with_packet_injection,
-      g_use_new_rxcrc         => g_use_new_rxcrc,
-      g_use_new_txcrc         => g_use_new_txcrc,
-      g_with_stop_traffic     => g_with_stop_traffic,
-      g_phy_lpcalib           => g_phy_lpcalib,
-      g_ep_idx                => g_ep_idx)
+      g_sync_edge => "positive")
     port map (
-      clk_ref_i            => clk_ref_i,
-      clk_sys_i            => clk_sys_i,
-      rst_sys_n_i          => rst_sys_n_i,
-      rst_ref_n_i          => rst_ref_n_i,
-      rst_txclk_n_i        => rst_txclk_n_i,
-      rst_rxclk_n_i        => rst_rxclk_n_i,
-      pps_csync_p1_i       => pps_csync_p1_i,
-      pps_valid_i          => pps_valid_i,
+      clk_i     => clk_sys_i,
+      rst_n_a_i => '1',
+      d_i       => phy_rdy_i,
+      q_o       => phy_rdy_resync_sys);
 
-      phy_rst_o            => phy_rst,
-      phy_loopen_o         => phy_loopen,
-      phy_loopen_vec_o     => phy_loopen_vec,
-      phy_tx_prbs_sel_o    => phy_tx_prbs_sel,
-      phy_rdy_i            => phy_rdy,
+  rst_n_rx  <= rst_rxclk_n_i and phy_rdy_i;
 
-      phy_mdio_master_cyc_o     => phy_mdio_master_o.cyc,
-      phy_mdio_master_stb_o     => phy_mdio_master_o.stb,
-      phy_mdio_master_we_o      => phy_mdio_master_o.we,
-      phy_mdio_master_sel_o     => phy_mdio_master_o.sel,
-      phy_mdio_master_adr_o     => phy_mdio_master_o.adr,
-      phy_mdio_master_dat_o     => phy_mdio_master_o.dat,
-      phy_mdio_master_dat_i     => phy_mdio_master_i.dat,
-      phy_mdio_master_stall_i   => phy_mdio_master_i.stall,
-      phy_mdio_master_ack_i     => phy_mdio_master_i.ack,
+  rst_n_rx_resync_sys <= rst_sys_n_i and phy_rdy_resync_sys;
 
-      phy_sfp_tx_fault_i   => sfp_tx_fault,
-      phy_sfp_los_i        => sfp_los,
-      phy_sfp_tx_disable_o => sfp_tx_disable,
+-------------------------------------------------------------------------------
+-- 1000Base-X PCS
+-------------------------------------------------------------------------------
 
-      phy_ref_clk_i        => phy_tx_clk,
-      phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
-      phy_tx_disparity_i   => phy_tx_disparity,
-      phy_tx_enc_err_i     => phy_tx_enc_err,
-      phy_rx_data_i        => phy_rx_data,
-      phy_rx_clk_i         => phy_rx_clk,
-      phy_rx_k_i           => phy_rx_k,
-      phy_rx_enc_err_i     => phy_rx_enc_err,
-      phy_rx_bitslide_i    => phy_rx_bts,
+  mdio_addr <= regs_fromwb.mdio_asr_phyad_o & regs_fromwb.mdio_cr_addr_o;
 
-      src_dat_o            => src_o.dat,
-      src_adr_o            => src_o.adr,
-      src_sel_o            => src_o.sel,
-      src_cyc_o            => src_o.cyc,
-      src_stb_o            => src_o.stb,
-      src_we_o             => src_o.we,
-      src_stall_i          => src_i.stall,
-      src_ack_i            => src_i.ack,
-      src_err_i            => src_i.err,
-      snk_dat_i            => snk_i.dat,
-      snk_adr_i            => snk_i.adr,
-      snk_sel_i            => snk_i.sel,
-      snk_cyc_i            => snk_i.cyc,
-      snk_stb_i            => snk_i.stb,
-      snk_we_i             => snk_i.we,
-      snk_stall_o          => snk_o.stall,
-      snk_ack_o            => snk_o.ack,
-      snk_err_o            => snk_o.err,
-      snk_rty_o            => snk_o.rty,
+  U_PCS_1000BASEX : entity work.ep_1000basex_pcs
+    generic map (
+      g_simulation => g_simulation,
+      g_16bit      => g_pcs_16bit,
+      g_ep_idx     => g_ep_idx)
+    port map (
+      rst_sys_n_i   => rst_sys_n_i,
+      rst_rxclk_n_i => rst_rxclk_n_i,
+      rst_txclk_n_i => rst_txclk_n_i,
+      clk_sys_i     => clk_sys_i,
+
+      rxpcs_fab_o             => rxpcs_fab,
+      rxpcs_busy_o            => rxpcs_busy,
+      rxpcs_fifo_almostfull_i => rxpcs_fifo_almostfull,
+
+      rxpcs_timestamp_trigger_p_a_o => rxpcs_timestamp_trigger_p_a,
+      rxpcs_timestamp_i             => rxpcs_timestamp_value,
+      rxpcs_timestamp_stb_i         => rxpcs_timestamp_stb,
+      rxpcs_timestamp_valid_i       => rxpcs_timestamp_valid,
+
+      txpcs_fab_i   => txpcs_fab,
+      txpcs_busy_o  => txpcs_busy,
+      txpcs_dreq_o  => txpcs_dreq,
+      txpcs_error_o => txpcs_error,
+
+      txpcs_timestamp_trigger_p_a_o => txpcs_timestamp_trigger_p_a,
+
+      rx_sync_o  => rx_synced,
+      link_ok_o  => link_ok,
+      link_ctr_i => ep_ctrl,
+
+      serdes_rst_o             => phy_rst_o,
+      serdes_loopen_o          => phy_loopen_o,
+      serdes_loopen_vec_o      => phy_loopen_vec_o,
+      serdes_tx_prbs_sel_o     => phy_tx_prbs_sel_o,
+      serdes_sfp_tx_fault_i    => phy_sfp_tx_fault_i,
+      serdes_sfp_los_i         => phy_sfp_los_i,
+      serdes_sfp_tx_disable_o  => phy_sfp_tx_disable_o,
+      serdes_rdy_i             => phy_rdy_i,
+      serdes_mdio_master_o     => phy_mdio_master_o,
+      serdes_mdio_master_i     => phy_mdio_master_i,
+
+      serdes_tx_clk_i       => phy_ref_clk_i,
+      serdes_tx_data_o      => phy_tx_data_o,
+      serdes_tx_k_o         => phy_tx_k_o,
+      serdes_tx_disparity_i => phy_tx_disparity_i,
+      serdes_tx_enc_err_i   => phy_tx_enc_err_i,
+      serdes_rx_data_i      => phy_rx_data_i,
+      serdes_rx_clk_i       => phy_rx_clk_i,
+      serdes_rx_k_i         => phy_rx_k_i,
+      serdes_rx_enc_err_i   => phy_rx_enc_err_i,
+      serdes_rx_bitslide_i  => phy_rx_bitslide_i,
+
+      rmon_o => pcs_rmon,
+
+      mdio_addr_i  => mdio_addr,
+      mdio_data_i  => regs_fromwb.mdio_cr_data_o,
+      mdio_data_o  => regs_towb_ep.mdio_asr_rdata_i,
+      mdio_stb_i   => regs_fromwb.mdio_cr_data_wr_o,
+      mdio_rw_i    => regs_fromwb.mdio_cr_rw_o,
+      mdio_ready_o => regs_towb_ep.mdio_asr_ready_i,
+      dbg_tx_pcs_wr_count_o => dbg_tx_pcs_wr_count_o,
+      dbg_tx_pcs_rd_count_o => dbg_tx_pcs_rd_count_o,
+      nice_dbg_o   => nice_dbg_o.pcs,
+      preamble_shrinkage => regs_fromwb.ecr_txshrin_en_o);
+
+-------------------------------------------------------------------------------
+-- TX FRAMER
+-------------------------------------------------------------------------------
+
+--  txfra_enable <= link_ok and regs_fromwb.ecr_tx_en_o;
+
+--   txfra_pause_req <= '0';
+
+  U_Tx_Path : entity work.ep_tx_path
+    generic map (
+      g_with_packet_injection => g_with_packet_injection,
+      g_with_vlans            => g_with_vlans,
+      g_with_timestamper      => g_with_timestamper,
+      g_force_gap_length      => g_tx_force_gap_length,
+      g_runt_padding          => g_tx_runt_padding,
+      g_use_new_crc           => g_use_new_txcrc)
+    port map (
+      clk_sys_i        => clk_sys_i,
+      rst_n_i          => rst_sys_n_i,
+      pcs_error_i      => txpcs_error,
+      pcs_busy_i       => txpcs_busy,
+      pcs_fab_o        => txpcs_fab,
+      pcs_dreq_i       => txpcs_dreq,
+      snk_i            => snk_i,
+      snk_o            => snk_o,
+      fc_pause_req_i   => txfra_pause_req,
+      fc_pause_ready_o => txfra_pause_ready,
+      fc_pause_delay_i => txfra_pause_delay,
+      fc_flow_enable_i => txfra_flow_enable,
+      ep_ctrl_i        => ep_ctrl,
+      regs_i           => regs_fromwb,
+      regs_o           => regs_towb_tpath,
+
+      txts_timestamp_i       => txts_timestamp_value,
+      txts_timestamp_valid_i => txts_timestamp_valid,
+
       txtsu_port_id_o      => txtsu_port_id_o,
-      txtsu_frame_id_o     => txtsu_frame_id_o,
+      txtsu_fid_o          => txtsu_frame_id_o,
       txtsu_ts_value_o     => txtsu_ts_value_o,
       txtsu_ts_incorrect_o => txtsu_ts_incorrect_o,
       txtsu_stb_o          => txtsu_stb_o,
       txtsu_ack_i          => txtsu_ack_i,
-      rtu_full_i           => rtu_full_i,
-      rtu_almost_full_i    => rtu_almost_full_i,
-      rtu_rq_strobe_p1_o   => rtu_rq_strobe_p1_o,
-      rtu_rq_abort_o       => rtu_rq_abort_o,
-      rtu_rq_smac_o        => rtu_rq_smac_o,
-      rtu_rq_dmac_o        => rtu_rq_dmac_o,
-      rtu_rq_vid_o         => rtu_rq_vid_o,
-      rtu_rq_has_vid_o     => rtu_rq_has_vid_o,
-      rtu_rq_prio_o        => rtu_rq_prio_o,
-      rtu_rq_has_prio_o    => rtu_rq_has_prio_o,
-      wb_cyc_i             => wb_i.cyc,
-      wb_stb_i             => wb_i.stb,
-      wb_we_i              => wb_i.we,
-      wb_sel_i             => wb_i.sel,
-      wb_adr_i             => wb_i.adr(7 downto 0),
-      wb_dat_i             => wb_i.dat,
-      wb_dat_o             => wb_o.dat,
-      wb_ack_o             => wb_o.ack,
-      wb_stall_o           => wb_o.stall,
-      rmon_events_o        => rmon_events_o,
-      txts_o               => txts_o, 		-- 2013-Nov-28 peterj added for debugging/calibration
-      rxts_o               => rxts_o, 		-- 2013-Nov-28 peterj added for debugging/calibration
-      led_link_o           => led_link_o,
-      led_act_o            => led_act_o,
-      link_up_o            => link_up_o,
-      link_kill_i          => link_kill_i,
-      pfilter_pclass_o     => pfilter_pclass_o,
-      pfilter_drop_o       => pfilter_drop_o,
-      pfilter_done_o       => pfilter_done_o,
-      fc_tx_pause_req_i    => fc_tx_pause_req_i,
-      fc_tx_pause_delay_i  => fc_tx_pause_delay_i,
-      fc_tx_pause_ready_o  => fc_tx_pause_ready_o,
-      fc_rx_pause_start_p_o   => fc_rx_pause_start_p_o,
-      fc_rx_pause_quanta_o    => fc_rx_pause_quanta_o,
-      fc_rx_pause_prio_mask_o => fc_rx_pause_prio_mask_o,
-      fc_rx_buffer_occupation_o =>fc_rx_buffer_occupation_o,
-      inject_req_i         => inject_req_i,
-      inject_user_value_i  => inject_user_value_i,
-      inject_packet_sel_i  => inject_packet_sel_i,
-      inject_ready_o       => inject_ready_o,
-      stop_traffic_i       => stop_traffic_i,
-      my_mac_addr_o        => my_mac_addr_o,
-      dbg_tx_pcs_wr_count_o=>dbg_tx_pcs_wr_count_o,
-      dbg_tx_pcs_rd_count_o=>dbg_tx_pcs_rd_count_o,
-      nice_dbg_o           => nice_dbg_o);
 
-  wb_o.err <= '0';
-  wb_o.rty <= '0';
+      inject_req_i        => inject_req_i,
+      inject_user_value_i => inject_user_value_i,
+      inject_packet_sel_i => inject_packet_sel_i,
+      inject_ready_o      => inject_ready_o,
+
+      dbg_o => open);
 
 
-  -- Record-based PHY connections, depending on 8/16-bit PCS
-  GEN_16BIT_IF: if g_pcs_16bit and g_records_for_phy generate
-    phy16_o.rst            <= phy_rst;
-    phy16_o.loopen         <= phy_loopen;
-    phy16_o.loopen_vec     <= phy_loopen_vec;
-    phy16_o.tx_data        <= phy_tx_data;
-    phy16_o.tx_k           <= phy_tx_k;
-    phy16_o.tx_prbs_sel    <= phy_tx_prbs_sel;
-    phy16_o.sfp_tx_disable <= sfp_tx_disable;
+  txfra_flow_enable <= '1';
 
-    phy_tx_clk       <= phy16_i.ref_clk;
-    phy_tx_disparity <= phy16_i.tx_disparity;
-    phy_tx_enc_err   <= phy16_i.tx_enc_err;
-    phy_rx_data      <= phy16_i.rx_data;
-    phy_rx_clk       <= phy16_i.rx_clk;
-    phy_rx_k         <= phy16_i.rx_k;
-    phy_rx_enc_err   <= phy16_i.rx_enc_err;
-    phy_rx_bts       <= phy16_i.rx_bitslide;
-    phy_rdy          <= phy16_i.rdy;
-    sfp_tx_fault     <= phy16_i.sfp_tx_fault;
-    sfp_los          <= phy16_i.sfp_los;
+-------------------------------------------------------------------------------
+-- RX deframer
+-------------------------------------------------------------------------------
 
-    -- drive unused ports with dummy values
-    phy8_o               <= c_dummy_phy8_from_wrc;
-    phy_rst_o            <= '0';
-    phy_loopen_o         <= '0';
-    phy_tx_data_o        <= (others => '0');
-    phy_tx_k_o           <= (others => '0');
-    phy_loopen_vec_o     <= (others => '0');
-    phy_tx_prbs_sel_o    <= (others => '0');
-    phy_sfp_tx_disable_o <= '0';
+  U_Rx_Path : entity work.ep_rx_path
+    generic map (
+      g_with_vlans          => g_with_vlans,
+      g_with_dpi_classifier => g_with_dpi_classifier,
+      g_with_rtu            => g_with_rtu,
+      g_with_rx_buffer      => g_with_rx_buffer,
+      g_rx_buffer_size      => g_rx_buffer_size,
+      g_use_new_crc         => g_use_new_rxcrc)
+    port map (
+      clk_sys_i => clk_sys_i,
+      clk_rx_i  => phy_rx_clk_i,
+
+      rst_n_sys_i => rst_n_rx_resync_sys,
+      rst_n_rx_i  => rst_n_rx,
+
+      stop_traffic_i  => stop_traffic_i,
+
+      pcs_fab_i             => rxpath_fab,
+      pcs_fifo_almostfull_o => rxpcs_fifo_almostfull,
+      pcs_busy_i            => rxpcs_busy,
+
+      fc_pause_p_o         => fc_rx_pause_start_p_o,  --rxfra_pause_p,
+      fc_pause_quanta_o    => fc_rx_pause_quanta_o,   --rxfra_pause_delay,
+      fc_pause_prio_mask_o => fc_rx_pause_prio_mask_o,
+      fc_buffer_occupation_o => fc_rx_buffer_occupation_o,
+
+      rmon_o => rx_path_rmon,
+      regs_i => regs_fromwb,
+      regs_o => regs_towb_rpath,
+
+      pfilter_pclass_o => pfilter_pclass,
+      pfilter_drop_o   => pfilter_drop,
+      pfilter_done_o   => pfilter_done,
+
+      rtu_full_i     => rtu_full_i,
+      rtu_rq_o       => rtu_rq,
+      rtu_rq_valid_o => rtu_rq_strobe_p1_o,
+      rtu_rq_abort_o => rtu_rq_abort_o,
+      src_wb_o       => src_out,
+      src_wb_i       => src_i,
+      nice_dbg_o     => nice_dbg_o.rxpath);
+
+
+  src_o <= src_out;
+
+  rtu_rq_smac_o     <= rtu_rq.smac;
+  rtu_rq_dmac_o     <= rtu_rq.dmac;
+  rtu_rq_vid_o      <= rtu_rq.vid;
+  rtu_rq_prio_o     <= rtu_rq.prio;
+  rtu_rq_has_vid_o  <= rtu_rq.has_vid;
+  rtu_rq_has_prio_o <= rtu_rq.has_prio;
+
+-------------------------------------------------------------------------------
+-- Flow control unit
+-------------------------------------------------------------------------------
+
+  --U_FLOW_CTL : ep_flow_control
+  --  port map (
+  --    clk_sys_i => clk_sys_i,
+  --    rst_n_i   => rst_n_i,
+
+  --    rx_pause_p1_i    => rxfra_pause_p,
+  --    rx_pause_delay_i => rxfra_pause_delay,
+
+  --    tx_pause_o       => txfra_pause,
+  --    tx_pause_delay_o => txfra_pause_delay,
+  --    tx_pause_ack_i   => txfra_pause_ack,
+
+  --    tx_flow_enable_o => txfra_flow_enable,
+
+  --    rx_buffer_used_i => rx_buffer_used,
+
+  --    ep_fcr_txpause_i   => regs.fcr_txpause_o,
+  --    ep_fcr_rxpause_i   => regs.fcr_rxpause_o,
+  --    ep_fcr_tx_thr_i    => regs.fcr_tx_thr_o,
+  --    ep_fcr_tx_quanta_i => regs.fcr_tx_quanta_o,
+  --    rmon_rcvd_pause_o  => rmon.rx_pause,
+  --    rmon_sent_pause_o  => rmon.tx_pause
+  --    );
+
+-------------------------------------------------------------------------------
+-- Timestamping unit
+-------------------------------------------------------------------------------
+
+  U_EP_TSU : entity work.ep_timestamping_unit
+    generic map (
+      g_timestamp_bits_r => 28,
+      g_timestamp_bits_f => 4,
+      g_ref_clock_rate   => f_pcs_clock_rate(g_pcs_16bit))
+    port map (
+      clk_ref_i      => clk_ref_i,
+      clk_rx_i       => phy_rx_clk_i,
+      clk_sys_i      => clk_sys_i,
+      rst_n_rx_i     => rst_rxclk_n_i,
+      rst_n_sys_i    => rst_sys_n_i,
+      rst_n_ref_i    => rst_ref_n_i,
+      pps_csync_p1_i => pps_csync_p1_i,
+      pps_valid_i    => pps_valid_i,
+
+      tx_timestamp_trigger_p_a_i => txpcs_timestamp_trigger_p_a,
+      rx_timestamp_trigger_p_a_i => rxpcs_timestamp_trigger_p_a,
+
+      rxts_timestamp_o       => rxpcs_timestamp_value,
+      rxts_timestamp_valid_o => rxpcs_timestamp_valid,
+      rxts_timestamp_stb_o   => rxpcs_timestamp_stb,
+
+      txts_timestamp_o       => txts_timestamp_value,
+      txts_timestamp_valid_o => txts_timestamp_valid,
+      txts_timestamp_stb_o   => open,
+
+      txts_o                 => txts_o,                   -- 2013-Nov-28 peterj added for debugging/calibration
+      rxts_o                 => rxts_o, 		              -- 2013-Nov-28 peterj added for debugging/calibration
+
+      regs_i => regs_fromwb,
+      regs_o => regs_towb_tsu);
+
+-------------------------------------------------------------------------------
+-- Wishbone controller & IO registers
+-------------------------------------------------------------------------------
+
+  U_WB_SLAVE : entity work.ep_wishbone_controller
+    port map (
+      rst_n_i    => rst_sys_n_i,
+      clk_sys_i  => clk_sys_i,
+      wb_adr_i   => wb_i.adr(5 downto 2),
+      wb_dat_i   => wb_i.dat,
+      wb_dat_o   => wb_o.dat,
+      wb_cyc_i   => wb_i.cyc,
+      wb_sel_i   => wb_i.sel,
+      wb_stb_i   => wb_i.stb,
+      wb_we_i    => wb_i.we,
+      wb_ack_o   => wb_o.ack,
+      wb_stall_o => wb_o.stall,
+      wb_err_o   => wb_o.err,
+      wb_rty_o   => wb_o.rty,
+
+      tx_clk_i => clk_ref_i,
+      rx_clk_i => phy_rx_clk_i,
+
+      regs_o => regs_fromwb,
+      regs_i => regs_towb
+      );
+
+  regs_towb <= regs_towb_ep or regs_towb_tsu or regs_towb_rpath or regs_towb_tpath;
+
+  my_mac_addr_o <= regs_fromwb.mach_o & regs_fromwb.macl_o;
+
+  p_link_activity : process(clk_sys_i)
+  begin
+    if rising_edge(clk_sys_i) then
+
+      if(rst_sys_n_i = '0') or
+        (regs_fromwb.dsr_lact_o = '1' and regs_fromwb.dsr_lact_load_o = '1') then
+        regs_towb_ep.dsr_lact_i <= '0';
+      else
+        regs_towb_ep.dsr_lact_i <= dvalid_rx or dvalid_tx;
+      end if;
+    end if;
+  end process;
+
+  -- drive unused regs_towb_ep signals
+  regs_towb_ep.ecr_feat_vlan_i           <= '0';
+  regs_towb_ep.ecr_feat_dmtd_i           <= '0';
+  regs_towb_ep.ecr_feat_ptp_i            <= '0';
+  regs_towb_ep.ecr_feat_dpi_i            <= '0';
+  regs_towb_ep.ecr_feat_lpc_i            <= '1' when(g_phy_lpcalib = true) else
+                                            '0';
+  regs_towb_ep.tscr_cs_done_i            <= '0';
+  regs_towb_ep.tscr_rx_cal_result_i      <= '0';
+  regs_towb_ep.tcar_pcp_map_i            <= (others => '0');
+  regs_towb_ep.dsr_lstatus_i             <= link_ok;
+  regs_towb_ep.dsr_rxsync_i              <= rx_synced;
+  regs_towb_ep.dsr_gtready_i             <= phy_rdy_resync_sys;
+  regs_towb_ep.inj_ctrl_pic_conf_ifg_i   <= (others => '0');
+  regs_towb_ep.inj_ctrl_pic_conf_sel_i   <= (others => '0');
+  regs_towb_ep.inj_ctrl_pic_conf_valid_i <= '0';
+  regs_towb_ep.inj_ctrl_pic_mode_id_i    <= (others => '0');
+  regs_towb_ep.inj_ctrl_pic_mode_valid_i <= '0';
+  regs_towb_ep.inj_ctrl_pic_ena_i        <= '0';
+
+
+  dvalid_tx <= snk_i.cyc and snk_i.stb and link_ok;
+  dvalid_rx <= src_out.cyc and src_out.stb and link_ok;
+
+  gen_leds : if g_with_leds generate
+    U_Led_Ctrl : entity work.ep_leds_controller
+      generic map (
+        g_blink_period_log2 => 22)
+      port map (
+        clk_sys_i   => clk_sys_i,
+        rst_n_i     => rst_sys_n_i,
+        dvalid_tx_i => dvalid_tx,
+        dvalid_rx_i => dvalid_rx,
+        link_ok_i   => link_ok,
+        led_link_o  => led_link_o,
+        led_act_o   => led_act_o);
+  end generate gen_leds;
+
+  -------------------------- TRU stuff -----------------------------------
+  link_up_o <= link_ok;                 -- indicates that link is UP
+
+  pfilter_pclass_o <= pfilter_pclass;
+  pfilter_done_o   <= pfilter_done;
+  pfilter_drop_o   <= pfilter_drop;
+
+  txfra_pause_req     <= fc_tx_pause_req_i;
+  fc_tx_pause_ready_o <= txfra_pause_ready;
+  txfra_pause_delay   <= fc_tx_pause_delay_i;
+
+  -- TRU needs to be able to share the control of ouput path, i.e. turn off the laser
+  p_ep_ctrl : process(clk_sys_i)
+  begin
+    if rising_edge(clk_sys_i) then
+      if rst_sys_n_i = '0' then
+        ep_ctrl <= '1';
+      else
+        ep_ctrl <= not link_kill_i;
+      end if;
+    end if;
+  end process;
+
+  GEN_STOP: if(g_with_stop_traffic) generate
+    rxpath_fab.sof    <= rxpcs_fab.sof    when(stop_traffic_i='0') else '0';
+    rxpath_fab.dvalid <= rxpcs_fab.dvalid when(stop_traffic_i='0') else '0';
+    rxpath_fab.eof   <= rxpcs_fab.eof;
+    rxpath_fab.error <= rxpcs_fab.error;
+    rxpath_fab.bytesel <= rxpcs_fab.bytesel;
+    rxpath_fab.has_rx_timestamp <= rxpcs_fab.has_rx_timestamp;
+    rxpath_fab.rx_timestamp_valid <= rxpcs_fab.rx_timestamp_valid;
+    rxpath_fab.data <= rxpcs_fab.data;
+    rxpath_fab.addr <= rxpcs_fab.addr;
   end generate;
 
-  GEN_8BIT_IF: if not g_pcs_16bit and g_records_for_phy generate
-    phy8_o.rst            <= phy_rst;
-    phy8_o.loopen         <= phy_loopen;
-    phy8_o.loopen_vec     <= phy_loopen_vec;
-    phy8_o.tx_data        <= phy_tx_data;
-    phy8_o.tx_k           <= phy_tx_k;
-    phy8_o.tx_prbs_sel    <= phy_tx_prbs_sel;
-    phy8_o.sfp_tx_disable <= sfp_tx_disable;
-
-    phy_tx_clk       <= phy8_i.ref_clk;
-    phy_tx_disparity <= phy8_i.tx_disparity;
-    phy_tx_enc_err   <= phy8_i.tx_enc_err;
-    phy_rx_data      <= phy8_i.rx_data;
-    phy_rx_clk       <= phy8_i.rx_clk;
-    phy_rx_k         <= phy8_i.rx_k;
-    phy_rx_enc_err   <= phy8_i.rx_enc_err;
-    phy_rx_bts       <= phy8_i.rx_bitslide;
-    phy_rdy          <= phy8_i.rdy;
-    sfp_tx_fault     <= phy8_i.sfp_tx_fault;
-    sfp_los          <= phy8_i.sfp_los;
-
-    -- drive unused ports with dummy values
-    phy16_o              <= c_dummy_phy16_from_wrc;
-    phy_rst_o            <= '0';
-    phy_loopen_o         <= '0';
-    phy_tx_data_o        <= (others => '0');
-    phy_tx_k_o           <= (others => '0');
-    phy_loopen_vec_o     <= (others => '0');
-    phy_tx_prbs_sel_o    <= (others => '0');
-    phy_sfp_tx_disable_o <= '0';
+  GEN_NO_STOP: if(not g_with_stop_traffic) generate
+    rxpath_fab <= rxpcs_fab;
   end generate;
 
-  -- backwards compatibility
-  GEN_STD_IF: if not g_records_for_phy generate
-    phy_rst_o            <= phy_rst;
-    phy_loopen_o         <= phy_loopen;
-    phy_loopen_vec_o     <= phy_loopen_vec;
-    phy_tx_data_o        <= phy_tx_data;
-    phy_tx_k_o           <= phy_tx_k;
-    phy_tx_prbs_sel_o    <= phy_tx_prbs_sel;
-    phy_sfp_tx_disable_o <= sfp_tx_disable;
+  -------------------------- RMON events -----------------------------------
+  rmon.rx_pcs_err      <= rx_path_rmon.rx_pcs_err;  --from ep_rx_path
+  rmon.rx_giant        <= rx_path_rmon.rx_giant;
+  rmon.rx_runt         <= rx_path_rmon.rx_runt;
+  rmon.rx_crc_err      <= rx_path_rmon.rx_crc_err;
+  rmon.rx_pause        <= rx_path_rmon.rx_pause;
+  rmon.rx_pfilter_drop <= rx_path_rmon.rx_pfilter_drop;
+  rmon.rx_pclass       <= rx_path_rmon.rx_pclass;
+  rmon.rx_tclass       <= rx_path_rmon.rx_tclass;
+  rmon.rx_drop_at_rtu_full <= rx_path_rmon.rx_drop_at_rtu_full;
+  rmon.tx_underrun     <= pcs_rmon.tx_underrun;
+  rmon.rx_overrun      <= pcs_rmon.rx_overrun;
+  rmon.rx_invalid_code <= pcs_rmon.rx_invalid_code;
+  rmon.rx_sync_lost    <= pcs_rmon.rx_sync_lost;
 
-    phy_tx_clk       <= phy_ref_clk_i;
-    phy_tx_disparity <= phy_tx_disparity_i;
-    phy_tx_enc_err   <= phy_tx_enc_err_i;
-    phy_rx_data      <= phy_rx_data_i;
-    phy_rx_clk       <= phy_rx_clk_i;
-    phy_rx_k         <= phy_rx_k_i;
-    phy_rx_enc_err   <= phy_rx_enc_err_i;
-    phy_rx_bts       <= phy_rx_bitslide_i;
-    phy_rdy          <= phy_rdy_i;
-    sfp_tx_fault     <= phy_sfp_tx_fault_i;
-    sfp_los          <= phy_sfp_los_i;
 
-    -- drive unused ports with dummy values
-    phy8_o  <= c_dummy_phy8_from_wrc;
-    phy16_o <= c_dummy_phy16_from_wrc;
-  end generate;
-  
+  rmon_event_tx : gc_sync_ffs
+    generic map(
+      g_sync_edge => "negative")
+    port map (
+      clk_i    => clk_sys_i,
+      rst_n_i  => rst_sys_n_i,
+      data_i   => txpcs_timestamp_trigger_p_a,
+      synced_o => open,
+      npulse_o => open,
+      ppulse_o => rmon.tx_frame);
+
+  rmon_event_rx : gc_sync_ffs
+    generic map(
+      g_sync_edge => "negative")
+    port map (
+      clk_i    => clk_sys_i,
+      rst_n_i  => rst_sys_n_i,
+      data_i   => rxpcs_timestamp_trigger_p_a,
+      synced_o => open,
+      npulse_o => open,
+      ppulse_o => rmon.rx_frame);
+
+  f_pack_rmon_triggers(rmon, rmon_events_o(c_epevents_sz-1 downto 0));
 end syn;
 
 
