@@ -3,10 +3,14 @@
 --
 -- SPDX-License-Identifier: CERN-OHL-W-2.0+
 -------------------------------------------------------------------------------
+-- ============================================================================
+--  DEPRECATED – Use gc_serial_dac.vhd from general-cores for new designs
+-- ============================================================================
+-------------------------------------------------------------------------------
 -- Title      : Serial DAC interface
 -- Project    : White Rabbit Switch
 -------------------------------------------------------------------------------
--- File       : serial_dac.vhd
+-- File       : cute_serial_dac.vhd
 -- Author     : paas, slayer
 -- Company    : CERN BE-Co-HT
 -- Created    : 2010-02-25
