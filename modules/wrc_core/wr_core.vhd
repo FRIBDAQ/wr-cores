@@ -51,7 +51,6 @@ use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
 use work.wr_timecode_pkg.all;
 
@@ -366,7 +365,7 @@ begin
       g_phys_uart_tx_fifo_size    => g_phys_uart_tx_fifo_size,
       g_phys_uart_rx_fifo_size    => g_phys_uart_rx_fifo_size,
       g_virtual_uart              => g_virtual_uart,
-      g_rx_buffer_size            => g_rx_buffer_size,
+      g_ep_rxbuf_size             => g_rx_buffer_size,
       g_tx_runt_padding           => g_tx_runt_padding,
       g_with_external_clock_input => g_with_external_clock_input,
       g_aux_clks                  => g_aux_clks,
