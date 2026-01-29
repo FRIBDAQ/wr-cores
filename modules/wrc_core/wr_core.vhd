@@ -51,7 +51,6 @@ use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.sysc_wbgen2_pkg.all;
 use work.softpll_pkg.all;
 use work.wr_timecode_pkg.all;
 
