@@ -1,4 +1,8 @@
 -------------------------------------------------------------------------------
+-- SPDX-FileCopyrightText: 2023 Missing Link Electronics(missinglinkelectronics.com)
+--
+-- SPDX-License-Identifier: CERN-OHL-W-2.0+
+-------------------------------------------------------------------------------
 -- Title      : WRPC reference design for ZCU102 and ZCU106 board
 -- Project    : WR PTP Core
 -- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
@@ -26,10 +30,6 @@
 -- ZCU102: https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html
 -- ZCU106: https://www.xilinx.com/products/boards-and-kits/zcu106.html
 --
--------------------------------------------------------------------------------
--- Copyright (c) 2023 Missing Link Electronics
---
--- CERN Open Hardware Licence Version 2 - Weakly Reciprocal
 -------------------------------------------------------------------------------
 
 library ieee;

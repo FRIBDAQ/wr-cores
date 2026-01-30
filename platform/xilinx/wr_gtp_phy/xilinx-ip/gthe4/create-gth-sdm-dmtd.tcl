@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 Missing Link Electronics(missinglinkelectronics.com)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 set module_name {gtwizard_v1_7_gthe4_sdm_dmtd}
 
 set_part ${device}

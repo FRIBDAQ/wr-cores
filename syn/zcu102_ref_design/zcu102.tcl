@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 Missing Link Electronics(missinglinkelectronics.com)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 set projDir [file dirname [info script]]
 
 set_param general.maxThreads 8

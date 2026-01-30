@@ -1,3 +1,8 @@
+##-----------------------------------------------------------------------------
+## SPDX-FileCopyrightText: 2026 Missing Link Electronics(missinglinkelectronics.com)
+##
+## SPDX-License-Identifier: CERN-OHL-W-2.0+
+##-----------------------------------------------------------------------------
 ##################
 # Clocks
 ##################

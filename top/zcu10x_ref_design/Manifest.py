@@ -1,3 +1,8 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 Missing Link Electronics(missinglinkelectronics.com)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later
+###############################################################################
 fetchto = "../../ip_cores"
 
 files = [ "zcu10x_ref_top.vhd", ]
