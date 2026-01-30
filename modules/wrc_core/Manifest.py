@@ -15,9 +15,3 @@ files = [ "xwr_core.vhd",
           "wrc_urv_wrapper.vhd",
           "wrc_cpu_csr.vhd",
 ];
-
-modules =  {
-    "local" : [
-        "../../ip_cores/urv-core",
-    ],
-}
