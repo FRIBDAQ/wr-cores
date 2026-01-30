@@ -1,0 +1,37 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 Missing Link Electronics(missinglinkelectronics.com)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later, CERN-OHL-W-2.0+
+###############################################################################
+memory-map:
+  name: board_zcu10x_bus_wb
+  description: board-level peripherals wishbone bus
+  bus: wb-32-be
+  x-hdl:
+    busgroup: True
+
+  children:
+
+  - submap:
+      name: fmc_enable
+      description: FMC-enable GPIO pins
+      size: 0x100
+      interface: wb-32-be
+      x-hdl:
+        busgroup: True
+
+  - submap:
+      name: gnss_uart
+      description: GNSS UART interface
+      size: 0x20
+      interface: wb-32-be
+      x-hdl:
+        busgroup: True
+
+  - submap:
+      name: si5xx
+      description: Si5xx oscillator interface
+      size: 0x20
+      interface: wb-32-be
+      x-hdl:
+        busgroup: True
