@@ -315,7 +315,7 @@ architecture struct of xwr_core is
   signal cpu_dwb_out : t_wishbone_master_out;
   signal cpu_dwb_in : t_wishbone_master_in;
 begin
-  inst_uncore: entity work.xwr_subsystem
+  inst_subsystem: entity work.xwr_subsystem
     generic map (
       g_simulation => g_simulation,
       g_with_external_clock_input => g_with_external_clock_input,
