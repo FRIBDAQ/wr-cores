@@ -344,9 +344,8 @@ TIMESPEC TS_dio_clk_n_i = PERIOD "dio_clk_n_i" 100 ns HIGH 50%;
 NET "cmp_xwrc_board_spec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" TNM_NET = cmp_xwrc_board_spec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>;
 TIMESPEC TS_cmp_xwrc_board_spec_cmp_xwrc_platform_gen_phy_spartan6_cmp_gtp_ch1_gtp_clkout_int_1_ = PERIOD "cmp_xwrc_board_spec/cmp_xwrc_platform/gen_phy_spartan6.cmp_gtp/ch1_gtp_clkout_int<1>" 8 ns HIGH 50%;
 # PIN "cmp_clk_dmtd_buf.O" CLOCK_DEDICATED_ROUTE = FALSE;
-##Created by Constraints Editor (xc6slx45t-fgg484-3) - 2012/08/07
-INST "*/U_SOFTPLL/gen_feedback_dmtds*/clk_in" TNM = skew_limit;
-INST "*/U_SOFTPLL/gen_ref_dmtds*/clk_in" TNM = skew_limit;
+INST "*/U_SOFTPLL/gen_no_direct_tag.gen_ref_dmtds*/clk_in" TNM = skew_limit;
+INST "*/U_SOFTPLL/gen_no_direct_tag.gen_output_dmtds*/clk_in" TNM = skew_limit;
 
 TIMESPEC TS_ = FROM "skew_limit" TO "FFS" 1 ns DATAPATHONLY;
 
