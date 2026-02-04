@@ -3,4 +3,4 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-modules = {"local" : ["chipscope", "dpram"]}
+modules = {"local" : ["serdes", "dpram"]}
