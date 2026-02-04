@@ -1,0 +1,103 @@
+###############################################################################
+## SPDX-FileCopyrightText: 2026 CERN (home.cern)
+##
+## SPDX-License-Identifier: LGPL-2.1-or-later, CERN-OHL-W-2.0+
+###############################################################################
+memory-map:
+  bus: wb-32-be
+  name: epx_mininic_map
+  description: Registers for the 10Gbe mini-nic
+  x-hdl:
+    busgroup: True
+  children:
+  - reg:
+     name: ctrl
+     comment: control register (mainly reset)
+     width: 32
+     access: rw
+     children:
+     - field:
+         name: rxreset
+         description: Reset RX
+         range: 0
+  - reg:
+     name: stat
+     comment: status register
+     width: 32
+     access: ro
+     children:
+     - field:
+         name: rxpkt
+         description: A packet has been received
+         range: 0
+     - field:
+         name: rxlocked
+         description: RX link is up (sync locked)
+         range: 1
+     - field:
+         name: txdone
+         description: TX frame has been transmitted
+         range: 2
+  - reg:
+     name: rxlen
+     comment: length of the current RX packet
+     width: 32
+     access: ro
+     children:
+     - field:
+         name: nbytes
+         description: Number of bytes in the last 8B block (0 means 8)
+         range: 2-0
+     - field:
+         name: len8
+         description: Number of 8B blocks
+         range: 15-3
+     - field:
+         name: rem8
+         description: Number of remaining 8B blocks to read
+         range: 28-16
+  - reg:
+     name: rxdatah
+     comment: high word of rx data 8B block
+     width: 32
+     access: ro
+  - reg:
+     name: rxdatal
+     comment: low word of rx data 8B block, advance the buffer
+     width: 32
+     access: ro
+     x-hdl:
+       read-strobe: True
+  - reg:
+     name: txlen
+     comment: length of the current TX packet and trigger xmit
+     width: 32
+     access: wo
+     x-hdl:
+       write-strobe: True
+     children:
+     - field:
+         name: nbytes
+         description: Number of bytes in the last 8B block (0 means 8)
+         range: 2-0
+     - field:
+         name: len8
+         description: Number of 8B blocks
+         range: 15-3
+  - reg:
+     name: txdatah
+     comment: high word of tx data 8B block
+     width: 32
+     access: rw
+  - reg:
+     name: txdatal
+     comment: low word of tx data 8B block, advance the buffer
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+  - reg:
+     name: txaddr
+     comment: Current address in tx buffer - for debug
+     width: 32
+     access: ro

@@ -26,5 +26,6 @@ modules =  {
         "wr_auxclk_gen",
         "wr_timecodes",
         "wr_flash",
+        "wr_epx",
     ]
 }
