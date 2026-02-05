@@ -16,4 +16,7 @@ syn_project = "vxs_wr_ref.xise"
 
 syn_tool = "ise"
 
+syn_properties = [
+       ["Other XST Command Line Options", "-use_new_parser yes"] ]
+
 modules = { "local" : "../../top/vxs_ref_design/"}
