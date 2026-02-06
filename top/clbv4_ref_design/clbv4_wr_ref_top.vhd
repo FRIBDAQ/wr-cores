@@ -41,7 +41,8 @@ use unisim.vcomponents.all;
 
 entity clbv4_wr_ref_top is
   generic (
-    g_dpram_initf : string := "../../../../bin/wrpc/wrc_phy16_direct_dmtd.bram";
+    g_dpram_initf : string := "";
+    --g_dpram_initf : string := "../../../../bin/wrpc/wrc_phy16_direct_dmtd.bram";
     -- In Vivado Project-Mode, during a Synthesis run or an Implementation run, the Vivado working
     -- directory temporarily changes to the "project_name/project_name.runs/run_name" directory.
 
