@@ -16,8 +16,8 @@ elif (syn_device[0:4].upper()=="XCZU"):                                      #Zy
 
 elif (syn_device[0:4].upper()=="XC5V"):                                      # Virtex5
 	modules["local"] += ["Virtex5"]
-	files            += ["xwrc_platform_xilinx.vhd" ]
+	files            += ["xwrc_platform_ise.vhd" ]
 
 elif (syn_device[0:4].upper()=="XC6S" or syn_device[0:4].upper()=="XC6V"):   # Spartan6 and Virtex6
 	modules["local"] += ["6Series"]
-	files            += ["xwrc_platform_xilinx.vhd" ]
+	files            += ["xwrc_platform_ise.vhd" ]
