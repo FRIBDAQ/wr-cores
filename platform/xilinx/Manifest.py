@@ -3,7 +3,7 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-modules = {"local" : ["wr_gtp_phy"]}
+modules = {"local" : [""]}
 files   = [ "wr_xilinx_pkg.vhd"]
 
 if (syn_device[0:4].upper()=="XC7A" or syn_device[0:4].upper()=="XC7K"):     #Artix7 and Kintex7
