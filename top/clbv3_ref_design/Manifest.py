@@ -16,7 +16,7 @@ modules = {
         "../../",
     ],
     "git" : [
-        "git://gitlab.com/ohwr/hdl-core-lib/general-cores.git",
+        "git://gitlab.com/ohwr/project/general-cores.git",
         "git://gitlab.com/ohwr/project/urv-core.git",
     ],
 }

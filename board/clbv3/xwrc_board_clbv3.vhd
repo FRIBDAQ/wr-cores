@@ -288,7 +288,7 @@ begin  -- architecture struct
 
   clk_dmtd_62m5_o <= clk_dmtd;
   
-  cmp_xwrc_platform : xwrc_platform_xilinx
+  cmp_xwrc_platform : entity work.xwrc_platform_xilinx
     generic map (
       g_fpga_family               => "artix7",
       g_direct_dmtd               => TRUE,
