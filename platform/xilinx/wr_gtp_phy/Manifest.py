@@ -104,36 +104,6 @@ xilinx_ip_gthe4_common_lp = [
 if globals().get('wrcore_platform') is False:
     # No platform (avoid inclusion of xdc files)
     pass
-elif (syn_device[0:4].upper()=="XC7A" or # Family 7 GTP (Artix7)
-      syn_device.upper()=="XC7Z015"):
-    files.extend([
-        "family7-gtp/wr_gtp_phy_family7.vhd",
-        "family7-gtp/whiterabbit_gtpe2_channel_wrapper.vhd",
-        "family7-gtp/whiterabbit_gtpe2_channel_wrapper_gt.vhd",
-        "family7-gtp/whiterabbit_gtpe2_channel_wrapper_gtrxreset_seq.vhd" ]);
-elif (syn_device[0:4].upper()=="XC7K" or # Family 7 GTX (Kintex7 and Virtex7 585, 2000, X485 and ZYNQ Z030,Z035 Z045)
-        syn_device[0:7].upper()=="XC7V585" or
-        syn_device[0:8].upper()=="XC7V2000" or
-        syn_device[0:8].upper()=="XC7VX485" or
-        syn_device[0:6].upper()=="XC7Z03" or
-        syn_device[0:7].upper()=="XC7Z045"):
-    files.extend([
-        "family7-gtx/wr_gtx_phy_family7.vhd",
-        "family7-gtx/whiterabbit_gtxe2_channel_wrapper_gt.vhd",
-        "common/lpdc_mdio_regs.vhd",
-        "kintex7-lp/whiterabbit_gtxe2_channel_wrapper_kintex7_lp.vhd",
-        "kintex7-lp/wr_gtx_phy_kintex7_lp.vhd",
-        "kintex7-lp/wr_gtx_phy_kintex7_lp_qpll.vhd",
-        "kintex7-lp/gtx_comma_detect_kintex7_lp.vhd",
-        "kintex7-lp/gtx_idle_detect_kintex7_lp.vhd",
-        "family7-gtx-lp/whiterabbit_gtxe2_channel_wrapper_gt_lp.vhd",
-        "family7-gtx-lp/gtx_comma_detect_lp.vhd",
-        "family7-gtx-lp/wr_gtx_phy_family7_lp.vhd" ]);
-elif (syn_device[0:4].upper()=="XC7V"): # Family 7 GTH (other Virtex7 devices)
-    files.extend(["family7-gth/wr_gth_phy_family7.vhd",
-        "whiterabbit_gthe2_channel_wrapper_gt.vhd",
-        "whiterabbit_gthe2_channel_wrapper_gtrxreset_seq.vhd",
-        "whiterabbit_gthe2_channel_wrapper_sync_block.vhd" ]);
 elif (syn_device[0:4].upper()=="XCKU"): # Kintex Ultrascale GTH
     files.extend(["family7-gthe3/wr_gthe3_phy_family7.vhd",
         "family7-gthe3/wr_gthe3_phy_family7_xilinx_ip.vhd",
