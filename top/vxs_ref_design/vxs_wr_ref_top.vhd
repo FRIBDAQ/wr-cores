@@ -30,8 +30,7 @@ use unisim.vcomponents.all;
 
 entity vxs_wr_ref_top is
   generic (
---     g_dpram_initf : string := "../../bin/wrpc/wrc_phy8.bram";
-    g_dpram_initf : string  := "../../../binaries/wrc-VXS-support-v8.bram";
+     g_dpram_initf : string := "../../bin/wrpc/wrc_phy8.bram";
     -- Simulation-mode enable parameter. Set by default (synthesis) to 0, and
     -- changed to non-zero in the instantiation of the top level DUT in the testbench.
     -- Its purpose is to reduce some internal counters/timeouts to speed up simulations.

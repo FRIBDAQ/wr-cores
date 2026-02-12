@@ -1,0 +1,2 @@
+The /common folder should be used to contain all the modules that are shared among multiple FPGA families
+This should not contain a Manifest.py, instead the files should be sourced in its FPGA family folder

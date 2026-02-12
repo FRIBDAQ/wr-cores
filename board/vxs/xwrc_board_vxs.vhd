@@ -334,7 +334,7 @@ begin  -- architecture struct
       I  => clk_125m_pllref_p_i,
       IB => clk_125m_pllref_n_i);
 
-  cmp_xwrc_platform : xwrc_platform_xilinx
+  cmp_xwrc_platform : entity work.xwrc_platform_xilinx
     generic map (
       g_fpga_family               => "virtex5",
       g_with_external_clock_input => g_with_external_clock_input,
