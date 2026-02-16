@@ -52,7 +52,7 @@ if (syn_device[0:6].upper()=="XCAU10" or # Artix Ultrascale+ AU10P AU15P GTH
       syn_device[0:6].upper()=="XCAU15"):  # use Low Phase Drift implementation
     files= ["wr_gthe4_phy_family7_lp.vhd",
             "../../7Series/GTX-7-LPDC/gtx_comma_detect_lp.vhd",
-            "../../common/gtp_bitslide.vhd"
+            "../../common/gtp_bitslide.vhd",
             "../../common/lpdc_mdio_regs.vhd",
            ]
     files.extend(xilinx_ip_gthe4_lp);             # Note that gthe4 depend on Vivado version
