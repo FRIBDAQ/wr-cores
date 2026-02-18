@@ -3,4 +3,4 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-modules = {"local" : ["serdes","GTPE2","GTH-7","GTX-7","GTX-7-LPDC"]}
+modules = {"local" : ["serdes","GTPE2","GTHE2","GTXE2","GTXE2-LPDC"]}
