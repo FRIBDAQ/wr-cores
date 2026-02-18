@@ -696,13 +696,7 @@ begin
   end generate gen_aux_timing;
 
   gen_without_aux_timing: if not f_aux_timing_enabled(g_aux_timing_config) generate
-
-    timecode_wb_out <= (dat => (others => '0'),
-                        stall => '0',
-                        err => '0',
-                        rty => '0',
-                        ack => '1');
-
+    timecode_wb_out <= cc_dummy_slave_out;
   end generate gen_without_aux_timing;
 
   -----------------------------------------------------------------------------
