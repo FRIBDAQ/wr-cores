@@ -3,5 +3,5 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-modules = {"local" : ["chipscope", "GTP-5"]}
+modules = {"local" : ["chipscope", "GTP"]}
 
