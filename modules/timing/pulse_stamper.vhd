@@ -42,6 +42,7 @@ entity pulse_stamper is
     -- Time tag output (clk_sys_i domain), tag_cycles_o is in 8ns steps
     ---------------------------------------------------------------------------
     tag_tai_o      : out std_logic_vector(39 downto 0);
+    --  tag_cycles_o is always in 8ns steps (125Mhz).
     tag_cycles_o   : out std_logic_vector(27 downto 0);
     -- single-cycle pulse: strobe tag on tag_utc_o and tag_cycles_o
     tag_valid_o : out std_logic
