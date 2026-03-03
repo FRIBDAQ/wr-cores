@@ -16,7 +16,7 @@ set_property -dict [list \
   CONFIG.TX_BUFFER_MODE {0} \
   CONFIG.RX_BUFFER_MODE {0} \
   CONFIG.RX_SLIDE_MODE {PCS} \
-  CONFIG.ENABLE_OPTIONAL_PORTS {drpclk_in sdm0data_in sdm0toggle_in} \
+  CONFIG.ENABLE_OPTIONAL_PORTS {drpclk_in rxpcsreset_in sdm0data_in sdm0toggle_in} \
   CONFIG.LOCATE_IN_SYSTEM_IBERT_CORE {EXAMPLE_DESIGN} \
   CONFIG.LOCATE_TX_USER_CLOCKING {CORE} \
   CONFIG.LOCATE_RX_USER_CLOCKING {CORE} \
