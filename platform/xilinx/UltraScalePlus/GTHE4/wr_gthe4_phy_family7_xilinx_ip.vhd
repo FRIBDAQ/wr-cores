@@ -220,6 +220,7 @@ architecture rtl of wr_gthe4_phy_family7_xilinx_ip is
       rxpmaresetdone_out                   : out std_logic_vector(0 downto 0);
       txpmaresetdone_out                   : out std_logic_vector(0 downto 0);
       txprgdivresetdone_out                : out std_logic_vector(0 downto 0);
+      rxpcsreset_in                        : in std_logic_vector(0 downto 0);
       rxlpmen_in      : in std_logic_vector(0 downto 0);
       rxrate_in       : in std_logic_vector(2 downto 0);
       txdiffctrl_in   : in std_logic_vector(4 downto 0);
@@ -285,6 +286,8 @@ architecture rtl of wr_gthe4_phy_family7_xilinx_ip is
   signal txdiffctrl_int : std_logic_vector(4 downto 0);
 
   signal txprecursor_int, txpostcursor_int : std_logic_vector(4 downto 0);
+
+  signal rx_pcs_reset: std_logic;
 
   component gtp_bitslide is
     generic (
@@ -385,7 +388,7 @@ begin
       gtp_rx_byte_is_aligned_i => rx_byte_is_aligned,
       serdes_ready_i           => serdes_ready_rxclk,
       gtp_rx_slide_o           => rx_slide,
-      gtp_rx_cdr_rst_o         => open,
+      gtp_rx_cdr_rst_o         => rx_pcs_reset,
       bitslide_o               => rx_bitslide_o,
       synced_o                 => rx_synced);
 
@@ -457,6 +460,7 @@ begin
       rxctrl3_out                           => rxctrl3_int,
       rxpmaresetdone_out(0)                 => rxpmaresetdone_int,
       txpmaresetdone_out(0)                 => txpmaresetdone_int,
+
 
       rxlpmen_in(0)   => rxlpmen_int,
       rxrate_in       => rxrate_int,
@@ -534,6 +538,7 @@ begin
       rxpmaresetdone_out(0)                 => rxpmaresetdone_int,
       txpmaresetdone_out(0)                 => txpmaresetdone_int,
       txprgdivresetdone_out                 => open,
+      rxpcsreset_in(0)                      => rx_pcs_reset,
       rxlpmen_in(0)   => rxlpmen_int,
       rxrate_in       => rxrate_int,
       txdiffctrl_in   => txdiffctrl_int,
