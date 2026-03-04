@@ -123,6 +123,8 @@ package wr_board_pkg is
       clk_ext_mul_locked_i : in  std_logic                                        := '1';
       clk_ext_stopped_i    : in  std_logic                                        := '0';
       clk_ext_rst_o        : out std_logic;
+      lock_sweep_i         : in  std_logic := '0';
+      lock_sweep_phase_i   : in  std_logic_vector(15 downto 0) := (others => '0');
       pps_ext_i            : in  std_logic                                        := '0';
       rst_n_i              : in  std_logic;
       dac_hpll_load_p1_o   : out std_logic;

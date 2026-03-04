@@ -91,6 +91,10 @@ entity xwrc_board_common is
     clk_ext_stopped_i    : in  std_logic := '0';
     clk_ext_rst_o        : out std_logic;
 
+    -- LockSweep signals
+    lock_sweep_i         : in std_logic := '0';
+    lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
+
     -- External PPS input (cesium, GPSDO, etc.), used in Grandmaster mode
     pps_ext_i : in std_logic := '0';
 
@@ -409,6 +413,8 @@ begin  -- architecture struct
       clk_ext_mul_locked_i        => clk_ext_mul_locked_i,
       clk_ext_stopped_i           => clk_ext_stopped_i,
       clk_ext_rst_o               => clk_ext_rst_o,
+      lock_sweep_i                => lock_sweep_i,
+      lock_sweep_phase_i          => lock_sweep_phase_i,
       pps_ext_i                   => pps_ext_i,
       rst_n_i                     => rst_n_i,
       dac_hpll_load_p1_o          => dac_hpll_load_p1_o,

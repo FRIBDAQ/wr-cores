@@ -57,6 +57,10 @@ entity xwr_pps_gen is
     pps_pre_o   : out std_logic;
     pps_valid_o : out std_logic;
 
+    -- LockSweep signals
+    lock_sweep_i         : in std_logic := '0';
+    lock_sweep_phase_i   : in std_logic_vector(15 downto 0) := (others => '0');
+
     tm_utc_o        : out std_logic_vector(39 downto 0);
     tm_cycles_o     : out std_logic_vector(27 downto 0);
     tm_time_valid_o : out std_logic
@@ -365,7 +369,7 @@ begin  -- behavioral
     port map (
       rst_n_i                => rst_n_i,
       clk_sys_i              => clk_sys_i,
-      wb_adr_i               => slave_i.adr(4 downto 2),
+      wb_adr_i               => slave_i.adr(5 downto 2),
       wb_dat_i               => slave_i.dat,
       wb_dat_o               => slave_o.dat,
       wb_cyc_i               => slave_i.cyc,
@@ -399,7 +403,9 @@ begin  -- behavioral
       ppsg_escr_sec_set_o    => ppsg_escr_sec_set,
       ppsg_escr_nsec_set_o   => ppsg_escr_nsec_set,
       ppsg_escr_pps_unmask_o => ppsg_escr_pps_unmask,
-      ppsg_escr_pps_in_term_o=> ppsin_term_o);
+      ppsg_escr_pps_in_term_o=> ppsin_term_o,
+      ppsg_lock_sweep_phase_i=> lock_sweep_phase_i,
+      ppsg_lock_sweep_stat_i => lock_sweep_i);
 
 -- drive unused signals
   slave_o.rty   <= '0';

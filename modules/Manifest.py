@@ -27,5 +27,6 @@ modules =  {
         "wr_timecodes",
         "wr_flash",
         "wr_epx",
+        "wr_locksweep",
     ]
 }
