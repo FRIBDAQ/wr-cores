@@ -142,8 +142,6 @@ architecture behavioral of ep_packet_filter is
   signal mm_write           : std_logic;
   signal mm_rdata, mm_wdata : std_logic_vector(35 downto 0);
 
-  type t_state is (WAIT_FRAME, PROCESS_FRAME, GEN_OUTPUT);
-
   signal stage1, stage2, stage3 : std_logic;
   signal r_pfcr1_mm_data_lsb : std_logic_vector(11 downto 0);
 
@@ -179,6 +177,9 @@ begin  -- behavioral
   mm_write <= not regs_i.pfcr0_enable_o and regs_i.pfcr0_mm_write_o and regs_i.pfcr0_mm_write_wr_o;
   mm_wdata <= regs_i.pfcr0_mm_data_msb_o & r_pfcr1_mm_data_lsb;
 
+  --  Dual port RAM for microcode instruction
+  --  Port A is used by the CPU to get instructions
+  --  Port B is for the user to read/write the memory.
   U_microcode_ram : generic_dpram
     generic map (
       g_data_width => 36,
@@ -192,6 +193,7 @@ begin  -- behavioral
       aa_i    => std_logic_vector(pc),
       da_i    => x"000000000",
       qa_o    => mm_rdata,
+      qb_o    => open,
       clkb_i  => clk_sys_i,
       bweb_i  => "11111",
       web_i   => mm_write,
@@ -200,7 +202,9 @@ begin  -- behavioral
       );
 
 
-
+  --  Dual port RAM for packet
+  --  Port A is used for beat from the incoming packet
+  --  Port B is used by CPU to reference the packet data.
   U_backlog_ram : generic_dpram
     generic map (
       g_data_width       => 16,
@@ -290,7 +294,7 @@ begin  -- behavioral
       if stage2 = '1' then
         stage3 <= '1';
         ir_d   <= ir;
-        if (((pmem_rdata and mask) = insn.cmp_value)) then
+        if (pmem_rdata and mask) = insn.cmp_value then
           result_cmp <= '1';
         else
           result_cmp <= '0';
@@ -361,9 +365,6 @@ begin  -- behavioral
       
     end if;
   end process;
-  
-  
-  
 
   U_Sync_Done : gc_pulse_synchronizer2
     port map (
