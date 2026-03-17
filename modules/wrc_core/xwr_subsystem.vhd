@@ -80,6 +80,9 @@ entity xwr_subsystem is
     g_softpll_aux_channel_config : t_softpll_channels_config_array := c_softpll_default_channels_config;
     g_with_clock_freq_monitor   : boolean                        := true;
     g_hwbld_date                : std_logic_vector(31 downto 0)  := (others => 'X');
+
+    --  CPU implemented.  See wrc_host_map.cheby for the values.
+    g_cpu_id                    : std_logic_vector(31 downto 0);
     g_direct_tag                : boolean                        := false;
     g_aux_timing_config         : t_wr_timecode_config           := c_WR_TIMECODE_NONE
     );
@@ -1068,6 +1071,7 @@ begin
       clk_i => clk_sys_i,
       wb_i => wb_host_i,
       wb_o => wb_host_o,
+      cpu_id_i => g_cpu_id,
       endpoint_mach_i(31 downto 16) => x"0000",
       endpoint_mach_i(15 downto 0) => my_mac_addr(47 downto 32),
       endpoint_macl_i => my_mac_addr(31 downto 0),

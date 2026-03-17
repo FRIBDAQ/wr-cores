@@ -356,7 +356,8 @@ begin
       g_with_clock_freq_monitor => g_with_clock_freq_monitor,
       g_hwbld_date => g_hwbld_date,
       g_direct_tag => g_direct_tag,
-      g_aux_timing_config => g_aux_timing_config
+      g_aux_timing_config => g_aux_timing_config,
+      g_cpu_id => x"000000f3"
       )
     port map (
       clk_sys_i => clk_sys_i,

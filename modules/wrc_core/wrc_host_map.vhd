@@ -14,6 +14,9 @@ entity wrc_host_map is
     wb_i                 : in    t_wishbone_slave_in;
     wb_o                 : out   t_wishbone_slave_out;
 
+    -- CPU implementation (used for loading fw, debugging)
+    cpu_id_i             : in    std_logic_vector(31 downto 0);
+
     -- MAC Address bits [47:32]
     endpoint_mach_i      : in    std_logic_vector(31 downto 0);
 
@@ -25,7 +28,7 @@ entity wrc_host_map is
     spll_o               : out   t_wishbone_master_out;
 
     -- HW feature register
-    -- Memory size (in 64KB units)
+    -- Memory size (in 16KB units + 1)
     syscon_hwfr_memory_i : in    std_logic_vector(3 downto 0);
     syscon_hwfr_STORAGE_SEC_i : in    std_logic_vector(15 downto 0);
 
@@ -155,6 +158,14 @@ begin
   -- Register magic
 
   -- Register mapver
+
+  -- Register cpu_id
+
+  -- Register vuart_id
+
+  -- Register splldbg_id
+
+  -- Register wdiags_id
 
   -- Register endpoint_mach
 
@@ -323,6 +334,18 @@ begin
       when "000001" =>
         -- Reg mapver
         wr_ack_int <= wr_req_d0;
+      when "000010" =>
+        -- Reg cpu_id
+        wr_ack_int <= wr_req_d0;
+      when "000011" =>
+        -- Reg vuart_id
+        wr_ack_int <= wr_req_d0;
+      when "000100" =>
+        -- Reg splldbg_id
+        wr_ack_int <= wr_req_d0;
+      when "000101" =>
+        -- Reg wdiags_id
+        wr_ack_int <= wr_req_d0;
       when others =>
         wr_ack_int <= wr_req_d0;
       end case;
@@ -370,10 +393,10 @@ begin
   end process;
 
   -- Process for read requests.
-  process (adr_int, rd_req_int, endpoint_mach_i, endpoint_macl_i, spll_i.dat,
-           spll_rack, syscon_hwfr_memory_i, syscon_hwfr_STORAGE_SEC_i,
-           syscon_hwir_i, vuart_i.dat, vuart_rack, wdiags_i.dat, wdiags_rack,
-           cpu_i.dat, cpu_rack) begin
+  process (adr_int, rd_req_int, cpu_id_i, endpoint_mach_i, endpoint_macl_i,
+           spll_i.dat, spll_rack, syscon_hwfr_memory_i,
+           syscon_hwfr_STORAGE_SEC_i, syscon_hwir_i, vuart_i.dat, vuart_rack,
+           wdiags_i.dat, wdiags_rack, cpu_i.dat, cpu_rack) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
     spll_re <= '0';
@@ -389,6 +412,22 @@ begin
         rd_dat_d0 <= "01010111010100100101000001000011";
       when "000001" =>
         -- Reg mapver
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= "00000000000000000000000000000001";
+      when "000010" =>
+        -- Reg cpu_id
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= cpu_id_i;
+      when "000011" =>
+        -- Reg vuart_id
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= "00000000000000000000000000000001";
+      when "000100" =>
+        -- Reg splldbg_id
+        rd_ack_d0 <= rd_req_int;
+        rd_dat_d0 <= "00000000000000000000000000000001";
+      when "000101" =>
+        -- Reg wdiags_id
         rd_ack_d0 <= rd_req_int;
         rd_dat_d0 <= "00000000000000000000000000000001";
       when others =>

@@ -23,6 +23,50 @@ memory-map:
      preset: 0x00000001
      x-hdl:
        type: const
+  - reg:
+     name: cpu_id
+     comment: CPU implementation (used for loading fw, debugging)
+     description: |
+        0x0000008A: lm32 (deprecated)
+        0x000000F3: urv
+        0x09000028: ARM RPU#0 on ZynqUS+
+        0x09010028: ARM RPU#1 on ZynqUS+
+     address: 0x8
+     access: ro
+     width: 32
+  - reg:
+     name: vuart_id
+     comment: VUART implementation
+     description: |
+        0x00000001: use host map
+     address: 0xC
+     access: ro
+     width: 32
+     preset: 0x00000001
+     x-hdl:
+       type: const
+  - reg:
+     name: splldbg_id
+     comment: SPLL debugger implementation
+     description: |
+        0x00000001: use host map
+     address: 0x10
+     access: ro
+     width: 32
+     preset: 0x00000001
+     x-hdl:
+       type: const
+  - reg:
+     name: wdiags_id
+     comment: wdiags implementation
+     description: |
+        0x00000001: use host map
+     address: 0x14
+     access: ro
+     width: 32
+     preset: 0x00000001
+     x-hdl:
+       type: const
   - block:
      name: endpoint
      address: 0x100
