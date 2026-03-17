@@ -38,6 +38,8 @@ gthe_ip_common = [
 if (syn_device[0:4].upper()=="XCZU" or  # Zynq Ultrascale GTH
       syn_device[0:5].upper()=="XCK26"):  # Kria K26
     files = ["wr_gthe4_phy_family7_xilinx_ip.vhd",
+             "wr_gthe4_adapter.vhd",
+             "wr_gthe4_rxtx_adapter.vhd",
              "../../common/gtp_bitslide.vhd"
             ]
     files.extend(xilinx_ip_gthe4);

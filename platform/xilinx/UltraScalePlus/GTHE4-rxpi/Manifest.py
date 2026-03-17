@@ -3,4 +3,12 @@
 ##
 ## SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
-modules = {"local" : ["serdes", "dpram", "GTHE4", "GTHE4-LPDC", "GTHE4-rxpi"]}
+
+if (syn_device[0:4].upper()=="XCZU" or  # Zynq Ultrascale GTH
+      syn_device[0:5].upper()=="XCK26"):  # Kria K26
+    files = [
+        #"gthe4_sdm.vhd",
+        "rxpi_gthe4_map.vhd",
+        "xwrc_gthe4_rxpi.vhd",
+    ]
+
