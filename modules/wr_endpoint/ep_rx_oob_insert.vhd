@@ -12,13 +12,14 @@
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
+-- Doc: Insert an OOB beat at then end of the packet
+-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.gencores_pkg.all;              -- for gc_crc_gen
 use work.endpoint_private_pkg.all;
 use work.endpoint_pkg.all;
 use work.ep_wbgen2_pkg.all;
@@ -37,62 +38,13 @@ entity ep_rx_oob_insert is
 
        regs_i : in t_ep_out_registers
        );
-
 end ep_rx_oob_insert;
 
 architecture behavioral of ep_rx_oob_insert is
 
   type t_state is (WAIT_OOB, OOB);
   signal state : t_state;
-
-  signal src_dreq_d0 : std_logic;
-
-  --component chipscope_ila
-  --  port (
-  --    CONTROL : inout std_logic_vector(35 downto 0);
-  --    CLK     : in    std_logic;
-  --    TRIG0   : in    std_logic_vector(31 downto 0);
-  --    TRIG1   : in    std_logic_vector(31 downto 0);
-  --    TRIG2   : in    std_logic_vector(31 downto 0);
-  --    TRIG3   : in    std_logic_vector(31 downto 0));
-  --end component;
-
-  --component chipscope_icon
-  --  port (
-  --    CONTROL0 : inout std_logic_vector (35 downto 0));
-  --end component;
-  
-  --signal CONTROL : std_logic_vector(35 downto 0);
-  --signal CLK     : std_logic;
-  --signal TRIG0   : std_logic_vector(31 downto 0);
-  --signal TRIG1   : std_logic_vector(31 downto 0);
-  --signal TRIG2   : std_logic_vector(31 downto 0);
-  --signal TRIG3   : std_logic_vector(31 downto 0);
-  
 begin
-  --chipscope_ila_1 : chipscope_ila
-  --  port map (
-  --    CONTROL => CONTROL,
-  --    CLK     => clk_sys_i,
-  --    TRIG0   => TRIG0,
-  --    TRIG1   => TRIG1,
-  --    TRIG2   => TRIG2,
-  --    TRIG3   => TRIG3);
-
-  --chipscope_icon_1 : chipscope_icon
-  --  port map (
-  --    CONTROL0 => CONTROL);
-
-  --TRIG0(15 downto 0) <= snk_fab_i.data;
-  --trig0(16) <= snk_fab_i.sof;
-  --trig0(17) <= snk_fab_i.eof;
-  --trig0(18) <= snk_fab_i.error;
-  --trig0(19) <= snk_fab_i.bytesel;
-  --trig0(20) <= snk_fab_i.has_rx_timestamp;
-  --trig0(21) <= snk_fab_i.dvalid;
-  --trig0(22) <= '1' when state = WAIT_OOB else '0';
-  --trig0(24 downto 23) <= snk_fab_i.addr;
-
   snk_dreq_o                   <= src_dreq_i;
   src_fab_o.sof                <= snk_fab_i.sof;
   src_fab_o.eof                <= snk_fab_i.eof;
@@ -101,9 +53,8 @@ begin
   src_fab_o.has_rx_timestamp   <= snk_fab_i.has_rx_timestamp;
   src_fab_o.rx_timestamp_valid <= snk_fab_i.rx_timestamp_valid;
   
-  p_comb_src : process (state, snk_fab_i, src_dreq_i, regs_i)
+  p_comb_src : process (state, snk_fab_i, regs_i)
   begin
-
     if(snk_fab_i.has_rx_timestamp = '1')then
       src_fab_o.data   <= c_WRF_OOB_TYPE_RX & (not snk_fab_i.rx_timestamp_valid) & "000000" & regs_i.ecr_portid_o;
       src_fab_o.dvalid <= '1';
@@ -146,8 +97,6 @@ begin
       end if;
     end if;
   end process;
-
-
 end behavioral;
 
 

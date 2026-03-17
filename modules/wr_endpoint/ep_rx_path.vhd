@@ -208,12 +208,12 @@ begin  -- behavioral
   end process;
 
   gen_with_match_buff: if( g_with_early_match or g_with_dpi_classifier) generate
-    U_Sync_Rst_match_buff : gc_sync_ffs
+    U_Sync_Rst_match_buff : gc_sync
       port map (
-        clk_i    => clk_sys_i,
-        rst_n_i  => '1',
-        data_i   => rst_n_rx_i,
-        synced_o => rst_n_rx_match_buff);
+        clk_i     => clk_sys_i,
+        rst_n_a_i => '1',
+        d_i       => rst_n_rx_i,
+        q_o       => rst_n_rx_match_buff);
 
     U_match_buffer : generic_shiftreg_fifo
       generic map (
@@ -235,6 +235,7 @@ begin  -- behavioral
 
         rd_i      => mbuf_rd,
         full_o    => mbuf_full,
+        almost_full_o => open,
         q_valid_o => mbuf_valid);
   end generate;
 
@@ -253,6 +254,7 @@ begin  -- behavioral
                                    and regs_i.pfcr0_enable_o='0') else
                          mbuf_valid;
 
+  --  From clk_rx to clk_sys.
   U_Rx_Clock_Align_FIFO : entity work.ep_clock_alignment_fifo
     generic map (
       g_size                 => 128,

@@ -12,6 +12,8 @@
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
+-- Description: insert at the beginning of a packet the status (given by filter)
+-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -22,7 +24,6 @@ use work.endpoint_pkg.all;
 use work.wr_fabric_pkg.all;
 
 entity ep_rx_status_reg_insert is
-  
   port (
     clk_sys_i : in std_logic;
     rst_n_i   : in std_logic;
@@ -42,7 +43,6 @@ entity ep_rx_status_reg_insert is
 
     rmon_pfilter_drop_o : out std_logic
     );
-
 end ep_rx_status_reg_insert;
 
 architecture rtl of ep_rx_status_reg_insert is
@@ -54,8 +54,6 @@ architecture rtl of ep_rx_status_reg_insert is
   signal sreg         : t_wrf_status_reg;
   signal state        : t_state;
   signal src_fab_out  : t_ep_internal_fabric;
-
-  signal sof_mask : std_logic;
   
 begin  -- rtl
   
@@ -97,6 +95,7 @@ begin  -- rtl
             rmon_pfilter_drop_o <= '0';
             if(snk_fab_i.sof = '1') then
               state     <= WAIT_MBUF;
+              --  Add an empty slot at the beginning to inser the status.
               dreq_mask <= '0';
             end if;
             
@@ -132,6 +131,4 @@ begin  -- rtl
       end if;
     end if;
   end process;
-
-
 end rtl;

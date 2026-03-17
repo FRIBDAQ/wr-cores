@@ -12,6 +12,9 @@
 -- Platform   : FPGA-generic
 -- Standard   : VHDL '93
 -------------------------------------------------------------------------------
+-- Description: check packet length (runt/giant), check CRC, and strip CRC.
+--   Assume OOB beat was already appended.
+-------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -47,31 +50,11 @@ entity ep_rx_crc_size_check is
     rmon_runt_o    : out std_logic;
     rmon_crc_err_o : out std_logic
     );
-
 end ep_rx_crc_size_check;
 
 architecture behavioral of ep_rx_crc_size_check is
 
   constant c_MIN_FRAME_SIZE : integer := 64;
-
-  component ep_rx_bypass_queue
-    generic (
-      g_size  : integer;
-      g_width : integer);
-    port (
-      rst_n_i : in  std_logic;
-      clk_i   : in  std_logic;
-      d_i     : in  std_logic_vector(g_width-1 downto 0);
-      valid_i : in  std_logic;
-      dreq_o  : out std_logic;
-      q_o     : out std_logic_vector(g_width-1 downto 0);
-      valid_o : out std_logic;
-      dreq_i  : in  std_logic;
-      flush_i : in  std_logic;
-      purge_i : in  std_logic;
-      empty_o : out std_logic);
-  end component;
-
 
   type t_state is (ST_WAIT_FRAME, ST_DATA, ST_OOB);
 
@@ -114,7 +97,6 @@ architecture behavioral of ep_rx_crc_size_check is
   signal err_on_giant     : std_logic;
 
   function f_queue_occupation(q : std_logic_vector; check_empty : std_logic) return std_logic is
-    variable i : integer;
   begin
     for i in 0 to q'length-1 loop
       if(q(i) = check_empty) then
@@ -146,12 +128,12 @@ begin  -- behavioral
         en_i    => crc_gen_enable,
         half_i  => snk_fab_i.bytesel,
         data_i  => snk_fab_i.data(15 downto 0),
+        restart_i => open,
         match_o => crc_match,
         crc_o   => open);
   end generate gen_old_crc;
 
   gen_new_crc : if(g_use_new_crc = true) generate
-
     crc_in_data(15 downto 8) <= snk_fab_i.data(15 downto 8);
     crc_in_data(7 downto 0)  <= x"00" when snk_fab_i.bytesel = '1' else snk_fab_i.data(7 downto 0);
 
@@ -172,27 +154,9 @@ begin  -- behavioral
 
   end generate gen_new_crc;
 
---   U_bypass_queue : ep_rx_bypass_queue
---     generic map (
---       g_size  => 3,
---       g_width => 18)
---     port map (
---       rst_n_i => rst_n_i,
---       clk_i   => clk_sys_i,
---       d_i     => q_in,
---       valid_i => q_dvalid_in,
---       dreq_o  => q_dreq_out,
---       q_o     => q_out,
---       valid_o => q_dvalid_out,
---       dreq_i  => src_dreq_i,
---       flush_i => '0',
---       purge_i => q_purge,
---       empty_o => q_empty);
-
   snk_dreq_o <= q_dreq_out and not (snk_fab_i.eof or snk_fab_i.error);
 
-
-  p_count_bytes : process (clk_sys_i, rst_n_i)
+  p_count_bytes : process (clk_sys_i)
   begin  -- process
     if rising_edge(clk_sys_i) then
       if (rst_n_i = '0' or regs_i.ecr_rx_en_o = '0') then
@@ -231,12 +195,10 @@ begin  -- behavioral
                    (is_giant = '1' and regs_i.rfcr_a_giant_o = '0') else '1';
   err_on_giant  <= '1' when (is_giant = '1' and regs_i.rfcr_a_giant_o = '0') else '0';
 
-  p_gen_output : process(clk_sys_i, rst_n_i)
+  p_gen_output : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
-
       if rst_n_i = '0' or regs_i.ecr_rx_en_o = '0' then
-
         q_purge   <= '0';
         q_bytesel <= '0';
 
@@ -248,7 +210,6 @@ begin  -- behavioral
         rmon_crc_err_o <= '0';
 
         src_fab_o.sof <= '0';
-
       else
         case state is
           when ST_WAIT_FRAME =>
@@ -282,7 +243,6 @@ begin  -- behavioral
               state           <= ST_WAIT_FRAME;
               q_purge         <= '1';
 
---             elsif(snk_fab_i.eof = '1' or oob_in = '1') then 
             elsif(snk_fab_i.eof = '1' or oob_in = '1' or err_on_giant = '1') then
               if(size_check_ok = '0' or crc_match = '0') then  -- bad frame?
                 state           <= ST_WAIT_FRAME;
@@ -299,7 +259,6 @@ begin  -- behavioral
               rmon_giant_o   <= is_giant and (not regs_i.rfcr_a_giant_o);
               rmon_crc_err_o <= not crc_match;
             end if;
-
             
           when ST_OOB =>
             rmon_runt_o    <= '0';
@@ -321,10 +280,11 @@ begin  -- behavioral
   q_in(17 downto 16) <= snk_fab_i.addr;
   q_dvalid_in        <= '1' when snk_fab_i.dvalid = '1' and (state = ST_DATA or state = ST_OOB) else '0';
 
-  --ML optimized queue_bypass so can remove masks tuff
+  --  When OOB beat arrives, the FIFO is bypassed.  So the CRC is removed (as the FIFO has the depth of a CRC).
+  --  bytesel (which can only be set on the last data beat) always bypass the FIFO.
   src_fab_o.dvalid  <= q_dvalid_out;
   src_fab_o.data    <= q_in(15 downto 0)  when (oob_in = '1') else q_out(15 downto 0);
-  src_fab_o.addr    <= q_in(17 downto 16) when (oob_in = '1') else q_out(17 downto 16) ;
+  src_fab_o.addr    <= q_in(17 downto 16) when (oob_in = '1') else q_out(17 downto 16);
   src_fab_o.bytesel <= snk_fab_i.bytesel  when (dat_in = '1') else '0';
   src_fab_o.eof     <= snk_fab_i.eof;
 
@@ -371,10 +331,12 @@ begin  -- behavioral
         valid_mask <= src_dreq_i;
 
         if sreg_enable = '1' then
-          q_valid(0)                           <= q_dvalid_in;
-          if(oob_in = '1' ) then -- flashing CRC
-            q_valid                            <=(others => '0');
+          q_valid(0) <= q_dvalid_in;
+          if(oob_in = '1' ) then
+            -- Strip CRC
+            q_valid <=(others => '0');
           else
+            -- Shift
             q_valid(q_valid'length-1 downto 1) <= q_valid(q_valid'length-2 downto 0);
           end if;
         end if;
@@ -383,7 +345,3 @@ begin  -- behavioral
   end process;
 
 end behavioral;
-
-
-
-
