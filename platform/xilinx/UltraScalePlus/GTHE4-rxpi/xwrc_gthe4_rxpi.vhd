@@ -75,7 +75,9 @@ entity xwrc_gthe4_rxpi is
     rxpcsreset_o : out std_logic;
     txpcsreset_o : out std_logic;
     txpmareset_o : out std_logic;
-    gth_status_i : std_logic_vector(15 downto 0) := (others => '0')
+    gth_status_i : std_logic_vector(15 downto 0) := (others => '0');
+
+    rxpi_byte_o : out std_logic_vector(7 downto 0)
   );
 end;
 
@@ -389,6 +391,9 @@ begin
             rxpi_acc <= rxpi_acc + unsigned(rxpi_ext);
             rxpi_cnt <= rxpi_cnt - 1;
           end if;
+
+          --  For debug (one cycle later)
+          rxpi_byte_o <= rxpi_ext(rxpi_byte_o'range);
 
           --  Extend rxpi
           if rxpi(rxpi'high) = '1' then
