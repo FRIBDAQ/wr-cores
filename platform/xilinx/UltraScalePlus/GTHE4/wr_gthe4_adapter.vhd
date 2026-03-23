@@ -77,6 +77,7 @@ entity wr_gthe4_adapter is
     gth_rx_comma_det_i : in std_logic;
     gth_rx_pma_reset_done_i : in std_logic;
     gth_tx_pma_reset_done_i : in std_logic;
+    gth_rx_pcs_rst_o : out std_logic;
 
     gth_rx_clk_i : in std_logic;
     gth_tx_clk_i : in std_logic
@@ -137,7 +138,7 @@ begin
       gtp_rx_byte_is_aligned_i => gth_rx_byte_aligned_i,
       serdes_ready_i           => serdes_ready_rxclk,
       gtp_rx_slide_o           => gth_rx_slide_o,
-      gtp_rx_cdr_rst_o         => open,
+      gtp_rx_cdr_rst_o         => gth_rx_pcs_rst_o,
       bitslide_o               => rx_bitslide_o,
       synced_o                 => rx_synced);
 
