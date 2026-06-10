@@ -43,7 +43,11 @@ entity clkMux is
         clk0_i     : in  std_logic; -- Selected when S = "000"
         clk1_i     : in  std_logic; -- Selected when S = "001"
         clk2_i     : in  std_logic; -- Selected when S = "010"
-        clk3_i     : in  std_logic; -- Selected when S = "100"
+        clk3_i     : in  std_logic; -- Selected when S = "011"
+        clk4_i     : in  std_logic; -- Selected when S = "100"
+        clk5_i     : in  std_logic; -- Selected when S = "101"
+        clk6_i     : in  std_logic; -- Selected when S = "110"
+        clk7_i     : in  std_logic; -- Selected when S = "111"
         
         -- Clock Output
         clk_o  : out std_logic
@@ -66,7 +70,11 @@ begin
         clk_sel <= clk0_i when "000",
                    clk1_i when "001",
                    clk2_i when "010",
-                   clk3_i when "100",
+                   clk3_i when "011",
+                   clk4_i when "100",
+                   clk5_i when "101",
+                   clk6_i when "110",
+                   clk7_i when "111",
                    '0'    when others; -- Safety net: drive '0' for all other combinations
                                     -- (e.g., "011", "101", "110", "111")
 
