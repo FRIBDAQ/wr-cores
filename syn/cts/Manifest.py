@@ -1,4 +1,4 @@
-board  = "kr260"
+board  = "cts"
 target = "xilinx"
 action = "synthesis"
 
@@ -6,17 +6,17 @@ syn_device = "xck26"
 syn_grade = "-2LV-c"
 syn_package = "-sfvc784"
 
-syn_top = "kr260_ref_top"
-syn_project = "kr260_ref_top"
+syn_top = "cts_top"
+syn_project = "cts"
 syn_tool = "vivado"
 
 files = [
-    "kr260_ref_design.xdc",
+    "cts.xdc",
 ]
 
 modules = {
     "local" : [
-        "../../top/kr260_ref_design/",
+        "../../top/cts/",
     ],
 }
 

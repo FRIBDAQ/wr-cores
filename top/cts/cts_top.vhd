@@ -1,7 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : WRPC reference design for KR260 board
+-- Title      : WRPC reference design for CTS board
+-- Orig. Title: WRPC reference design for KR260 board
 -- Project    : WR PTP Core
--- URL        : http://www.ohwr.org/projects/wr-cores/wiki/Wrpc_core
+-- URL        : http://www.github.com/FRIBDAQ/wr-cores.git
 -------------------------------------------------------------------------------
 -- Company    : CERN (BE-CO-HT)
 -- Standard   : VHDL'93
@@ -42,41 +43,36 @@ use work.endpoint_pkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity kr260_ref_top is
+entity cts_top is
   port (
-    refclk0_n_i : in std_logic;
-    refclk0_p_i : in std_logic;
+    GTH_REFCLK1_n : in std_logic;
+    GTH_REFCLK1_p : in std_logic;
 
-    clk_25m_i   : in std_logic;
+    GTH_SFP_TX0_n : out std_logic;
+    GTH_SFP_TX0_p : out std_logic;
+    GTH_SFP_RX0_n : in std_logic;
+    GTH_SFP_RX0_p : in std_logic;
 
-    pad_txn_o : out std_logic;
-    pad_txp_o : out std_logic;
-    pad_rxn_i : in std_logic;
-    pad_rxp_i : in std_logic;
+    GTH_SFP_TX3_NC_n : out std_logic;
+    GTH_SFP_TX3_NC_p : out std_logic;
+    GTH_SFP_RX3_NC_n : in std_logic;
+    GTH_SFP_RX3_NC_p : in std_logic;
 
-    helper_txn_o : out std_logic;
-    helper_txp_o : out std_logic;
-    helper_rxn_i : in std_logic;
-    helper_rxp_i : in std_logic;
+    LED_FPGA_DS0 : out std_logic;
+    LED_FPGA_DS1 : out std_logic;
 
-    led1_o : out std_logic;
-    led2_o : out std_logic;
-    sfp_led1_o : out std_logic;
-    sfp_led2_o : out std_logic;
+    SFP_TX_FAULT0 : in std_logic;
+    SFP_DISABLE0 : out std_logic;
+    SFP_MOD_ABS0 : in std_logic;
+    P2_HDIO3_SDA : inout std_logic;
+    P2_HDIO4_SCL : inout std_logic;
 
-    sfp_tx_fault_i : in std_logic;
-    sfp_tx_disable_o : out std_logic;
-    sfp_mod_abs_i : in std_logic;
-    sfp_sda_b : inout std_logic;
-    sfp_scl_b : inout std_logic;
-
-    pmod4_2_b : out std_logic;
-    pmod4_4_b : out std_logic;
-    pmod4_6_b : out std_logic
+    LEMO_HP_OUT_n : out std_logic_vector(3 downto 0);
+    LEMO_HP_OUT_p : out std_logic_vector(3 downto 0)
   );
 end;
 
-architecture top of kr260_ref_top is
+architecture top of cts_top is
   --  In sources, select the mpsoc.bd file and right-click to view instantiation template
   component mpsoc is
     port (
@@ -190,9 +186,7 @@ END COMPONENT;
   signal qpll_reset, qpll_lock, qpll0_lock, qpll1_lock : std_logic;
   signal qpll0_outclk, qpll0_outrefclk : std_logic;
   signal qpll1_outclk, qpll1_outrefclk : std_logic;
-  signal clk_25m : std_logic;
 
-  signal count : natural range 0 to 156_250_000 - 1;
   signal clk_156m25, clk_62m5 : std_logic;
   signal clk_fb, pll_locked : std_logic;
   signal clk_dmtd : std_logic;
@@ -248,6 +242,10 @@ END COMPONENT;
   signal hpll_toggle, mpll_toggle : std_logic;
   signal hpll_cnt, mpll_cnt : unsigned(5 downto 0);
 
+  signal nimo : std_logic_vector(3 downto 0);
+  signal led_link_o : std_logic;
+  signal led_act_o : std_logic;
+
 begin
   inst_ibufds_gt : IBUFDS_GTE4
       generic map (
@@ -258,8 +256,8 @@ begin
         O     => refclk_156m25,
         ODIV2 => refclk_156m25_int,
         CEB   => '0',
-        I     => refclk0_p_i,
-        IB    => refclk0_n_i);
+        I     => GTH_REFCLK1_p,
+        IB    => GTH_REFCLK1_n);
 
   inst_buf_gt : BUFG_GT
       port map (
@@ -270,12 +268,6 @@ begin
         CLRMASK => '0',
         DIV => "000",
         I => refclk_156m25_int);
-
-
-  inst_bufg: BUFG
-    port map (
-      O => clk_25m,
-      I => clk_25m_i);
 
   --  VCO: 800-1600Mhz
   --  input: 156.25 * 8 = 1250Mhz / 20 => 62.50
@@ -322,7 +314,7 @@ begin
       CLKFBOUTB => open, -- 1-bit output: Inverted CLKFBOUT
       CLKOUT0 => clk_62m5, -- 1-bit output: CLKOUT0
       CLKOUT0B => open,  -- 1-bit output: Inverted CLKOUT0
-      CLKOUT1 => pmod4_2_b,   -- 1-bit output: CLKOUT1
+      CLKOUT1 => open,   -- 1-bit output: CLKOUT1
       CLKOUT1B => open,  -- 1-bit output: Inverted CLKOUT1
       CLKOUT2 => open,   -- 1-bit output: CLKOUT2
       CLKOUT2B => open,  -- 1-bit output: Inverted CLKOUT2
@@ -353,29 +345,6 @@ begin
   end process;
 
   rst <= not rst_n;
-
-  process(clk_25m)
-  begin
-    if rising_edge(clk_25m) then
-      if rst_n = '0' then
-        led1_o <= '0';
-        led2_o <= '1';
-        count <= 0;
-      else
-        if count = 12_500_000 - 1 then
-          led1_o <= '1';
-          led2_o <= '0';
-          count <= count + 1;
-        elsif count = 25_000_000 - 1 then
-          led1_o <= '0';
-          led2_o <= '1';
-          count <= 0;
-        else
-          count <= count + 1;
-        end if;
-      end if;
-    end if;
-  end process;
 
   inst_mpsoc: mpsoc
     port map (
@@ -433,14 +402,13 @@ begin
     wrpc_o => wb_wrpc_out,
 
     ctrl_led1_o => open,
-    ctrl_led2_o => sfp_led2_o,
+    ctrl_led2_o => open,
     ctrl_gth_rst_o => gth_rst
   );
 
   inst_wrcore : entity work.xwr_core
     generic map (
-      g_board_name => "KR26",
---      g_dpram_initf => "../../../../bin/wrpc/wrc_phy16.bram",
+      g_board_name => "CTS ",
       g_dpram_initf => "",
       g_dpram_size => 192 * 1024 / 4,
       g_pcs_16bit => true,
@@ -494,17 +462,17 @@ begin
       phy16_o => phy16_out,
       phy16_i => phy16_in,
 
-      led_act_o => open,
+      led_act_o => led_act_o,
       scl_o => open,
       scl_i => open,
       sda_o => open,
       sda_i => open,
 
-      sfp_det_i => sfp_mod_abs_i,
+      sfp_det_i => SFP_MOD_ABS0,
       sfp_scl_o => sfp_scl_out,
-      sfp_scl_i => sfp_scl_b,
+      sfp_scl_i => P2_HDIO4_SCL,
       sfp_sda_o => sfp_sda_out,
-      sfp_sda_i => sfp_sda_b,
+      sfp_sda_i => P2_HDIO3_SDA,
 
       spi_sclk_o => open,
       spi_ncs_o => open,
@@ -551,12 +519,12 @@ begin
 
       pps_csync_o => open,
       pps_valid_o => open,
-      pps_p_o => open,
+      pps_p_o => nimo(1),
       pps_led_o => open,
 
       rst_aux_n_o => open,
 
-      led_link_o => open,
+      led_link_o => led_link_o,
       link_ok_o => open,
 
       aux_diag_i => open,
@@ -567,11 +535,11 @@ begin
     );
   -- uart_rx <= uart_tx;
 
-  sfp_tx_disable_o <= phy16_out.sfp_tx_disable;
-  phy16_in.sfp_tx_fault <= sfp_tx_fault_i;
+  SFP_DISABLE0 <= phy16_out.sfp_tx_disable;
+  phy16_in.sfp_tx_fault <= SFP_TX_FAULT0;
 
-  sfp_sda_b <= '0' when sfp_sda_out = '0' else 'Z';
-  sfp_scl_b <= '0' when sfp_scl_out = '0' else 'Z';
+  P2_HDIO3_SDA <= '0' when sfp_sda_out = '0' else 'Z';
+  P2_HDIO4_SCL <= '0' when sfp_scl_out = '0' else 'Z';
 
   process(clk_62m5)
   begin
@@ -614,7 +582,7 @@ begin
           --  FB CLK should be way higher than system clock
           if hpll_cnt(5 downto 4) = "00" then
             hpll_toggle <= '0';
-          elsif mpll_cnt(5 downto 4) /= "11" then
+          elsif hpll_cnt(5 downto 4) /= "11" then
             hpll_toggle <= '1';
           end if;
           hpll_cnt <= hpll_cnt - 1;
@@ -807,10 +775,10 @@ begin
 
   inst_gth: gthe4_sdm
     port map (
-      gthrxn_in(0)  => pad_rxn_i,
-      gthrxp_in(0)  => pad_rxp_i,
-      gthtxn_out(0) => pad_txn_o,
-      gthtxp_out(0) => pad_txp_o,
+      gthrxn_in(0)  => GTH_SFP_RX0_n,
+      gthrxp_in(0)  => GTH_SFP_RX0_p,
+      gthtxn_out(0) => GTH_SFP_TX0_n,
+      gthtxp_out(0) => GTH_SFP_TX0_p,
 
       gtwiz_userclk_tx_reset_in(0) => gtwiz_userclk_tx_reset_out,
       gtwiz_userclk_tx_srcclk_out => open,
@@ -931,10 +899,10 @@ begin
 
   inst_gth_helper: gthe4_sdm
     port map (
-      gthrxn_in(0)  => helper_rxn_i,
-      gthrxp_in(0)  => helper_rxp_i,
-      gthtxn_out(0) => helper_txn_o,
-      gthtxp_out(0) => helper_txp_o,
+      gthrxn_in(0)  => GTH_SFP_RX3_NC_n,
+      gthrxp_in(0)  => GTH_SFP_RX3_NC_p,
+      gthtxn_out(0) => GTH_SFP_TX3_NC_n,
+      gthtxp_out(0) => GTH_SFP_TX3_NC_p,
 
       gtwiz_userclk_tx_reset_in(0) => gtwiz_userclk_tx_reset_out,
       gtwiz_userclk_tx_srcclk_out => open,
@@ -1016,35 +984,29 @@ begin
   phy16_in.sfp_los <= '0';
   phy16_in.rx_sampled_clk <= '0';
 
-  --  Generate some outputs on PMOD
+--  nimo(0) <= ;
+  nimo(2) <= phy16_in.ref_clk;
+  nimo(3) <= clk_dmtd;
 
-  process(phy16_in.ref_clk)
-    variable cnt : natural range 0 to 4 := 0;
-    variable v : std_logic := '0';
-  begin
-    if rising_edge(phy16_in.ref_clk) then
-      if cnt = 4 then
-        cnt := 0;
-        pmod4_6_b <= v;
-        v := not v;
-      else
-        cnt := cnt + 1;
-      end if;
-    end if;
-  end process;
+  nimo_inst : for i in 0 to 3 generate
+      nimo_sig_inst : OBUFDS
+      port map (
+        O => LEMO_HP_OUT_p(i),
+        OB => LEMO_HP_OUT_n(i),
+        I => nimo(i)
+      );
+  end generate;
 
-  process(phy16_in.rx_clk)
-    variable cnt : natural range 0 to 4 := 0;
-    variable v   : std_logic            := '0';
-  begin
-    if rising_edge(phy16_in.rx_clk) then
-      if cnt = 4 then
-        cnt := 0;
-        pmod4_4_b <= v;
-        v := not v;
-      else
-        cnt := cnt + 1;
-      end if;
-    end if;
-  end process;
+  led1_inst : OBUF
+  port map (
+    O => LED_FPGA_DS0,
+    I => led_link_o
+  );
+
+  led2_inst : OBUF
+  port map (
+    O => LED_FPGA_DS1,
+    I => led_act_o
+  );
+
 end top;
