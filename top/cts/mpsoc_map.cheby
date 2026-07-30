@@ -1,0 +1,128 @@
+memory-map:
+  bus: axi4-lite-32
+  name: mpsoc_map
+  description: Memmap from mpsoc
+  children:
+  - submap:
+     name: wrpc_host
+     interface: wb-32-be
+     size: 4k
+     address: 0x0000
+     x-hdl:
+       busgroup: True
+  - reg:
+      name: ctrl
+      comment: control register
+      address: 0x1000
+      width: 32
+      access: rw
+      children:
+      - field:
+          name: led1
+          range: 0
+      - field:
+          name: led2
+          range: 1
+      - field:
+          name: gth_rst
+          range: 2
+      - field:
+          name: gth_tx_rst
+          range: 4
+      - field:
+          name: gth_tx_pcs_rst
+          range: 5
+      - field:
+          name: gth_tx_pma_rst
+          range: 6
+      - field:
+          name: gth_rx_rst
+          range: 8
+      - field:
+          name: gth_rx_pcs_rst
+          range: 9
+      - field:
+          name: gth_rx_pma_rst
+          range: 10
+      - field:
+          name: gth_rx_buf_rst
+          range: 11
+  - reg:
+     name: status
+     width: 32
+     access: ro
+  - reg:
+     name: qpll0_sdm
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+  - reg:
+     name: qpll1_sdm
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+  - reg:
+     name: rxpi_nsamp
+     comment: number of rxpi samples to accumulate
+     width: 32
+     access: rw
+     preset: 0x7fff
+  - reg:
+     name: rxpi_count
+     comment: Number of tags
+     width: 32
+     access: ro
+  - reg:
+     name: rxpi_tag
+     width: 32
+     access: ro
+  - reg:
+     name: rxpi_direct
+     comment: rxpi (7b) samples
+     width: 32
+     access: ro
+  - reg:
+     name: bitslide
+     comment: control of bitslide
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+     children:
+     - field:
+         name: force
+         range: 0
+     - field:
+         name: slide
+         range: 1
+         x-hdl:
+           type: wire
+     - field:
+         name: value
+         range: 12-8
+         x-hdl:
+           type: wire
+  - reg:
+     name: nbr_comma_det
+     width: 32
+     access: ro
+  - reg:
+     name: nbr_byte_align
+     width: 32
+     access: ro
+  - submap:
+     name: wrpc_device
+     interface: wb-32-be
+     size: 4k
+     address: 0x3000
+     x-hdl:
+       busgroup: True
+  - submap:
+     name: wrpc_aux
+     interface: wb-32-be
+     size: 4k
+     address: 0x4000
+     x-hdl:
+       busgroup: True

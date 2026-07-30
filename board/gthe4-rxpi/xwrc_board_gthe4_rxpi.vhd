@@ -697,6 +697,7 @@ begin
   inst_wr_subsystem : entity work.xwr_subsystem
     generic map (
       g_board_name => g_board_name, --"KR26",
+      g_cpu_id     => x"09000028",
       g_dpram_size => g_dpram_size,
       g_pcs_16bit => true,
       g_records_for_phy => true,
