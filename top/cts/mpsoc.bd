@@ -6,13 +6,13 @@
       "name": "mpsoc",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "Hierarchical",
-      "tool_version": "2024.2",
-      "validated": "true"
+      "tool_version": "2024.2"
     },
     "design_tree": {
       "zynq_ultra_ps_e_0": "",
       "axi_protocol_convert_0": "",
-      "axi_dwidth_converter_0": ""
+      "axi_dwidth_converter_0": "",
+      "proc_sys_reset_0": ""
     },
     "interface_ports": {
       "M_AXI": {
@@ -253,48 +253,14 @@
     "ports": {
       "rst_axi_n": {
         "type": "rst",
-        "direction": "I",
-        "parameters": {
-          "INSERT_VIP": {
-            "value": "0",
-            "value_src": "default"
-          },
-          "POLARITY": {
-            "value": "ACTIVE_LOW",
-            "value_src": "default"
-          }
-        }
+        "direction": "I"
       },
       "clk_axi": {
         "type": "clk",
         "direction": "I",
         "parameters": {
-          "ASSOCIATED_BUSIF": {
-            "value": "M_AXI",
-            "value_src": "default"
-          },
-          "ASSOCIATED_RESET": {
-            "value": "rst_axi_n",
-            "value_src": "default"
-          },
-          "CLK_DOMAIN": {
-            "value": "bd_aclk_0",
-            "value_src": "default"
-          },
           "FREQ_HZ": {
             "value": "100000000"
-          },
-          "FREQ_TOLERANCE_HZ": {
-            "value": "0",
-            "value_src": "default"
-          },
-          "INSERT_VIP": {
-            "value": "0",
-            "value_src": "default"
-          },
-          "PHASE": {
-            "value": "0.0",
-            "value_src": "default"
           }
         }
       },
@@ -306,10 +272,6 @@
         "parameters": {
           "PortWidth": {
             "value": "1"
-          },
-          "SENSITIVITY": {
-            "value": "LEVEL_HIGH",
-            "value_src": "default"
           }
         }
       }
@@ -1681,6 +1643,13 @@
             ]
           }
         }
+      },
+      "proc_sys_reset_0": {
+        "vlnv": "xilinx.com:ip:proc_sys_reset:5.0",
+        "ip_revision": "16",
+        "xci_name": "mpsoc_proc_sys_reset_0_0",
+        "xci_path": "ip/mpsoc_proc_sys_reset_0_0/mpsoc_proc_sys_reset_0_0.xci",
+        "inst_hier_path": "proc_sys_reset_0"
       }
     },
     "interface_nets": {
@@ -1715,7 +1684,8 @@
           "clk_axi",
           "axi_protocol_convert_0/aclk",
           "zynq_ultra_ps_e_0/maxihpm0_lpd_aclk",
-          "axi_dwidth_converter_0/s_axi_aclk"
+          "axi_dwidth_converter_0/s_axi_aclk",
+          "proc_sys_reset_0/slowest_sync_clk"
         ]
       },
       "pl_ps_irq0_0_1": {
@@ -1724,11 +1694,23 @@
           "zynq_ultra_ps_e_0/pl_ps_irq0"
         ]
       },
+      "proc_sys_reset_0_peripheral_aresetn": {
+        "ports": [
+          "proc_sys_reset_0/peripheral_aresetn",
+          "axi_dwidth_converter_0/s_axi_aresetn",
+          "axi_protocol_convert_0/aresetn"
+        ]
+      },
       "rst_axi_n_1": {
         "ports": [
           "rst_axi_n",
-          "axi_protocol_convert_0/aresetn",
-          "axi_dwidth_converter_0/s_axi_aresetn"
+          "proc_sys_reset_0/ext_reset_in"
+        ]
+      },
+      "zynq_ultra_ps_e_0_pl_resetn0": {
+        "ports": [
+          "zynq_ultra_ps_e_0/pl_resetn0",
+          "proc_sys_reset_0/aux_reset_in"
         ]
       }
     },

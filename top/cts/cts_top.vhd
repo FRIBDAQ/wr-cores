@@ -128,8 +128,8 @@ architecture top of cts_top is
 begin
   inst_wrc_board: entity work.xwrc_board_gthe4_rxpi
     generic map (
-      g_refclk0_freq => 156_250_000,
-      g_board_name => "KR26",
+      g_refclk0_freq => 155_038_760,
+      g_board_name => "CTS ",
       g_dpram_initf => "",
       g_dpram_size => (128+64) * 1024 / 4
     )
@@ -202,9 +202,9 @@ begin
   inst_mmcm_62m5: mmcme4_base
     generic map (
       BANDWIDTH => "OPTIMIZED",  -- Jitter programming
-      CLKFBOUT_MULT_F => 8.0,   -- Multiply value for all CLKOUT
+      CLKFBOUT_MULT_F => 16.125, -- refclk 155.038760MHz / DIVCLK 2 * 16.125 = 1250MHz VCO (unchanged)
       CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB
-      CLKIN1_PERIOD => 6.4,    -- Input clock period in ns to ps resolution (i.e., 33.333 is 30 MHz).
+      CLKIN1_PERIOD => 6.45,    -- Input clock period in ns (155.038760 MHz).
       CLKOUT0_DIVIDE_F => 20.0,  -- Divide amount for CLKOUT0
       CLKOUT0_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT0
       CLKOUT0_PHASE => 0.0,     -- Phase offset for CLKOUT0
@@ -227,7 +227,7 @@ begin
       CLKOUT6_DIVIDE => 1,   -- Divide amount for CLKOUT (1-128)
       CLKOUT6_DUTY_CYCLE => 0.5, -- Duty cycle for CLKOUT outputs (0.001-0.999).
       CLKOUT6_PHASE => 0.0,    -- Phase offset for CLKOUT outputs (-360.000-360.000).
-      DIVCLK_DIVIDE => 1,   -- Master division value
+      DIVCLK_DIVIDE => 2,   -- Master division value (2 with MULT 16.125 keeps VCO=1250MHz => clk_62m5=62.5MHz exact)
       IS_CLKFBIN_INVERTED => '0', -- Optional inversion for CLKFBIN
       IS_CLKIN1_INVERTED => '0', -- Optional inversion for CLKIN1
       IS_PWRDWN_INVERTED => '0', -- Optional inversion for PWRDWN

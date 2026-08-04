@@ -231,6 +231,18 @@ END COMPONENT;
         return (fbdiv => 64,
                 fbdiv_g3 => 160,
                 lpf => "1000111111");
+      when 155_038_760 =>
+        --  CTS RXPI: refclk chosen so the *nominal* QPLL feedback divide is a
+        --  half-integer, N = 64.5 (155.038760 MHz x 64.5 = 10.000 GHz VCO =>
+        --  1.25 Gbps).  Integer fbdiv stays 64; the missing 0.5 comes from the
+        --  SDM fraction, which therefore operates centered at 0.5 -- far from
+        --  both the 0 and 1 boundaries -- so the SoftPLL can trim the frequency
+        --  symmetrically UP and DOWN around nominal (see inst_mpll_sdm).  This
+        --  replaces the old fbdiv=64 / fraction~0 design, whose fraction sat on
+        --  the 0 boundary and could only trim upward (never locked).
+        return (fbdiv => 64,
+                fbdiv_g3 => 160,
+                lpf => "1000111111");
       when 250_000_000 =>
         return (fbdiv => 40,
                 fbdiv_g3 => 64,
@@ -281,6 +293,12 @@ END COMPONENT;
 
   signal mpll_data_out : std_logic_vector(15 downto 0);
   signal mpll_load : std_logic;
+  --  Centered SDM fractional setpoint: 0x7F8000 + 16-bit SoftPLL DAC.  With
+  --  fbdiv=64 and the N=64.5 refclk, SoftPLL DAC mid-scale (0x8000) => SDM
+  --  0x800000 => fraction 0.5 => exactly nominal.  Full DAC swing dithers the
+  --  fraction over [0x7F8000, 0x807FFF] = 0.5 +/- ~30 ppm, symmetric, never
+  --  approaching the 0/1 boundary (no clamp, no integer carry).
+  signal mpll_sdm_data : std_logic_vector(23 downto 0);
 
   signal hpll_data, mpll_data : std_logic_vector(24 downto 0);
   signal hpll_toggle, mpll_toggle : std_logic;
@@ -604,12 +622,16 @@ begin
       dmonitorclk_in(0) => gth_dmon_clk
   );
 
+  --  Center the SDM fraction at 0.5 (= nominal N=64.5) when the SoftPLL DAC is
+  --  at mid-scale, and let the DAC trim +/- ~30 ppm around it (see decl above).
+  mpll_sdm_data <= std_logic_vector(to_unsigned(16#7F8000#, 24)
+                                    + resize(unsigned(mpll_data_out), 24));
+
   inst_mpll_sdm: entity work.gthe4_sdm
   port map (
     clk_62m5_i => clk_62m5_i,
     rst_n_i => rst_n_i,
-    dac_data_i(13 downto 0) => mpll_data_out(15 downto 2),
-    dac_data_i(23 downto 14) => (others => '0'),
+    dac_data_i => mpll_sdm_data,
     dac_load_i => mpll_load,
     sdm_data_o => mpll_data,
     sdm_toggle_o => mpll_toggle
@@ -800,7 +822,7 @@ begin
       tm_dac_wr_o => open,
       pps_csync_o => open,
       pps_valid_o => open,
-      pps_p_o => open,
+      pps_p_o => pps_p_o,
       pps_led_o => open,
       rst_aux_n_o => open,
       led_act_o => led_act_o,
