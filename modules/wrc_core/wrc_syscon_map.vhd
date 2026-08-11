@@ -29,6 +29,7 @@ package wrc_syscon_map_pkg is
     GPSR_spi_ncs     : std_logic;
     GPSR_spi_mosi    : std_logic;
     GPSR_spi_miso    : std_logic;
+    GPSR_spi_cs2     : std_logic;
     GPSR_sfp2_det    : std_logic;
     GPSR_sfp2_scl    : std_logic;
     GPSR_sfp2_sda    : std_logic;
@@ -40,6 +41,7 @@ package wrc_syscon_map_pkg is
     GPCR_spi_sclk    : std_logic;
     GPCR_spi_cs      : std_logic;
     GPCR_spi_mosi    : std_logic;
+    GPCR_spi_cs2     : std_logic;
     GPCR_sfp2_scl    : std_logic;
     GPCR_sfp2_sda    : std_logic;
     GPCR_wr          : std_logic;
@@ -66,6 +68,7 @@ package wrc_syscon_map_pkg is
     GPSR_spi_ncs     : std_logic;
     GPSR_spi_mosi    : std_logic;
     GPSR_spi_miso    : std_logic;
+    GPSR_spi_cs2     : std_logic;
     GPSR_sfp2_det    : std_logic;
     GPSR_sfp2_scl    : std_logic;
     GPSR_sfp2_sda    : std_logic;
@@ -219,6 +222,7 @@ begin
   sysc_regs_o.GPSR_spi_ncs <= wr_dat_d0(11);
   sysc_regs_o.GPSR_spi_mosi <= wr_dat_d0(12);
   sysc_regs_o.GPSR_spi_miso <= wr_dat_d0(13);
+  sysc_regs_o.GPSR_spi_cs2 <= wr_dat_d0(14);
   sysc_regs_o.GPSR_sfp2_det <= wr_dat_d0(16);
   sysc_regs_o.GPSR_sfp2_scl <= wr_dat_d0(17);
   sysc_regs_o.GPSR_sfp2_sda <= wr_dat_d0(18);
@@ -232,6 +236,7 @@ begin
   sysc_regs_o.GPCR_spi_sclk <= wr_dat_d0(10);
   sysc_regs_o.GPCR_spi_cs <= wr_dat_d0(11);
   sysc_regs_o.GPCR_spi_mosi <= wr_dat_d0(12);
+  sysc_regs_o.GPCR_spi_cs2 <= wr_dat_d0(14);
   sysc_regs_o.GPCR_sfp2_scl <= wr_dat_d0(17);
   sysc_regs_o.GPCR_sfp2_sda <= wr_dat_d0(18);
   sysc_regs_o.GPCR_wr <= GPCR_wreq;
@@ -357,14 +362,14 @@ begin
            sysc_regs_i.GPSR_sfp1_scl, sysc_regs_i.GPSR_sfp1_sda,
            sysc_regs_i.GPSR_spi_sclk, sysc_regs_i.GPSR_spi_ncs,
            sysc_regs_i.GPSR_spi_mosi, sysc_regs_i.GPSR_spi_miso,
-           sysc_regs_i.GPSR_sfp2_det, sysc_regs_i.GPSR_sfp2_scl,
-           sysc_regs_i.GPSR_sfp2_sda, sysc_regs_i.HWFR_MEMSIZE,
-           sysc_regs_i.HWFR_STORAGE_TYPE, sysc_regs_i.HWFR_mapver,
-           sysc_regs_i.HWFR_STORAGE_SEC, sysc_regs_i.HWIR_NAME,
-           sysc_regs_i.SDBFS_BADDR, TCR_ENABLE_reg, sysc_regs_i.TVR,
-           sysc_regs_i.DIAG_INFO_VER, sysc_regs_i.DIAG_INFO_ID,
-           sysc_regs_i.DIAG_NW_RW, sysc_regs_i.DIAG_NW_RO,
-           sysc_regs_i.DIAG_DAT, sysc_regs_i.HWBLD) begin
+           sysc_regs_i.GPSR_spi_cs2, sysc_regs_i.GPSR_sfp2_det,
+           sysc_regs_i.GPSR_sfp2_scl, sysc_regs_i.GPSR_sfp2_sda,
+           sysc_regs_i.HWFR_MEMSIZE, sysc_regs_i.HWFR_STORAGE_TYPE,
+           sysc_regs_i.HWFR_mapver, sysc_regs_i.HWFR_STORAGE_SEC,
+           sysc_regs_i.HWIR_NAME, sysc_regs_i.SDBFS_BADDR, TCR_ENABLE_reg,
+           sysc_regs_i.TVR, sysc_regs_i.DIAG_INFO_VER,
+           sysc_regs_i.DIAG_INFO_ID, sysc_regs_i.DIAG_NW_RW,
+           sysc_regs_i.DIAG_NW_RO, sysc_regs_i.DIAG_DAT, sysc_regs_i.HWBLD) begin
     -- By default ack read requests
     rd_dat_d0 <= (others => 'X');
     case adr_int(5 downto 2) is
@@ -390,7 +395,8 @@ begin
       rd_dat_d0(11) <= sysc_regs_i.GPSR_spi_ncs;
       rd_dat_d0(12) <= sysc_regs_i.GPSR_spi_mosi;
       rd_dat_d0(13) <= sysc_regs_i.GPSR_spi_miso;
-      rd_dat_d0(15 downto 14) <= (others => '0');
+      rd_dat_d0(14) <= sysc_regs_i.GPSR_spi_cs2;
+      rd_dat_d0(15) <= '0';
       rd_dat_d0(16) <= sysc_regs_i.GPSR_sfp2_det;
       rd_dat_d0(17) <= sysc_regs_i.GPSR_sfp2_scl;
       rd_dat_d0(18) <= sysc_regs_i.GPSR_sfp2_sda;

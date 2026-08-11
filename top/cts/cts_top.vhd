@@ -62,8 +62,14 @@ entity cts_top is
     P2_HDIO3_SDA : inout std_logic;
     P2_HDIO4_SCL : inout std_logic;
 
-    P2_HDIO1_SDA : inout std_logic;
-    P2_HDIO2_SCL : inout std_logic;
+    EEPROM_CSN0 : out std_logic;
+    EEPROM_CSN1 : out std_logic;
+    EEPROM_SCK0 : out std_logic;
+    EEPROM_SI0  : out std_logic;
+    EEPROM_SO0  : in  std_logic;
+
+--    P2_HDIO1_SDA : inout std_logic;
+--    P2_HDIO2_SCL : inout std_logic;
 
     LEMO_HP_OUT_n : out std_logic_vector(3 downto 0);
     LEMO_HP_OUT_p : out std_logic_vector(3 downto 0)
@@ -125,7 +131,48 @@ architecture top of cts_top is
 
 
   signal refclk1_int, refclk1 : std_logic;
+
+  -- SPI-EEPROM pin nets (driven by the PL spi_master).
+  signal ee_sck, ee_csn0, ee_csn1, ee_si, ee_so : std_logic;
+  -- PL SPI master register interface (mpsoc_map @ 0x2000)
+  signal spi_cs_reg, spi_tx_reg, spi_rx_reg : std_logic_vector(31 downto 0);
+  signal spi_tx_wr, spi_busy, spi_done : std_logic;
+  signal spi_rx_data : std_logic_vector(7 downto 0);
 begin
+  -- PL SPI master for the two 25AA02E48 EEPROMs, driven by the R5 through
+  -- mpsoc_map registers SPI_CS/SPI_TX/SPI_RX (@ 0x2000).  Replaces the WR-core
+  -- SYSCON bit-bang; CS is register-held across the bytes of a transaction and
+  -- the master shifts one byte per SPI_TX write.
+  inst_spi_master : entity work.spi_master
+    generic map (
+      g_CLK_DIV => 8           -- 62.5 MHz / (2*8) = 3.9 MHz SCK (< 5 MHz max)
+    )
+    port map (
+      clk_i   => clk_62m5,
+      rst_i   => rst,          -- active high (rst = not rst_n)
+      start_i => spi_tx_wr,
+      tx_i    => spi_tx_reg(7 downto 0),
+      rx_o    => spi_rx_data,
+      busy_o  => spi_busy,
+      done_o  => spi_done,
+      sck_o   => ee_sck,
+      mosi_o  => ee_si,
+      miso_i  => ee_so
+    );
+
+  ee_csn0 <= spi_cs_reg(0);
+  ee_csn1 <= spi_cs_reg(1);
+  spi_rx_reg(7 downto 0)  <= spi_rx_data;
+  spi_rx_reg(8)           <= spi_busy;
+  spi_rx_reg(31 downto 9) <= (others => '0');
+
+  -- SPI master drives the physical EEPROM pins.
+  EEPROM_SCK0 <= ee_sck;
+  EEPROM_CSN0 <= ee_csn0;
+  EEPROM_CSN1 <= ee_csn1;
+  EEPROM_SI0  <= ee_si;
+  ee_so       <= EEPROM_SO0;
+
   inst_wrc_board: entity work.xwrc_board_gthe4_rxpi
     generic map (
       g_refclk0_freq => 155_038_760,
@@ -167,12 +214,15 @@ begin
       wrf_src_o => open,
       abscal_txts_o => abscal_tx,
       abscal_rxts_o => abscal_rx,
+      -- WR-core SYSCON bit-bang SPI no longer used (PL spi_master drives the
+      -- EEPROM now); leave its pins unconnected.
       spi_sclk_o => open,
       spi_ncs_o => open,
+      spi_cs2_o => open,
       spi_mosi_o => open,
       spi_miso_i => '1',
-      eeprom_scl_b => P2_HDIO2_SCL,
-      eeprom_sda_b => P2_HDIO1_SDA,
+      eeprom_scl_b => open,
+      eeprom_sda_b => open,
       uart_rxd_i => uart_rx,
       uart_txd_o => uart_tx,
       tm_link_up_o => open,
@@ -358,6 +408,11 @@ begin
 
     nbr_comma_det_i => (others => '0'),
     nbr_byte_align_i => (others => '0'),
+
+    spi_cs_o => spi_cs_reg,
+    spi_tx_o => spi_tx_reg,
+    spi_tx_wr_o => spi_tx_wr,
+    spi_rx_i => spi_rx_reg,
 
     wrpc_device_i => wb_wrpc_dev_in,
     wrpc_device_o => wb_wrpc_dev_out,

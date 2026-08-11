@@ -105,6 +105,7 @@ entity xwrc_board_gthe4_rxpi is
     --  SPI flash
     spi_sclk_o : out std_logic;
     spi_ncs_o  : out std_logic;
+    spi_cs2_o  : out std_logic;
     spi_mosi_o : out std_logic;
     spi_miso_i : in  std_logic := '0';
 
@@ -785,6 +786,7 @@ begin
       sfp_sda_i => sfp_sda_b,
       spi_sclk_o => spi_sclk_o,
       spi_ncs_o => spi_ncs_o,
+      spi_cs2_o => spi_cs2_o,
       spi_mosi_o => spi_mosi_o,
       spi_miso_i => spi_miso_i,
       owr_pwren_o => open,

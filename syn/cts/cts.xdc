@@ -6,9 +6,9 @@ set_property PACKAGE_PIN A1     [get_ports {LEMO_HP_OUT_n[0]}]   ;# Bank  66 VCC
 #set_property PACKAGE_PIN C2     [get_ports SI5344_HP_GC_n]    ;# Bank  66 VCCO - som240_1_a7 - IO_L12N_T1U_N11_GC_66
 #set_property PACKAGE_PIN G8     [get_ports SI5344_2_HP_p]     ;# Bank  66 VCCO - som240_1_a12 - IO_L16P_T2U_N6_QBC_AD3P_66
 #set_property PACKAGE_PIN F7     [get_ports SI5344_2_HP_n]     ;# Bank  66 VCCO - som240_1_a13 - IO_L16N_T2U_N7_QBC_AD3N_66
-#set_property PACKAGE_PIN F11    [get_ports EEPROM_SCK0]      ;# Bank  45 VCCO - som240_1_a15 - IO_L6N_HDGC_45
-#set_property PACKAGE_PIN J12    [get_ports EEPROM_CSN0]      ;# Bank  45 VCCO - som240_1_a16 - IO_L4P_AD12P_45
-#set_property PACKAGE_PIN H12    [get_ports EEPROM_SI0]       ;# Bank  45 VCCO - som240_1_a17 - IO_L4N_AD12N_45
+set_property PACKAGE_PIN F11    [get_ports EEPROM_SCK0]      ;# Bank  45 VCCO - som240_1_a15 - IO_L6N_HDGC_45
+set_property PACKAGE_PIN J12    [get_ports EEPROM_CSN0]      ;# Bank  45 VCCO - som240_1_a16 - IO_L4P_AD12P_45
+set_property PACKAGE_PIN H12    [get_ports EEPROM_SI0]       ;# Bank  45 VCCO - som240_1_a17 - IO_L4N_AD12N_45
 
 # CN1B
 set_property PACKAGE_PIN C1     [get_ports {LEMO_HP_OUT_p[3]}]   ;# Bank  66 VCCO - som240_1_b1 - IO_L7P_T1L_N0_QBC_AD13P_66
@@ -19,8 +19,8 @@ set_property PACKAGE_PIN B3     [get_ports {LEMO_HP_OUT_p[1]}]   ;# Bank  66 VCC
 set_property PACKAGE_PIN A3     [get_ports {LEMO_HP_OUT_n[1]}]   ;# Bank  66 VCCO - som240_1_b8 - IO_L9N_T1L_N5_AD12N_66
 #set_property PACKAGE_PIN E5     [get_ports BASE_CLK_p]       ;# Bank  66 VCCO - som240_1_b10 - IO_L14P_T2L_N2_GC_66
 #set_property PACKAGE_PIN D5     [get_ports BASE_CLK_n]       ;# Bank  66 VCCO - som240_1_b11 - IO_L14N_T2L_N3_GC_66
-#set_property PACKAGE_PIN J10    [get_ports EEPROM_SO0]       ;# Bank  45 VCCO - som240_1_b16 - IO_L1N_AD15N_45
-set_property PACKAGE_PIN B10    [get_ports P2_HDIO2_SCL]         ;# Bank  45 VCCO - som240_1_b20 - IO_L9N_AD11N_45
+set_property PACKAGE_PIN J10    [get_ports EEPROM_SO0]       ;# Bank  45 VCCO - som240_1_b16 - IO_L1N_AD15N_45
+#set_property PACKAGE_PIN B10    [get_ports P2_HDIO2_SCL]         ;# Bank  45 VCCO - som240_1_b20 - IO_L9N_AD11N_45
 set_property PACKAGE_PIN E12    [get_ports P2_HDIO3_SDA]         ;# Bank  45 VCCO - som240_1_b21 - IO_L8P_HDGC_45
 set_property PACKAGE_PIN D11    [get_ports P2_HDIO4_SCL]         ;# Bank  45 VCCO - som240_1_b22 - IO_L8N_HDGC_45
 
@@ -31,8 +31,8 @@ set_property PACKAGE_PIN D11    [get_ports P2_HDIO4_SCL]         ;# Bank  45 VCC
 #set_property PACKAGE_PIN F3     [get_ports SI5344_2_IN_SEL1]  ;# Bank  66 VCCO - som240_1_c7 - IO_L4N_T0U_N7_DBC_AD7N_66
 #set_property PACKAGE_PIN D7     [get_ports SI5344_2_HP_GC_p]  ;# Bank  66 VCCO - som240_1_c12 - IO_L13P_T2L_N0_GC_QBC_66
 #set_property PACKAGE_PIN D6     [get_ports SI5344_2_HP_GC_n]  ;# Bank  66 VCCO - som240_1_c13 - IO_L13N_T2L_N1_GC_QBC_66
-#set_property PACKAGE_PIN G10    [get_ports EEPROM_CSN1]      ;# Bank  45 VCCO - som240_1_c19 - IO_L3N_AD13N_45
-set_property PACKAGE_PIN F12    [get_ports P2_HDIO1_SDA]         ;# Bank  45 VCCO - som240_1_c20 - IO_L6P_HDGC_45
+set_property PACKAGE_PIN G10    [get_ports EEPROM_CSN1]      ;# Bank  45 VCCO - som240_1_c19 - IO_L3N_AD13N_45
+#set_property PACKAGE_PIN F12    [get_ports P2_HDIO1_SDA]         ;# Bank  45 VCCO - som240_1_c20 - IO_L6P_HDGC_45
 #set_property PACKAGE_PIN B11    [get_ports LMK04806_DATA]    ;# Bank  45 VCCO - som240_1_c22 - IO_L10P_AD10P_45
 #set_property PACKAGE_PIN A10    [get_ports LMK04806_CLK]     ;# Bank  45 VCCO - som240_1_c23 - IO_L10N_AD10N_45
 #set_property PACKAGE_PIN A12    [get_ports LMK04806_LE]      ;# Bank  45 VCCO - som240_1_c24 - IO_L11P_AD9P_45
@@ -168,12 +168,13 @@ set_property DIFF_TERM true  [get_ports {LEMO_HDGC_IN_p[*]}]
 set_property IOSTANDARD LVDS [get_ports {LEMO_HP_OUT_p[*]}]
 
 # EEPROM
-#set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SCK0]
-#set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_CSN0]
-#set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SI0]
-#set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SO0]
-set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO1_SDA]
-set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO2_SCL]
+set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_CSN0]
+set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_CSN1]
+set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SCK0]
+set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SI0]
+set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SO0]
+#set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO1_SDA]
+#set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO2_SCL]
 
 # SFP
 set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO3_SDA]
@@ -235,3 +236,20 @@ set_property DMONITOR_CFG1 "00000001" [get_cells "$wr_gth"]
 set_property RXCDR_CFG0 "0000010000100110" [get_cells "$wr_gth"]
 set_property RXCDR_CFG2 "0000000011000101" [get_cells "$wr_gth"]
 set_property RXCDR_CFG5 "0011010001111011" [get_cells "$wr_gth"]
+
+# ---------------------------------------------------------------------------
+# Floorplan: confine the PL SPI-EEPROM master (inst_spi_master) to a small PL
+# region AWAY from the GT quad (bank 224) and the WR-core/RXPI logic, so adding
+# it does not disturb the WR-core placement.  The marginal board's RXPI phase
+# lock is sensitive to that placement (proven: reusing the WR-core placement via
+# an incremental checkpoint makes it lock; a fresh, unconstrained P&R does not).
+# Timing is NOT the issue (WNS is +5 ns in both builds) -- this only pins where
+# the new logic goes so it stops perturbing the WR core.
+#
+create_pblock pb_spi_ee
+add_cells_to_pblock [get_pblocks pb_spi_ee] [get_cells -quiet -hierarchical -filter {NAME =~ "*inst_spi_master*"}]
+resize_pblock [get_pblocks pb_spi_ee] -add {CLOCKREGION_X0Y1:CLOCKREGION_X0Y1}
+# soft pblock: keep it from forcing routing detours / hurting timing
+set_property CONTAIN_ROUTING   false [get_pblocks pb_spi_ee]
+set_property EXCLUDE_PLACEMENT false [get_pblocks pb_spi_ee]
+# ---------------------------------------------------------------------------

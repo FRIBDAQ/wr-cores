@@ -212,6 +212,7 @@ entity xwr_core is
     btn2_i     : in  std_logic := '1';
     spi_sclk_o : out std_logic;
     spi_ncs_o  : out std_logic;
+    spi_cs2_o  : out std_logic;
     spi_mosi_o : out std_logic;
     spi_miso_i : in  std_logic := '0';
 
@@ -420,6 +421,7 @@ begin
       btn2_i => btn2_i,
       spi_sclk_o => spi_sclk_o,
       spi_ncs_o => spi_ncs_o,
+      spi_cs2_o => spi_cs2_o,
       spi_mosi_o => spi_mosi_o,
       spi_miso_i => spi_miso_i,
       uart_rxd_i => uart_rxd_i,

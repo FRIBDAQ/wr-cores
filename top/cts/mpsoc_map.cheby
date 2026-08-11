@@ -112,6 +112,25 @@ memory-map:
      name: nbr_byte_align
      width: 32
      access: ro
+  - reg:
+      name: spi_cs
+      comment: SPI EEPROM chip-selects; bit0=CSN0 bit1=CSN1 (1=deasserted)
+      address: 0x2000
+      width: 32
+      access: rw
+      preset: 0x3
+  - reg:
+      name: spi_tx
+      comment: write [7:0]=byte to shift out; the write also starts one xfer
+      width: 32
+      access: rw
+      x-hdl:
+        write-strobe: True
+  - reg:
+      name: spi_rx
+      comment: read [7:0]=last byte shifted in, bit8=busy
+      width: 32
+      access: ro
   - submap:
      name: wrpc_device
      interface: wb-32-be

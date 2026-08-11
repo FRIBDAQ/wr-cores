@@ -112,6 +112,13 @@ memory-map:
           comment: SPI bitbanged MISO
           range: 13
       - field:
+          name: spi_cs2
+          comment: SPI bitbanged CS for 2nd device
+          description: |
+            write 1: drive SPI CS2 to 1
+            read: always 0
+          range: 14
+      - field:
           name: sfp2_det
           comment: SFP2 detect
           description: 'read : returns the state of the SFP2''s MOD_DEF0 line'
@@ -175,6 +182,11 @@ memory-map:
           comment: SPI bitbanged MOSI
           description: 'write 1: Set SPI MOSI line to 0.'
           range: 12
+      - field:
+          name: spi_cs2
+          comment: SPI bitbanged CS for 2nd device
+          description: 'write 1: Set SPI CS2 line to 0'
+          range: 14
       - field:
           name: sfp2_scl
           comment: SFP2 I2C bitbanged SCL

@@ -1,12 +1,13 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0x8AE78C57CD2EFBB4",
+      "boundary_crc": "0x8AE78C57A37600FA",
       "device": "xck26-sfvc784-2LV-c",
       "name": "mpsoc",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "Hierarchical",
-      "tool_version": "2024.2"
+      "tool_version": "2025.2",
+      "validated": "true"
     },
     "design_tree": {
       "zynq_ultra_ps_e_0": "",
@@ -36,7 +37,7 @@
             "value_src": "const_prop"
           },
           "CLK_DOMAIN": {
-            "value": "bd_aclk_0",
+            "value": "mpsoc_clk_axi",
             "value_src": "default"
           },
           "DATA_WIDTH": {
@@ -253,14 +254,44 @@
     "ports": {
       "rst_axi_n": {
         "type": "rst",
-        "direction": "I"
+        "direction": "I",
+        "parameters": {
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "POLARITY": {
+            "value": "ACTIVE_LOW",
+            "value_src": "default"
+          }
+        }
       },
       "clk_axi": {
         "type": "clk",
         "direction": "I",
         "parameters": {
+          "ASSOCIATED_BUSIF": {
+            "value": "M_AXI",
+            "value_src": "default"
+          },
+          "CLK_DOMAIN": {
+            "value": "mpsoc_clk_axi",
+            "value_src": "default"
+          },
           "FREQ_HZ": {
             "value": "100000000"
+          },
+          "FREQ_TOLERANCE_HZ": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "INSERT_VIP": {
+            "value": "0",
+            "value_src": "default"
+          },
+          "PHASE": {
+            "value": "0.0",
+            "value_src": "default"
           }
         }
       },
@@ -272,6 +303,10 @@
         "parameters": {
           "PortWidth": {
             "value": "1"
+          },
+          "SENSITIVITY": {
+            "value": "LEVEL_HIGH",
+            "value_src": "default"
           }
         }
       }
@@ -279,10 +314,11 @@
     "components": {
       "zynq_ultra_ps_e_0": {
         "vlnv": "xilinx.com:ip:zynq_ultra_ps_e:3.5",
-        "ip_revision": "5",
+        "ip_revision": "8",
         "xci_name": "mpsoc_zynq_ultra_ps_e_0_0",
         "xci_path": "ip/mpsoc_zynq_ultra_ps_e_0_0/mpsoc_zynq_ultra_ps_e_0_0.xci",
         "inst_hier_path": "zynq_ultra_ps_e_0",
+        "has_run_ip_tcl": "true",
         "parameters": {
           "PSU_BANK_0_IO_STANDARD": {
             "value": "LVCMOS18"
@@ -653,11 +689,26 @@
           "PSU_MIO_51_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_52_DIRECTION": {
+            "value": "inout"
+          },
+          "PSU_MIO_53_DIRECTION": {
+            "value": "inout"
+          },
+          "PSU_MIO_54_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_54_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_54_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_55_DIRECTION": {
+            "value": "inout"
+          },
+          "PSU_MIO_56_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_56_DRIVE_STRENGTH": {
             "value": "4"
@@ -665,17 +716,26 @@
           "PSU_MIO_56_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_57_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_57_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_57_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_58_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_58_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_58_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_59_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_59_DRIVE_STRENGTH": {
             "value": "4"
@@ -689,11 +749,17 @@
           "PSU_MIO_5_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_60_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_60_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_60_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_61_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_61_DRIVE_STRENGTH": {
             "value": "4"
@@ -701,11 +767,17 @@
           "PSU_MIO_61_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_62_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_62_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_62_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_63_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_63_DRIVE_STRENGTH": {
             "value": "4"
@@ -713,11 +785,17 @@
           "PSU_MIO_63_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_64_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_64_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_64_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_65_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_65_DRIVE_STRENGTH": {
             "value": "4"
@@ -725,11 +803,17 @@
           "PSU_MIO_65_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_66_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_66_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_66_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_67_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_67_DRIVE_STRENGTH": {
             "value": "4"
@@ -737,11 +821,17 @@
           "PSU_MIO_67_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_68_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_68_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_68_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_69_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_69_DRIVE_STRENGTH": {
             "value": "4"
@@ -755,11 +845,17 @@
           "PSU_MIO_6_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_70_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_70_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_70_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_71_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_71_DRIVE_STRENGTH": {
             "value": "4"
@@ -767,11 +863,17 @@
           "PSU_MIO_71_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_72_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_72_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_72_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_73_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_73_DRIVE_STRENGTH": {
             "value": "4"
@@ -779,11 +881,17 @@
           "PSU_MIO_73_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_74_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_74_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_74_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_75_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_75_DRIVE_STRENGTH": {
             "value": "4"
@@ -791,11 +899,17 @@
           "PSU_MIO_75_SLEW": {
             "value": "slow"
           },
+          "PSU_MIO_76_DIRECTION": {
+            "value": "inout"
+          },
           "PSU_MIO_76_DRIVE_STRENGTH": {
             "value": "4"
           },
           "PSU_MIO_76_SLEW": {
             "value": "slow"
+          },
+          "PSU_MIO_77_DIRECTION": {
+            "value": "inout"
           },
           "PSU_MIO_77_DRIVE_STRENGTH": {
             "value": "4"
@@ -1272,6 +1386,9 @@
           "PSU__GT__VLT_SWNG_LVL_4": {
             "value": "0"
           },
+          "PSU__I2C0__PERIPHERAL__ENABLE": {
+            "value": "0"
+          },
           "PSU__IOU_SLCR__IOU_TTC_APB_CLK__TTC0_SEL": {
             "value": "APB"
           },
@@ -1531,6 +1648,12 @@
         },
         "interface_ports": {
           "M_AXI_HPM0_LPD": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "END_POINT",
+                "value_src": "auto"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Master",
             "address_space_ref": "Data",
@@ -1545,7 +1668,7 @@
           "address_spaces": {
             "Data": {
               "range": "1T",
-              "width": "40",
+              "width": "64",
               "local_memory_map": {
                 "name": "Data",
                 "description": "Address Space Segments",
@@ -1614,42 +1737,81 @@
       },
       "axi_protocol_convert_0": {
         "vlnv": "xilinx.com:ip:axi_protocol_converter:2.1",
-        "ip_revision": "33",
+        "ip_revision": "37",
         "xci_name": "mpsoc_axi_protocol_convert_0_0",
         "xci_path": "ip/mpsoc_axi_protocol_convert_0_0/mpsoc_axi_protocol_convert_0_0.xci",
         "inst_hier_path": "axi_protocol_convert_0",
+        "has_run_ip_tcl": "true",
         "interface_ports": {
           "S_AXI": {
+            "bd_attributes": {
+              "BRIDGES": {
+                "value": "M_AXI",
+                "value_src": "auto"
+              },
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Slave",
             "bridges": [
               "M_AXI"
             ]
+          },
+          "M_AXI": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            }
           }
         }
       },
       "axi_dwidth_converter_0": {
         "vlnv": "xilinx.com:ip:axi_dwidth_converter:2.1",
-        "ip_revision": "33",
+        "ip_revision": "37",
         "xci_name": "mpsoc_axi_dwidth_converter_0_0",
         "xci_path": "ip/mpsoc_axi_dwidth_converter_0_0/mpsoc_axi_dwidth_converter_0_0.xci",
         "inst_hier_path": "axi_dwidth_converter_0",
+        "has_run_ip_tcl": "true",
         "interface_ports": {
           "S_AXI": {
+            "bd_attributes": {
+              "BRIDGES": {
+                "value": "M_AXI",
+                "value_src": "auto"
+              },
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Slave",
             "bridges": [
               "M_AXI"
             ]
+          },
+          "M_AXI": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            }
           }
         }
       },
       "proc_sys_reset_0": {
         "vlnv": "xilinx.com:ip:proc_sys_reset:5.0",
-        "ip_revision": "16",
+        "ip_revision": "17",
         "xci_name": "mpsoc_proc_sys_reset_0_0",
         "xci_path": "ip/mpsoc_proc_sys_reset_0_0/mpsoc_proc_sys_reset_0_0.xci",
-        "inst_hier_path": "proc_sys_reset_0"
+        "inst_hier_path": "proc_sys_reset_0",
+        "has_run_ip_tcl": "true"
       }
     },
     "interface_nets": {

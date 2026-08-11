@@ -333,8 +333,8 @@ begin
       M_AXI_rresp => m_axi4_in.rresp,
       M_AXI_rvalid => m_axi4_in.rvalid,
       M_AXI_rready => m_axi4_out.rready,
-      UART_0_0_rxd => uart_rx,
-      UART_0_0_txd => uart_tx,
+      UART_0_0_rxd => uart_tx,
+      UART_0_0_txd => uart_rx,
       rst_axi_n => rst_n,
       irq(0) => irq,
       clk_axi => clk_62m5

@@ -58,6 +58,7 @@ entity wrc_syscon is
     btn2_i      : in  std_logic;
     spi_sclk_o  : out std_logic;
     spi_ncs_o   : out std_logic;
+    spi_cs2_o   : out std_logic;
     spi_mosi_o  : out std_logic;
     spi_miso_i  : in  std_logic;
 
@@ -233,6 +234,7 @@ begin
         spi_sclk_o  <= '0';
         spi_mosi_o  <= '0';
         spi_ncs_o   <= '1';
+        spi_cs2_o   <= '1';
       else
         if sysc_regs_o.gpsr_wr = '1' and sysc_regs_o.gpsr_spi_sclk = '1' then
           spi_sclk_o <= '1';
@@ -246,6 +248,12 @@ begin
           spi_ncs_o <= '0';
         end if;
 
+        if sysc_regs_o.gpsr_wr = '1' and sysc_regs_o.gpsr_spi_cs2 = '1' then
+          spi_cs2_o <= '1';
+        elsif sysc_regs_o.gpcr_wr = '1' and sysc_regs_o.gpcr_spi_cs2 = '1' then
+          spi_cs2_o <= '0';
+        end if;
+
         if sysc_regs_o.gpsr_wr = '1' and sysc_regs_o.gpsr_spi_mosi = '1' then
           spi_mosi_o <= '1';
         elsif sysc_regs_o.gpsr_wr = '1' and sysc_regs_o.gpcr_spi_mosi = '1' then
@@ -257,6 +265,7 @@ begin
 
   sysc_regs_i.gpsr_spi_sclk <= '0';
   sysc_regs_i.gpsr_spi_ncs  <= '0';
+  sysc_regs_i.gpsr_spi_cs2  <= '0';
   sysc_regs_i.gpsr_spi_mosi <= '0';
   sysc_regs_i.gpsr_spi_miso <= spi_miso_i;
 

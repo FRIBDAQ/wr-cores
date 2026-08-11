@@ -6,7 +6,7 @@
       "name": "mpsoc",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "Hierarchical",
-      "tool_version": "2024.2",
+      "tool_version": "2025.2",
       "validated": "true"
     },
     "design_tree": {
@@ -317,10 +317,11 @@
     "components": {
       "zynq_ultra_ps_e_0": {
         "vlnv": "xilinx.com:ip:zynq_ultra_ps_e:3.5",
-        "ip_revision": "5",
+        "ip_revision": "8",
         "xci_name": "mpsoc_zynq_ultra_ps_e_0_0",
         "xci_path": "ip/mpsoc_zynq_ultra_ps_e_0_0/mpsoc_zynq_ultra_ps_e_0_0.xci",
         "inst_hier_path": "zynq_ultra_ps_e_0",
+        "has_run_ip_tcl": "true",
         "parameters": {
           "PSU_BANK_0_IO_STANDARD": {
             "value": "LVCMOS18"
@@ -1569,6 +1570,12 @@
         },
         "interface_ports": {
           "M_AXI_HPM0_LPD": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "END_POINT",
+                "value_src": "auto"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Master",
             "address_space_ref": "Data",
@@ -1583,7 +1590,7 @@
           "address_spaces": {
             "Data": {
               "range": "1T",
-              "width": "40",
+              "width": "64",
               "local_memory_map": {
                 "name": "Data",
                 "description": "Address Space Segments",
@@ -1652,33 +1659,71 @@
       },
       "axi_protocol_convert_0": {
         "vlnv": "xilinx.com:ip:axi_protocol_converter:2.1",
-        "ip_revision": "33",
+        "ip_revision": "37",
         "xci_name": "mpsoc_axi_protocol_convert_0_0",
         "xci_path": "ip/mpsoc_axi_protocol_convert_0_0/mpsoc_axi_protocol_convert_0_0.xci",
         "inst_hier_path": "axi_protocol_convert_0",
+        "has_run_ip_tcl": "true",
         "interface_ports": {
           "S_AXI": {
+            "bd_attributes": {
+              "BRIDGES": {
+                "value": "M_AXI",
+                "value_src": "auto"
+              },
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Slave",
             "bridges": [
               "M_AXI"
             ]
+          },
+          "M_AXI": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            }
           }
         }
       },
       "axi_dwidth_converter_0": {
         "vlnv": "xilinx.com:ip:axi_dwidth_converter:2.1",
-        "ip_revision": "33",
+        "ip_revision": "37",
         "xci_name": "mpsoc_axi_dwidth_converter_0_0",
         "xci_path": "ip/mpsoc_axi_dwidth_converter_0_0/mpsoc_axi_dwidth_converter_0_0.xci",
         "inst_hier_path": "axi_dwidth_converter_0",
+        "has_run_ip_tcl": "true",
         "interface_ports": {
           "S_AXI": {
+            "bd_attributes": {
+              "BRIDGES": {
+                "value": "M_AXI",
+                "value_src": "auto"
+              },
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            },
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0",
             "mode": "Slave",
             "bridges": [
               "M_AXI"
             ]
+          },
+          "M_AXI": {
+            "bd_attributes": {
+              "TYPE": {
+                "value": "interior",
+                "value_src": "default"
+              }
+            }
           }
         }
       }
