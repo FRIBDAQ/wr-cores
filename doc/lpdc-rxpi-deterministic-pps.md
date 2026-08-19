@@ -80,7 +80,7 @@ Eight relinks after the mod-10 fix (slide counts 0–9 on both ends, every combi
 | 7 | 4.99 | 9 / 9 | 665 792 |
 | 8 | 4.99 | 8 / 9 | 665 793 |
 
-- **PPS offset constant at 4.98 ns ±50 ps across relinks, and across power cycles.** (Down from ~8 ns of scatter at the start of the campaign.)
+- **PPS offset constant at 4.98 ns ±50 ps across relinks, and across power cycles.** (Down from ~8 ns of scatter at the start of the campaign.) With the SFP-delta trial calibration below, **0 ± 25 ps**.
 - crtt in a single cluster, spread ±102 ps. Row 3 is exactly one 200 ps sweep-stitch grain low in crtt and grain/2 in PPS — the system is coherent down to the stitch quantum.
 - Frequency syntonization unchanged throughout (~9 ps rms, as always).
 
@@ -88,7 +88,7 @@ Eight relinks after the mod-10 fix (slide counts 0–9 on both ends, every combi
 
 | Item | Nature |
 |---|---|
-| The 4.98 ns constant | Static calibration, stable across power cycles — absorb into the SFP deltas (`sfp add`) / t24p like any WR deployment; PPS then lands at ~0 |
+| The 4.98 ns constant | **Done (bench trial, 2026-08-19):** absorbed on the slave with `sfp add <PN> 0 9980 0 0` (master DB clean) — the textbook ½-gain: 9980 ps ≈ 2 × 4.99 ns. PPS lands at **0 ± 25 ps** (scope min/max −29…+18 ps). Formal per-port calibration against a golden reference remains for deployment; this value is role- and board-pair-specific. Caveat found on the way: this PPSi build silently accepts a **negative** SFP delta and wraps crtt through 2⁴⁸ ps (`FixedDelta` is unsigned) — the servo then chases garbage; keep deltas ≥ 0 and put the correction on whichever end/knob needs a positive value |
 | ±50 ps residual | The sweep coarse/fine stitch quantum (200 ps). Optional: harden the stitch heuristic, or use the TXPI park (`txpi.c rpark`, demonstrated ±14 ps on the bench) for the last tens of ps |
 | TXPI servo | The TXPIPPM actuator is wired in gateware and driven from the PS bench tool only; no firmware servo — deliberate for now |
 
