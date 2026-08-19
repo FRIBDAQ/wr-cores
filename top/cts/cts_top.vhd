@@ -59,17 +59,12 @@ entity cts_top is
     SFP_TX_FAULT0 : in std_logic;
     SFP_DISABLE0 : out std_logic;
     SFP_MOD_ABS0 : in std_logic;
-    P2_HDIO3_SDA : inout std_logic;
-    P2_HDIO4_SCL : inout std_logic;
 
     EEPROM_CSN0 : out std_logic;
     EEPROM_CSN1 : out std_logic;
     EEPROM_SCK0 : out std_logic;
     EEPROM_SI0  : out std_logic;
     EEPROM_SO0  : in  std_logic;
-
---    P2_HDIO1_SDA : inout std_logic;
---    P2_HDIO2_SCL : inout std_logic;
 
     LEMO_HP_OUT_n : out std_logic_vector(3 downto 0);
     LEMO_HP_OUT_p : out std_logic_vector(3 downto 0)
@@ -197,8 +192,8 @@ begin
       sfp_tx_fault_i => SFP_TX_FAULT0,
       sfp_tx_disable_o => SFP_DISABLE0,
       sfp_mod_abs_i => SFP_MOD_ABS0,
-      sfp_sda_b => P2_HDIO3_SDA,
-      sfp_scl_b => P2_HDIO4_SCL,
+      sfp_sda_b => open,
+      sfp_scl_b => open,
       dac_dpll_data_o => open,
       dac_dpll_load_p1_o => open,
       wb_wrpc_host_i => wb_wrpc_host_out,

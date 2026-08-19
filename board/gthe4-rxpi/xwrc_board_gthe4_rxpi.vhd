@@ -139,14 +139,24 @@ entity xwrc_board_gthe4_rxpi is
 end;
 
 architecture top of xwrc_board_gthe4_rxpi is
+  --  Regenerated for deterministic RX latency: RX AND TX datapaths are RAW
+  --  20-bit with fabric 8b10b (rxpi_lp_adapter), the RX elastic buffer
+  --  BYPASSED (gtwiz_buffbypass_rx_* handshake).  GT 8b10b/comma-align/rxctrl/
+  --  txctrl ports are gone; userdata_rx/tx are 20-bit; rxslide (PCS, driven by
+  --  the comma-steering FSM) and rxcdrlock (unplug detect) are used.
+  --  Port list = gthe4_phy.veo.
   COMPONENT gthe4_phy
   PORT (
     gtwiz_userclk_tx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userclk_rx_active_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_reset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_start_user_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_done_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+    gtwiz_buffbypass_rx_error_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_tx_done_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_reset_rx_done_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtwiz_userdata_tx_in : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-    gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    gtwiz_userdata_rx_out : OUT STD_LOGIC_VECTOR(19 DOWNTO 0);
     dmonitorclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     drpaddr_in : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
     drpclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -161,11 +171,7 @@ architecture top of xwrc_board_gthe4_rxpi is
     qpll0refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll1clk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     qpll1refclk_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rx8b10ben_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxbufreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxcommadeten_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxmcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxpcommaalignen_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpcsreset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpd_in : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
     rxpmareset_in : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -198,20 +204,13 @@ architecture top of xwrc_board_gthe4_rxpi is
     gthtxn_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gthtxp_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     gtpowergood_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxbyteisaligned_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxbyterealign_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxcdrlock_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxcommadet_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    rxctrl0_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    rxctrl1_out : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    rxctrl2_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-    rxctrl3_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
     rxoutclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     rxresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txoutclk_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
     txpmaresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-    txresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0) 
+    txresetdone_out : OUT STD_LOGIC_VECTOR(0 DOWNTO 0)
   );
 END COMPONENT;
 
@@ -270,16 +269,24 @@ END COMPONENT;
 
   signal rx_cdr_stable_out : std_logic;
 
-  signal gth_rx_data_in : std_logic_vector(15 downto 0);
+  --  RX datapath is RAW 20-bit (fabric 8b10b in rxpi_lp_adapter); TX stays
+  --  GT-internal 8b10b (16-bit).
+  signal gth_rx_data_in : std_logic_vector(19 downto 0);
   signal gth_tx_data_out : std_logic_vector(15 downto 0);
-  signal gth_rx_slide : std_logic;
-  signal gth_rx_k_in, gth_rx_disp_err_in : std_logic_vector(15 downto 0);
-  signal gth_rx_comma_in, gth_rx_dec_err_in : std_logic_vector(7 downto 0);
   signal gth_tx_k_out : std_logic_vector(7 downto 0) := (others => '0');
-  signal gth_rx_byte_aligned_in : std_logic;
-  signal gth_rx_comma_det_in : std_logic;
   signal gth_rx_pma_reset_done_in : std_logic;
   signal gth_tx_pma_reset_done_in : std_logic;
+
+  --  RX elastic-buffer bypass handshake (deterministic latency) + aligned
+  --  comma tap position exported by the adapter for diagnostics.
+  signal gth_rx_buffbypass_done : std_logic;
+  signal gth_rx_buffbypass_rst  : std_logic;
+  signal comma_pos   : std_logic_vector(4 downto 0);
+  signal comma_lane8 : std_logic_vector(7 downto 0);
+  --  PCS bitslip from the adapter comma-steering FSM to the GT rxslide input.
+  signal gth_rx_slide : std_logic;
+  --  Decode diagnostics from the adapter -> rxpi_gthe4_map bitslide(31:8).
+  signal dbg_rx : std_logic_vector(23 downto 0);
 
   signal gth_powergood : std_logic;
   signal gth_tx_prg_div_reset_done : std_logic;
@@ -317,6 +324,11 @@ END COMPONENT;
 
   signal bitslide_val : std_logic_vector(4 downto 0);
   signal rdy_in, rdy_out_62m5 : std_logic;
+
+  --  TX phase interpolator (TXPIPPM) control, driven by txpi_ctrl register in
+  --  inst_gthe4_rxpi -> GTHE4 primitive (was tied off to constants).
+  signal txpippmen, txpippmovrden, txpippmpd, txpippmsel : std_logic;
+  signal txpippmstepsize : std_logic_vector(4 downto 0);
 
   signal eeprom_scl_out, eeprom_sda_out : std_logic;
 begin
@@ -559,7 +571,10 @@ begin
       gtwiz_userclk_tx_active_in(0) => '1',
       gtwiz_userclk_rx_active_in(0) => '1',
       gtwiz_reset_tx_done_in(0) => tx_reset_done,
-      gtwiz_reset_rx_done_in(0) => tx_reset_done,
+      --  RX buffer-bypass controller (now in core) starts its phase alignment
+      --  when the RX reset is done, so feed the real rx_reset_done (was
+      --  tx_reset_done, which was harmless only while the RX buffer was on).
+      gtwiz_reset_rx_done_in(0) => rx_reset_done,
 
 --      gtwiz_reset_qpll0reset_out(0) => qpll0_reset,
 --      gtwiz_reset_qpll0lock_in(0) => qpll0_lock,
@@ -583,32 +598,33 @@ begin
       qpll1refclk_in(0) => qpll1_outrefclk,
 
       txpllclksel_in => "11", --  11: QPLL0
-      rx8b10ben_in(0) => '1',
-      rxcommadeten_in(0) => '1',
-      rxmcommaalignen_in(0) => '0',
-      rxpcommaalignen_in(0) => '0',
+      --  RX_SLIDE_MODE=PCS: the adapter comma-steering FSM pulses rxslide to
+      --  bit-slip the comma to tap 0 (the GT barrel-shift only aligns when the
+      --  comma already sits at the target).
       rxslide_in(0) => gth_rx_slide,
       tx8b10ben_in(0) => '1',
       txctrl0_in => x"0000",
       txctrl1_in => x"0000",
       txctrl2_in => gth_tx_k_out,
       gtpowergood_out(0) => gth_powergood,
-      rxbyteisaligned_out(0) => gth_rx_byte_aligned_in,
-      rxbyterealign_out => open,
-      rxcommadet_out(0) => gth_rx_comma_det_in,
-      rxctrl0_out => gth_rx_k_in,
-      rxctrl1_out => gth_rx_disp_err_in,
-      rxctrl2_out => gth_rx_comma_in,
-      rxctrl3_out => gth_rx_dec_err_in,
+
+      --  RX elastic-buffer bypass handshake (deterministic RX latency).  The
+      --  bypass phase alignment re-runs on every RX reset / relink so the
+      --  recovered-word framing is re-pinned each time.
+      gtwiz_buffbypass_rx_reset_in(0) => gth_rx_buffbypass_rst,
+      gtwiz_buffbypass_rx_start_user_in(0) => '0',
+      gtwiz_buffbypass_rx_done_out(0) => gth_rx_buffbypass_done,
+      gtwiz_buffbypass_rx_error_out => open,
+
       rxpmaresetdone_out(0) => gth_rx_pma_reset_done_in,
       txpmaresetdone_out(0) => gth_tx_pma_reset_done_in,
 --      txprgdivresetdone_out(0) => gth_tx_prg_div_reset_done,
 
-      txpippmen_in(0) => '0',
-      txpippmovrden_in(0) => '0',
-      txpippmsel_in(0) => '1',
-      txpippmpd_in(0) => '0',
-      txpippmstepsize_in => b"1_0001", -- txpippmstepsize, -- b"1_0000",
+      txpippmen_in(0) => txpippmen,
+      txpippmovrden_in(0) => txpippmovrden,
+      txpippmsel_in(0) => txpippmsel,
+      txpippmpd_in(0) => txpippmpd,
+      txpippmstepsize_in => txpippmstepsize,
 
       drpaddr_in => (others => '0'),
       drpclk_in(0) => clk_62m5_i,
@@ -656,16 +672,38 @@ begin
       gth_tx_rst_o => gth_tx_rst,
       gth_rx_rst_o => gth_rx_rst,
       bitslide_val_i => bitslide_val,
+      rx_comma_i => comma_lane8,
+      dbg_i => dbg_rx,
       rxbufreset_o => rxbufreset,
       rxpcsreset_o => rxpcsreset,
       rxpmareset_o => rxpmareset,
       txpcsreset_o => txpcsreset,
       txpmareset_o => txpmareset,
-      gth_status_i => gth_status
+      gth_status_i => gth_status,
+      txpippmen_o => txpippmen,
+      txpippmovrden_o => txpippmovrden,
+      txpippmpd_o => txpippmpd,
+      txpippmsel_o => txpippmsel,
+      txpippmstepsize_o => txpippmstepsize
     );
 
-  --  As PMA slide mode is used, there is no extra latency.
-  phy16_in.rx_bitslide <= (others => '0'); -- bitslide_val;
+  --  The comma is pinned to tap 0 by PCS rxslide, but each slide shifts RX
+  --  latency by 1 UI and the slide count is random per relink (comma lands on
+  --  a random tap per CDR lock).  Feed the count to the endpoint so PPSi
+  --  compensates it (WR_SPEC.BSLIDE -> ep_get_bitslide -> scaledBitSlide),
+  --  exactly like the classic gtp_bitslide scheme.
+  phy16_in.rx_bitslide <= bitslide_val;
+
+  --  Re-run the RX buffer-bypass phase alignment on every RX reset / relink so
+  --  the recovered-word framing is re-pinned each time.  Held until the GT's
+  --  internal RX reset sequence completes (rx_reset_done): starting buffbypass
+  --  alignment (or the comma detector) before the CDR has relocked makes the
+  --  comma position jitter and sync never acquire (doc wall #3).
+  gth_rx_buffbypass_rst <= phy_rst or rxpmareset or rxpcsreset
+                           or (not rx_reset_done);
+
+  --  Aligned comma tap (5-bit) exported to the RXPI map's diagnostic byte-lane.
+  comma_lane8 <= "000" & comma_pos;
 
   inst_sync_rdy: entity work.gc_sync
     port map (
@@ -839,9 +877,12 @@ begin
       btn2_i => open
       );
     
-  inst_gthe4_adapter: entity work.wr_gthe4_adapter
+  --  Deterministic-latency RX adapter: RAW 20-bit RX -> fabric comma align
+  --  (fixed tap, target 0) + 8b10b decode; TX unchanged (GT-internal 8b10b).
+  --  Self-contained (no MDIO): works with the existing pure-RXPI firmware; the
+  --  comma detector is reset on every RX reset / relink via comma_rst_i.
+  inst_gthe4_adapter: entity work.rxpi_lp_adapter
     port map (
-      tx_locked_o => open,
       tx_data_i => phy16_out.tx_data,
       tx_k_i => phy16_out.tx_k,
       tx_disparity_o => phy16_in.tx_disparity,
@@ -851,32 +892,20 @@ begin
       rx_enc_err_o => phy16_in.rx_enc_err,
       rx_bitslide_o => bitslide_val,
       rst_i => phy_rst,
+      comma_rst_i => gth_rx_buffbypass_rst,
       rdy_o => rdy_in,
-      gtwiz_userclk_tx_reset_o => open,
-      gtwiz_userclk_tx_active_i => '1',
-      gtwiz_userclk_rx_reset_o => open,
-      gtwiz_userclk_rx_active_i => '1',
-      gtwiz_buffbypass_tx_reset_o => open,
-      gtwiz_buffbypass_tx_done_i => '1',
-      gtwiz_buffbypass_rx_reset_o => open,
-      gtwiz_buffbypass_rx_start_user_o => open,
-      gtwiz_buffbypass_rx_done_i => '1',
-      gtwiz_reset_all_o => open,  --  same as phy_rst
-      gtwiz_reset_tx_done_i => tx_reset_done,
-      gtwiz_reset_rx_done_i => rx_reset_done,
+      gt_reset_tx_done_i      => tx_reset_done,
+      gt_reset_rx_done_i      => rx_reset_done,
+      gt_buffbypass_rx_done_i => gth_rx_buffbypass_done,
+      gt_rx_cdr_lock_i        => rx_cdr_stable_out,
       gth_rx_data_i => gth_rx_data_in,
       gth_tx_data_o => gth_tx_data_out,
-      gth_rx_slide_o => gth_rx_slide,
-      gth_rx_k_i => gth_rx_k_in(1 downto 0),
       gth_tx_k_o => gth_tx_k_out(1 downto 0),
-      gth_rx_dec_err_i => gth_rx_dec_err_in(1 downto 0),
-      gth_rx_disp_err_i => gth_rx_disp_err_in(1 downto 0),
-      gth_rx_byte_aligned_i => gth_rx_byte_aligned_in,
-      gth_rx_comma_det_i => gth_rx_comma_det_in,
-      gth_rx_pma_reset_done_i => gth_rx_pma_reset_done_in,
-      gth_tx_pma_reset_done_i => gth_tx_pma_reset_done_in,
+      gth_rx_slide_o => gth_rx_slide,
       gth_rx_clk_i => phy16_in.rx_clk,
-      gth_tx_clk_i => phy16_in.ref_clk
+      gth_tx_clk_i => phy16_in.ref_clk,
+      comma_pos_o => comma_pos,
+      dbg_o => dbg_rx
       );
 
   b_rst: block
@@ -951,12 +980,12 @@ begin
 
     gth_status_a(8) <= gth_rx_pma_reset_done_in;
     gth_status_a(9) <= gth_rx_pma_reset_done_in;
-    gth_status_a(10) <= gth_rx_byte_aligned_in;
-    gth_status_a(11) <= gth_rx_comma_det_in;
+    gth_status_a(10) <= gth_rx_buffbypass_done;
+    gth_status_a(11) <= rdy_in;
 
     gth_status_a(12) <= gth_tx_prg_div_reset_done;
     gth_status_a(13) <= rdy_in;
-    gth_status_a(14) <= gth_rx_slide;
+    gth_status_a(14) <= comma_pos(0);
     gth_status_a(15) <= phy_rst;
 
     gen_sync: for i in gth_status'range generate
@@ -973,19 +1002,19 @@ begin
       port map (
         clk => phy16_in.rx_clk,
         probe0 (15 downto 0) => phy16_in.rx_data,
-        probe0(16) => gth_rx_byte_aligned_in,
-        probe0(17) => gth_rx_comma_det_in,
-        probe0(18) => gth_rx_slide,
+        probe0(16) => gth_rx_buffbypass_done,
+        probe0(17) => rdy_in,
+        probe0(18) => '0',
         probe0(19) => '0',
         probe0(20) => '0',
         probe0(21) => '0',
         probe0(22) => '0',
         probe0(23) => '0',
-        probe0(28 downto 24) => phy16_in.rx_bitslide,
-        probe0(30 downto 29) => gth_rx_k_in(1 downto 0),
-        probe0(32 downto 31) => gth_rx_disp_err_in(1 downto 0),
-        probe0(34 downto 33) => gth_rx_comma_in(1 downto 0),
-        probe0(36 downto 35) => gth_rx_dec_err_in(1 downto 0),
+        probe0(28 downto 24) => comma_pos,
+        probe0(30 downto 29) => phy16_in.rx_k,
+        probe0(32 downto 31) => "00",
+        probe0(34 downto 33) => comma_pos(1 downto 0),
+        probe0(36 downto 35) => "00",
         probe0(63 downto 37) => (others => '0')
         --probe0 (31 downto 16) => gth_status(15 downto 0)
         );

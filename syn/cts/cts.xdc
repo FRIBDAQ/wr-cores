@@ -21,8 +21,8 @@ set_property PACKAGE_PIN A3     [get_ports {LEMO_HP_OUT_n[1]}]   ;# Bank  66 VCC
 #set_property PACKAGE_PIN D5     [get_ports BASE_CLK_n]       ;# Bank  66 VCCO - som240_1_b11 - IO_L14N_T2L_N3_GC_66
 set_property PACKAGE_PIN J10    [get_ports EEPROM_SO0]       ;# Bank  45 VCCO - som240_1_b16 - IO_L1N_AD15N_45
 #set_property PACKAGE_PIN B10    [get_ports P2_HDIO2_SCL]         ;# Bank  45 VCCO - som240_1_b20 - IO_L9N_AD11N_45
-set_property PACKAGE_PIN E12    [get_ports P2_HDIO3_SDA]         ;# Bank  45 VCCO - som240_1_b21 - IO_L8P_HDGC_45
-set_property PACKAGE_PIN D11    [get_ports P2_HDIO4_SCL]         ;# Bank  45 VCCO - som240_1_b22 - IO_L8N_HDGC_45
+#set_property PACKAGE_PIN E12    [get_ports P2_HDIO3_SDA]         ;# Bank  45 VCCO - som240_1_b21 - IO_L8P_HDGC_45
+#set_property PACKAGE_PIN D11    [get_ports P2_HDIO4_SCL]         ;# Bank  45 VCCO - som240_1_b22 - IO_L8N_HDGC_45
 
 # CN1C
 #set_property PACKAGE_PIN G1     [get_ports SI5344_IN_SEL0]    ;# Bank  66 VCCO - som240_1_c3 - IO_L1P_T0L_N0_DBC_66
@@ -177,10 +177,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports EEPROM_SO0]
 #set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO2_SCL]
 
 # SFP
-set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO3_SDA]
-set_property SLEW FAST           [get_ports P2_HDIO3_SDA]
-set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO4_SCL]
-set_property SLEW FAST           [get_ports P2_HDIO4_SCL]
+#set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO3_SDA]
+#set_property SLEW FAST           [get_ports P2_HDIO3_SDA]
+#set_property IOSTANDARD LVCMOS33 [get_ports P2_HDIO4_SCL]
+#set_property SLEW FAST           [get_ports P2_HDIO4_SCL]
 
 set_property IOSTANDARD LVCMOS25 [get_ports SFP_DISABLE0]
 set_property IOSTANDARD LVCMOS25 [get_ports SFP_MOD_ABS0]

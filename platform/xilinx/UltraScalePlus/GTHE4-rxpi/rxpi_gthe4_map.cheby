@@ -147,3 +147,52 @@ memory-map:
      - field:
         name: gen
         range: 31-24
+  - reg:
+     name: txpi_ctrl
+     comment: TX phase interpolator (TXPIPPM) control
+     width: 32
+     access: rw
+     children:
+     - field:
+        name: en
+        comment: TXPIPPMEN - enable TX PI PPM stepping
+        range: 0
+     - field:
+        name: ovrden
+        comment: TXPIPPMOVRDEN - override enable
+        range: 1
+     - field:
+        name: pd
+        comment: TXPIPPMPD - power down
+        range: 2
+     - field:
+        name: sel
+        comment: TXPIPPMSEL - select
+        range: 3
+        preset: 1
+     - field:
+        name: stepsize
+        comment: TXPIPPMSTEPSIZE
+        range: 8-4
+        preset: 0x11
+  - reg:
+     name: txpi_step
+     comment: Issue a counted TXPIPPMEN pulse of <nsteps> clk_62m5 cycles
+     width: 32
+     access: rw
+     x-hdl:
+       write-strobe: True
+     children:
+     - field:
+        name: nsteps
+        range: 23-0
+  - reg:
+     name: txpi_stat
+     comment: TXPI counted-pulse status
+     width: 32
+     access: ro
+     children:
+     - field:
+        name: busy
+        comment: counted pulse in progress
+        range: 0
