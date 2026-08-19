@@ -67,6 +67,13 @@ entity xwrc_gthe4_rxpi is
     rxpmareset_o : out std_logic;
     bitslide_val_i : std_logic_vector(4 downto 0);
 
+    --  RX comma byte-lane (rxctrl2 / rxchariscomma) for framing diagnostics;
+    --  latched + synced and exposed in the bitslide register upper bits.
+    rx_comma_i : in std_logic_vector(7 downto 0) := (others => '0');
+
+    --  Decode diagnostics from the adapter, exposed in bitslide(31:8).
+    dbg_i : in std_logic_vector(23 downto 0) := (others => '0');
+
     --  Not used by SW, extra.
     gth_rst_o : out std_logic;
     gth_tx_rst_o : out std_logic;
@@ -77,7 +84,14 @@ entity xwrc_gthe4_rxpi is
     txpmareset_o : out std_logic;
     gth_status_i : std_logic_vector(15 downto 0) := (others => '0');
 
-    rxpi_byte_o : out std_logic_vector(7 downto 0)
+    rxpi_byte_o : out std_logic_vector(7 downto 0);
+
+    --  TX phase interpolator (TXPIPPM) control, to the GTHE4 primitive
+    txpippmen_o       : out std_logic;
+    txpippmovrden_o   : out std_logic;
+    txpippmpd_o       : out std_logic;
+    txpippmsel_o      : out std_logic;
+    txpippmstepsize_o : out std_logic_vector(4 downto 0)
   );
 end;
 
@@ -106,7 +120,41 @@ architecture top of xwrc_gthe4_rxpi is
   signal ps_clk_nsamp_cnt, ps_clk_count, ps_clk_count_out : unsigned(23 downto 0);
   signal ps_clk_gen : unsigned(7 downto 0);
 
+  --  TXPI counted-pulse
+  signal txpi_en_manual, txpi_pulse, txpi_step_wr : std_logic;
+  signal txpi_step_nsteps : std_logic_vector(23 downto 0);
+  signal txpi_cnt : unsigned(23 downto 0);
+
+  --  RX comma byte-lane latch (rx domain) + sync to clk_62m5
+  signal comma_lat : std_logic_vector(7 downto 0);
+  signal comma_m, comma_s : std_logic_vector(7 downto 0);
+
+  --  Decode diagnostics from the adapter (rx domain, quasi-static) synced to
+  --  clk_62m5 and exposed in bitslide(31:16).
+  signal dbg_m, dbg_s : std_logic_vector(23 downto 0);
+
 begin
+  --  Latch the last-seen comma byte-lane in the RX clock domain, then sync it
+  --  to clk_62m5 (slowly-changing: stable after byte alignment, changes only at
+  --  relink).  Exposed via bitslide(15:8) for framing correlation.
+  process (rx_out_clk_i)
+  begin
+    if rising_edge(rx_out_clk_i) then
+      if rx_comma_i /= x"00" then
+        comma_lat <= rx_comma_i;
+      end if;
+    end if;
+  end process;
+
+  process (clk_62m5_i)
+  begin
+    if rising_edge(clk_62m5_i) then
+      comma_m <= comma_lat;
+      comma_s <= comma_m;
+      dbg_m   <= dbg_i;
+      dbg_s   <= dbg_m;
+    end if;
+  end process;
   --  MMCM for phase shift
   --  Input: ref clock
   --  Output: shifted version of ref clock
@@ -234,7 +282,10 @@ begin
       status_extra_i(15 downto 0) => gth_status_i,
       ctrl_rdy_o => phy_rdy_o,
       bitslide_i(4 downto 0) => bitslide_val_i,
-      bitslide_i(31 downto 5) => (others => '0'),
+      bitslide_i(7 downto 5) => "000",
+      --  comma_s dropped for this debug build: bitslide(31:8) carries the full
+      --  captured 20-bit erroring word + error count (see rxpi_lp_adapter dbg_o).
+      bitslide_i(31 downto 8) => dbg_s,
       rxpi_nsamp_o => rxpi_nsamp,
       rxpi_shift_o => rxpi_shift,
       ps_ctrl_shift_i => '0',
@@ -250,8 +301,34 @@ begin
       ps_stat_ps_busy_i => ps_clk_busy,
       ps_count_val_o => ps_clk_nsamp,
       ps_res_val_i => std_logic_vector(ps_clk_count_out),
-      ps_res_gen_i => std_logic_vector(ps_clk_gen)
+      ps_res_gen_i => std_logic_vector(ps_clk_gen),
+      txpi_ctrl_en_o => txpi_en_manual,
+      txpi_ctrl_ovrden_o => txpippmovrden_o,
+      txpi_ctrl_pd_o => txpippmpd_o,
+      txpi_ctrl_sel_o => txpippmsel_o,
+      txpi_ctrl_stepsize_o => txpippmstepsize_o,
+      txpi_step_nsteps_o => txpi_step_nsteps,
+      txpi_step_wr_o => txpi_step_wr,
+      txpi_stat_busy_i => txpi_pulse
     );
+
+  --  Counted TXPIPPMEN pulse: on a write to txpi_step, hold TXPIPPMEN high for
+  --  exactly <nsteps> clk_62m5 cycles => <nsteps> deterministic PI substeps.
+  --  Final TXPIPPMEN = manual en (txpi_ctrl.en) OR the counted pulse.
+  process (clk_62m5_i)
+  begin
+    if rising_edge(clk_62m5_i) then
+      if rst_n_i = '0' then
+        txpi_cnt <= (others => '0');
+      elsif txpi_step_wr = '1' and unsigned(txpi_step_nsteps) /= 0 then
+        txpi_cnt <= unsigned(txpi_step_nsteps);
+      elsif txpi_cnt /= 0 then
+        txpi_cnt <= txpi_cnt - 1;
+      end if;
+    end if;
+  end process;
+  txpi_pulse <= '1' when txpi_cnt /= 0 else '0';
+  txpippmen_o <= txpi_en_manual or txpi_pulse;
 
   inst_sync_rdy_in: entity work.gc_sync
     port map (
