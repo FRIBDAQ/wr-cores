@@ -29,8 +29,8 @@ set_property PACKAGE_PIN J10    [get_ports EEPROM_SO0]       ;# Bank  45 VCCO - 
 #set_property PACKAGE_PIN F1     [get_ports SI5344_IN_SEL1]    ;# Bank  66 VCCO - som240_1_c4 - IO_L1N_T0L_N1_DBC_66
 #set_property PACKAGE_PIN G3     [get_ports SI5344_2_IN_SEL0]  ;# Bank  66 VCCO - som240_1_c6 - IO_L4P_T0U_N6_DBC_AD7P_66
 #set_property PACKAGE_PIN F3     [get_ports SI5344_2_IN_SEL1]  ;# Bank  66 VCCO - som240_1_c7 - IO_L4N_T0U_N7_DBC_AD7N_66
-#set_property PACKAGE_PIN D7     [get_ports SI5344_2_HP_GC_p]  ;# Bank  66 VCCO - som240_1_c12 - IO_L13P_T2L_N0_GC_QBC_66
-#set_property PACKAGE_PIN D6     [get_ports SI5344_2_HP_GC_n]  ;# Bank  66 VCCO - som240_1_c13 - IO_L13N_T2L_N1_GC_QBC_66
+set_property PACKAGE_PIN D7     [get_ports SI5344_2_HP_GC_p]  ;# Bank  66 VCCO - som240_1_c12 - IO_L13P_T2L_N0_GC_QBC_66
+set_property PACKAGE_PIN D6     [get_ports SI5344_2_HP_GC_n]  ;# Bank  66 VCCO - som240_1_c13 - IO_L13N_T2L_N1_GC_QBC_66
 set_property PACKAGE_PIN G10    [get_ports EEPROM_CSN1]      ;# Bank  45 VCCO - som240_1_c19 - IO_L3N_AD13N_45
 #set_property PACKAGE_PIN F12    [get_ports P2_HDIO1_SDA]         ;# Bank  45 VCCO - som240_1_c20 - IO_L6P_HDGC_45
 #set_property PACKAGE_PIN B11    [get_ports LMK04806_DATA]    ;# Bank  45 VCCO - som240_1_c22 - IO_L10P_AD10P_45
@@ -40,8 +40,8 @@ set_property PACKAGE_PIN G10    [get_ports EEPROM_CSN1]      ;# Bank  45 VCCO - 
 # CN1D
 #set_property PACKAGE_PIN F2     [get_ports HP_SI5344_in_p]    ;# Bank  66 VCCO - som240_1_d4 - IO_L3P_T0L_N4_AD15P_66
 #set_property PACKAGE_PIN E2     [get_ports HP_SI5344_in_n]    ;# Bank  66 VCCO - som240_1_d5 - IO_L3N_T0L_N5_AD15N_66
-#set_property PACKAGE_PIN E1     [get_ports HP_SI5344_2_in_p]  ;# Bank  66 VCCO - som240_1_d7 - IO_L2P_T0L_N2_66
-#set_property PACKAGE_PIN D1     [get_ports HP_SI5344_2_in_n]  ;# Bank  66 VCCO - som240_1_d8 - IO_L2N_T0L_N3_66
+set_property PACKAGE_PIN E1     [get_ports HP_SI5344_2_in_p]  ;# Bank  66 VCCO - som240_1_d7 - IO_L2P_T0L_N2_66
+set_property PACKAGE_PIN D1     [get_ports HP_SI5344_2_in_n]  ;# Bank  66 VCCO - som240_1_d8 - IO_L2N_T0L_N3_66
 set_property PACKAGE_PIN F10    [get_ports LED_FPGA_DS0]     ;# Bank  45 VCCO - som240_1_d17 - IO_L5N_HDGC_45
 set_property PACKAGE_PIN J11    [get_ports LED_FPGA_DS1]     ;# Bank  45 VCCO - som240_1_d18 - IO_L1P_AD15P_45
 #set_property PACKAGE_PIN E10    [get_ports I2C_SDA_OSC2_HD]  ;# Bank  45 VCCO - som240_1_d20 - IO_L7P_HDGC_45
@@ -157,10 +157,10 @@ set_property PACKAGE_PIN AG11   [get_ports SFP_RX_LOS0]      ;# Bank  43 VCCO - 
 # Helper clock
 #set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_p]
 #set_property DIFF_TERM true  [get_ports SI5344_2_HP_p]
-#set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_GC_p]
-#set_property DIFF_TERM true  [get_ports SI5344_2_HP_GC_p]
+set_property IOSTANDARD LVDS [get_ports SI5344_2_HP_GC_p]
+set_property DIFF_TERM true  [get_ports SI5344_2_HP_GC_p]
 
-#set_property IOSTANDARD LVDS [get_ports HP_SI5344_2_in_p]
+set_property IOSTANDARD LVDS [get_ports HP_SI5344_2_in_p]
 
 set_property IOSTANDARD LVDS [get_ports {LEMO_HDGC_IN_p[*]}]
 set_property DIFF_TERM true  [get_ports {LEMO_HDGC_IN_p[*]}]
@@ -190,12 +190,16 @@ set_property IOSTANDARD LVCMOS25 [get_ports SFP_TX_FAULT0]
 set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS0]
 set_property IOSTANDARD LVCMOS33 [get_ports LED_FPGA_DS1]
 
-create_clock -period  6.400 -name SFP_156p25MHz     -waveform {0.000  3.200} [get_ports {GTH_REFCLK1_p}]
+create_clock -period  6.450 -name SFP_155p038760MHz     -waveform {0.000  3.225} [get_ports {GTH_REFCLK1_p}]
+create_clock -period  2.000 -name si5344_clk500         -waveform {0.000  1.000} [get_ports SI5344_2_HP_GC_p]
 
 create_generated_clock -name clk_62m5 [get_pins inst_mmcm_62m5/CLKOUT0]
-create_generated_clock -name clk_ps_out [get_pins inst_wrc_board/inst_mmcm_ps/CLKOUT0]
+create_generated_clock -name clk_ps_out [get_pins inst_wrc_board/inst_gthe4_rxpi/inst_mmcm_ps/CLKOUT0]
 
 set wr_gth {inst_wrc_board/inst_gth_channel/inst/gen_gtwizard_gthe4_top.gthe4_phy_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_channel_container[1].gen_enabled_channel.gthe4_channel_wrapper_inst/channel_inst/gthe4_channel_gen.gen_gthe4_channel_inst[0].GTHE4_CHANNEL_PRIM_INST}
+
+create_generated_clock -name clk_500m [get_pins sync_clk_gen_inst/clk_500m_mmcme4_inst/CLKOUT0]
+create_generated_clock -name wr_ref_to_si5344 -source [get_pins "$wr_gth/TXOUTCLK"] -divide_by 1 [get_ports HP_SI5344_2_in_p]
 
 # GTH monitor clock
 # Not sure about the period (apparently 2* clk)
@@ -203,10 +207,11 @@ create_clock -period 10.000 -name dmon_clk [get_pins "$wr_gth/DMONITOROUTCLK"]
 set_clock_groups -asynchronous \
   -group clk_62m5 \
   -group clk_ps_out \
-  -group clk_25m \
   -group dmon_clk \
   -group [get_clocks -of_objects [get_pins "$wr_gth/RXOUTCLK"]] \
-  -group [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]]
+  -group [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]] \
+  -group [get_clocks -include_generated_clocks si5344_clk500]
+
 
 # clk_ref_62m5_div2 = 16 ns = 8 clock periods of clk_500m which has 2 ns period
 # Setup requirement at edge 8, hold requirement at edge 7
@@ -221,13 +226,10 @@ set_clock_groups -asynchronous \
 #set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 #set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500Mhz*"] -to [get_clocks gth_txclk]
 
-#set_multicycle_path 2 -setup -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500m*"]
-#set_multicycle_path 1 -hold -from [get_clocks gth_txclk] -to [get_clocks  "*clk_500m*"]
-#set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500m*"] -to [get_clocks gth_txclk]
-#set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500m*"] -to [get_clocks gth_txclk]
-
-#set_clock_groups -asynchronous -group {SFP_156p25MHz WR_MAIN} -group {WR_HELPER clk_pll_dmtd} -group {gth_txclk} -group {gth_rxclk}
-#set_clock_groups -asynchronous -group {SFP_156p25MHz phy16_in.ref_clk} -group {clk_dmtd} -group {gth_txclk} -group {gth_rxclk}
+set_multicycle_path 2 -setup -from [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]] -to [get_clocks  "*clk_500m*"]
+set_multicycle_path 1 -hold -from [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]] -to [get_clocks  "*clk_500m*"]
+set_multicycle_path 3 -setup -start -from [get_clocks  "*clk_500m*"] -to [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]]
+set_multicycle_path 2 -hold -start -from [get_clocks  "*clk_500m*"] -to [get_clocks -of_objects [get_pins "$wr_gth/TXOUTCLK"]]
 
 # For dmonitor
 # Cf xapp1252

@@ -47,6 +47,14 @@ entity cts_top is
   port (
     GTH_REFCLK1_n : in std_logic;
     GTH_REFCLK1_p : in std_logic;
+    
+    -- 62.5 MHz clock out for the second Si5344
+    HP_SI5344_2_in_n : out std_logic;
+    HP_SI5344_2_in_p : out std_logic;
+    
+    -- 500 MHz clock generated out of 62.5 MHz clock by the second Si5344
+    SI5344_2_HP_GC_n : in std_logic;
+    SI5344_2_HP_GC_p : in std_logic;
 
     GTH_SFP_TX0_n : out std_logic;
     GTH_SFP_TX0_p : out std_logic;
@@ -66,8 +74,10 @@ entity cts_top is
     EEPROM_SI0  : out std_logic;
     EEPROM_SO0  : in  std_logic;
 
-    LEMO_HP_OUT_n : out std_logic_vector(3 downto 0);
-    LEMO_HP_OUT_p : out std_logic_vector(3 downto 0)
+    LEMO_HDGC_IN_n : in  std_logic_vector(3 downto 0);
+    LEMO_HDGC_IN_p : in  std_logic_vector(3 downto 0);
+    LEMO_HP_OUT_n  : out std_logic_vector(3 downto 0);
+    LEMO_HP_OUT_p  : out std_logic_vector(3 downto 0)
   );
 end;
 
@@ -102,18 +112,39 @@ architecture top of cts_top is
   );
   end component mpsoc;
 
+  component sync_clk_generator is
+  port (
+    rst_n      : in STD_LOGIC;
+    clk_500m_i : in STD_LOGIC;
+    pps_i      : in STD_LOGIC;
+    clk_sel_i  : in STD_LOGIC_VECTOR(2 downto 0);
+    clk_10m_o  : out STD_LOGIC;
+    clk_mux_o  : out STD_LOGIC);
+  end component;
+
+
   signal rst_n, rst : std_logic := '0';
   signal rst_cnt : natural range 0 to 15 := 0;
+
+  signal pps_p_o : std_logic;
 
   signal clk_62m5 : std_logic;
   signal clk_fb, pll_locked : std_logic;
   signal clk_ref : std_logic;
+  signal clk_sel : std_logic_vector(2 downto 0);
+  signal clk_mux : std_logic;
+  signal clk_10m_o: std_logic;
+  
+  signal clk_ref_forwarded : std_logic;
+  signal clk_500m_ibuf     : std_logic;
+  signal clk_500m          : std_logic;
 
   signal m_axi4_out : t_axi4_lite_master_out_32;
   signal m_axi4_in : t_axi4_lite_master_in_32;
   signal m_axi_araddr, m_axi_awaddr : std_logic_vector(39 downto 32);
 
   signal uart_rx, uart_tx : std_logic;
+  signal nimi : std_logic_vector(3 downto 0);
   signal nimo : std_logic_vector(3 downto 0);
   signal led_link_o : std_logic;
   signal led_act_o : std_logic;
@@ -225,7 +256,7 @@ begin
       tm_tai_o => open,
       tm_cycles_o => open,
       pps_valid_o => open,
-      pps_p_o => nimo(0),
+      pps_p_o => pps_p_o,
       pps_led_o => open
     );
 
@@ -414,16 +445,75 @@ begin
     wrpc_aux_i => wb_wrpc_aux_in,
     wrpc_aux_o => wb_wrpc_aux_out
   );
- 
-  nimo(2) <= clk_ref;
---  nimo(3) <= '0';
+
+  -- Forward WR's 62.5 MHz reference to the second Si5344.
+  -- D1='1', D2='0': output follows the clock polarity.
+  u_si5344_ref_oddr : ODDRE1
+  port map (
+    C  => clk_ref,
+    D1 => '1',
+    D2 => '0',
+    SR => '0',
+    Q  => clk_ref_forwarded
+  );
+
+  u_si5344_ref_obuf : OBUFDS
+  port map (
+    I  => clk_ref_forwarded,
+    O  => HP_SI5344_2_in_p,
+    OB => HP_SI5344_2_in_n
+  );
+
+  -- Receive the Si5344's differential 500 MHz output.
+  u_si5344_500m_ibuf : IBUFDS
+  generic map (
+    IBUF_LOW_PWR => FALSE
+  )
+  port map (
+    I  => SI5344_2_HP_GC_p,
+    IB => SI5344_2_HP_GC_n,
+    O  => clk_500m_ibuf
+  );
+
+  -- Distribute 500 MHz on the dedicated global clock network.
+  u_si5344_500m_bufg : BUFG
+  port map (
+    I => clk_500m_ibuf,
+    O => clk_500m
+  );
+
+  clk_sel <= nimi(2) & nimi(1) & nimi(0);
+
+  sync_clk_gen_inst: sync_clk_generator
+  port map (
+    rst_n      => rst_n,
+    clk_500m_i => clk_500m,
+    pps_i      => pps_p_o,
+    clk_sel_i  => clk_sel,
+    clk_10m_o  => clk_10m_o,
+    clk_mux_o  => clk_mux
+  );
+
+  nimo(0) <= pps_p_o;
+  nimo(1) <= clk_10m_o;
+  nimo(2) <= clk_mux;
+  nimo(3) <= clk_ref;
+
+  nimi_inst : for i in 0 to 3 generate
+      nimi_sig_inst : IBUFDS
+      port map (
+        I  => LEMO_HDGC_IN_p(i),
+        IB => LEMO_HDGC_IN_n(i),
+        O  => nimi(i)
+      );
+  end generate;
 
   nimo_inst : for i in 0 to 3 generate
       nimo_sig_inst : OBUFDS
       port map (
-        O => LEMO_HP_OUT_p(i),
+        O  => LEMO_HP_OUT_p(i),
         OB => LEMO_HP_OUT_n(i),
-        I => nimo(i)
+        I  => nimo(i)
       );
   end generate;
 
